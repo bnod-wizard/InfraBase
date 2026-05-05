@@ -1,0 +1,223 @@
+/* Home Page Styles */
+
+.home-page {
+  min-height: 100vh;
+  background-color: #ecf0f1;
+  display: flex;
+  flex-direction: row;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.dashboard-content {
+  padding: 40px;
+  flex: 1;
+}
+
+.dashboard-content h1 {
+  color: #2c3e50;
+  font-size: 32px;
+  margin-bottom: 30px;
+}
+
+.welcome-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-card h2 {
+  color: #2c3e50;
+  font-size: 28px;
+  margin-bottom: 15px;
+}
+
+.welcome-card > p {
+  color: #7f8c8d;
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.features-list {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 6px;
+  margin-bottom: 30px;
+}
+
+.features-list h3 {
+  color: #2c3e50;
+  margin-top: 0;
+}
+
+.features-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.features-list li {
+  color: #555;
+  padding: 8px 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.start-message {
+  color: #3498db;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* Button Styles */
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+}
+
+.btn-secondary {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #7f8c8d;
+}
+
+.btn-danger {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c0392b;
+}
+
+.btn-info {
+  background-color: #16a085;
+  color: white;
+}
+
+.btn-info:hover {
+  background-color: #117a65;
+}
+
+.btn-search {
+  background-color: #27ae60;
+  color: white;
+}
+
+.btn-search:hover {
+  background-color: #229954;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Responsive Design */
+
+@media (max-width: 768px) {
+  .home-page {
+    flex-direction: column;
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .dashboard-content {
+    padding: 20px;
+  }
+
+  .dashboard-content h1 {
+    font-size: 24px;
+  }
+
+  .welcome-card {
+    padding: 20px;
+  }
+
+  .welcome-card h2 {
+    font-size: 20px;
+  }
+}
+
+.logout-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.home-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.user-card,
+.info-card {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.user-card h2,
+.info-card h2 {
+  margin-top: 0;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.profile-info p {
+  margin: 12px 0;
+  font-size: 16px;
+  color: #555;
+}
+
+.profile-info strong {
+  color: #667eea;
+}
+
+.info-card p {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
+}

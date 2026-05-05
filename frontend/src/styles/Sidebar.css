@@ -1,0 +1,152 @@
+/* Sidebar Styles */
+
+.sidebar {
+  width: 250px;
+  background-color: #2c3e50;
+  color: #ecf0f1;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.sidebar-header {
+  padding: 0 20px 30px;
+  border-bottom: 2px solid #34495e;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #3498db;
+  font-weight: bold;
+}
+
+.sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 10px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  color: #ecf0f1;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+  border-radius: 4px;
+}
+
+.nav-item:hover {
+  background-color: rgba(52, 152, 219, 0.1);
+  border-left-color: #3498db;
+}
+
+.nav-item.active {
+  background-color: rgba(52, 152, 219, 0.2);
+  border-left-color: #3498db;
+  color: #3498db;
+  font-weight: 600;
+}
+
+.nav-icon {
+  font-size: 20px;
+}
+
+.nav-label {
+  flex: 1;
+  text-align: left;
+}
+
+.sidebar-footer {
+  padding: 20px 10px;
+  border-top: 2px solid #34495e;
+}
+
+.logout-button {
+  width: 100%;
+  padding: 12px 20px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+  }
+
+  .sidebar-header {
+    padding: 0;
+    border: none;
+    margin-bottom: 0;
+  }
+
+  .sidebar-header h2 {
+    font-size: 20px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    flex-direction: row;
+    gap: 20px;
+    padding: 0 30px;
+    justify-content: center;
+  }
+
+  .nav-item {
+    padding: 8px 15px;
+    border-left: none;
+    border-bottom: 4px solid transparent;
+    border-radius: 0;
+  }
+
+  .nav-item:hover {
+    border-left: none;
+    border-bottom-color: #3498db;
+    background-color: transparent;
+  }
+
+  .nav-item.active {
+    border-left: none;
+    border-bottom-color: #3498db;
+    background-color: transparent;
+  }
+
+  .sidebar-footer {
+    padding: 0;
+    border: none;
+  }
+
+  .logout-button {
+    padding: 8px 15px;
+    font-size: 14px;
+  }
+}

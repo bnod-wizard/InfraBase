@@ -1,0 +1,262 @@
+/* Customer List Styles */
+
+.customer-list-container {
+  padding: 30px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.customer-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 20px;
+}
+
+.customer-list-header h1 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 32px;
+}
+
+.customer-list-filters {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.search-form {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-width: 300px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap;
+}
+
+.status-filter {
+  padding: 10px 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.status-filter:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+/* Table Styles */
+
+.table-responsive {
+  overflow-x: auto;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.customers-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+.customers-table thead {
+  background-color: #34495e;
+  color: white;
+}
+
+.customers-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #2c3e50;
+}
+
+.customers-table td {
+  padding: 15px;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.customers-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.customers-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.cell-name {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-prospect {
+  background-color: #cfe2ff;
+  color: #084298;
+}
+
+.cell-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Pagination Styles */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.page-info {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Empty State */
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.empty-state p {
+  color: #7f8c8d;
+  font-size: 18px;
+  margin-bottom: 30px;
+}
+
+/* Error Message */
+
+.error-message {
+  padding: 15px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+/* Loading State */
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #7f8c8d;
+  font-size: 18px;
+}
+
+/* Responsive Design */
+
+@media (max-width: 1024px) {
+  .customer-list-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-form {
+    min-width: auto;
+  }
+
+  .filter-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 768px) {
+  .customer-list-container {
+    padding: 20px;
+  }
+
+  .customer-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .customer-list-header h1 {
+    font-size: 24px;
+  }
+
+  .customers-table {
+    font-size: 13px;
+  }
+
+  .customers-table th,
+  .customers-table td {
+    padding: 10px;
+  }
+
+  .cell-actions {
+    flex-direction: column;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .page-info {
+    order: 1;
+  }
+}
