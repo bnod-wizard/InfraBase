@@ -19,7 +19,6 @@ function AppContent() {
     <Routes>
       <Route path="/" element={isAuthenticated ? <Navigate to="/home" /> : <AuthPage />} />
       <Route path="/home/*" element={isAuthenticated ? <HomePage /> : <Navigate to="/" />} />
-      <Route path="/customers/*" element={isAuthenticated ? <HomePage /> : <Navigate to="/" />} />
       <Route path="*" element={isAuthenticated ? <Navigate to="/home" /> : <Navigate to="/" />} />
     </Routes>
   );

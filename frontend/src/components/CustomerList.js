@@ -7,7 +7,7 @@ import '../styles/CustomerList.css';
 /**
  * CustomerList Component - Displays all customers in a table
  */
-function CustomerList() {
+function CustomerList({ onAddClick, refreshKey }) {
   const navigate = useNavigate();
   const { token } = useAuth();
   const [customers, setCustomers] = useState([]);
@@ -22,7 +22,7 @@ function CustomerList() {
 
   useEffect(() => {
     fetchCustomers();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, refreshKey]);
 
   const fetchCustomers = async () => {
     setLoading(true);
@@ -105,11 +105,15 @@ function CustomerList() {
   };
 
   const handleAddCustomer = () => {
-    navigate('/customers/new');
+    if (onAddClick) {
+      onAddClick();
+    } else {
+      navigate('/home/customers/new');
+    }
   };
 
   const handleViewCustomer = (customerId) => {
-    navigate(`/customers/${customerId}`);
+    navigate(`/home/customers/${customerId}`);
   };
 
   const handleDeleteCustomer = async (customerId) => {

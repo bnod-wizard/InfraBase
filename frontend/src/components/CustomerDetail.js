@@ -7,8 +7,9 @@ import '../styles/CustomerDetail.css';
 /**
  * CustomerDetail Component - View, edit, and delete a customer
  */
-function CustomerDetail() {
-  const { customerId } = useParams();
+function CustomerDetail({ customerId: customIdProp, onClose, isModal }) {
+  const params = useParams();
+  const customerId = customIdProp || params.customerId;
   const navigate = useNavigate();
   const { token } = useAuth();
 
@@ -36,6 +37,8 @@ function CustomerDetail() {
   useEffect(() => {
     if (customerId && customerId !== 'new') {
       fetchCustomer();
+    } else if (customerId === 'new') {
+      setLoading(false);
     }
   }, [customerId]);
 
@@ -111,7 +114,11 @@ function CustomerDetail() {
       setIsEditing(false);
 
       if (customerId === 'new') {
-        navigate(`/customers/${result.data._id}`);
+        if (isModal && onClose) {
+          onClose();
+        } else {
+          navigate(`/home/customers/${result.data._id}`);
+        }
       }
     } catch (err) {
       setError(err.message);
@@ -140,7 +147,7 @@ function CustomerDetail() {
         throw new Error('Failed to delete customer');
       }
 
-      navigate('/customers');
+      navigate('/home/customers');
     } catch (err) {
       setError(`Error deleting customer: ${err.message}`);
       console.error('Error deleting customer:', err);
@@ -148,11 +155,13 @@ function CustomerDetail() {
   };
 
   const handleCancel = () => {
-    if (customerId && customerId !== 'new') {
+    if (isModal && onClose) {
+      onClose();
+    } else if (customerId && customerId !== 'new') {
       setFormData(customer);
       setIsEditing(false);
     } else {
-      navigate('/customers');
+      navigate('/home/customers');
     }
   };
 
@@ -196,15 +205,28 @@ function CustomerDetail() {
 
   return (
     <div className="customer-detail-container">
-      <div className="detail-header">
-        <button
-          className="btn btn-secondary btn-back"
-          onClick={() => navigate('/customers')}
-        >
-          ← Back to Customers
-        </button>
-        <h1>{isEditing ? 'New Customer' : formData.name}</h1>
-      </div>
+      {!isModal && (
+        <div className="detail-header">
+          <button
+            className="btn btn-secondary btn-back"
+            onClick={() => {
+              if (isModal && onClose) {
+                onClose();
+              } else {
+                navigate('/home/customers');
+              }
+            }}
+          >
+            ← Back to Customers
+          </button>
+          <h1>{isEditing ? 'New Customer' : formData.name}</h1>
+        </div>
+      )}
+      {isModal && (
+        <h1 style={{ marginBottom: '20px', color: '#2c3e50' }}>
+          {isEditing ? 'New Customer' : formData.name}
+        </h1>
+      )}
 
       {error && (
         <div className="error-message">

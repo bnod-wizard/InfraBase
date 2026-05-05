@@ -19,7 +19,7 @@ function Sidebar() {
     },
     {
       label: 'Customers',
-      path: '/customers',
+      path: '/home/customers',
       icon: '👥',
     },
   ];
@@ -29,7 +29,12 @@ function Sidebar() {
     navigate('/');
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === '/home') {
+      return location.pathname === '/home' || location.pathname === '/home/';
+    }
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <div className="sidebar">

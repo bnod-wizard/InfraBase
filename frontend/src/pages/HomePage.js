@@ -2,7 +2,7 @@
  * HomePage - Main page after login
  */
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import CustomersPage from './CustomersPage';
 import CustomerDetailPage from './CustomerDetailPage';
@@ -14,9 +14,9 @@ const HomePage = () => {
       <Sidebar />
       <div className="main-content">
         <Routes>
-          <Route path="/home" element={<DashboardContent />} />
-          <Route path="/customers" element={<CustomersPage />} />
-          <Route path="/customers/:customerId" element={<CustomerDetailPage />} />
+          <Route path="/" element={<DashboardContent />} />
+          <Route path="customers/:customerId" element={<CustomerDetailPage />} />
+          <Route path="customers" element={<CustomersPage />} />
         </Routes>
       </div>
     </div>
