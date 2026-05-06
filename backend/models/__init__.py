@@ -2,6 +2,13 @@
 Models Module - Database schemas
 """
 
+from .account_model import AccountModel
+from .client_model import ClientModel
+from .owner_model import OwnerModel
+from .property_model import PropertyModel
+
+__all__ = ['AccountModel', 'ClientModel', 'OwnerModel', 'PropertyModel', 'User']
+
 class User:
     """User model representing the user collection structure"""
     

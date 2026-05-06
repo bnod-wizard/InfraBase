@@ -10,8 +10,18 @@ from dotenv import load_dotenv
 
 # Import layers
 from controllers import AuthController, CustomerController, PDFController
+from controllers.account_controller import account_controller
 from services import AuthService, CustomerService, PDFService
+from services.account_service import AccountService
+from services.client_service import ClientService
+from services.owner_service import OwnerService
+from services.property_service import PropertyService
+from services.bulk_account_service import BulkAccountCreationService
 from repositories import UserRepository, CustomerRepository
+from repositories.account_repository import AccountRepository
+from repositories.client_repository import ClientRepository
+from repositories.owner_repository import OwnerRepository
+from repositories.property_repository import PropertyRepository
 
 load_dotenv()
 
@@ -45,16 +55,30 @@ if db is not None:
         # Repository Layer
         user_repository = UserRepository(db)
         customer_repository = CustomerRepository(db)
+        account_repository = AccountRepository(db)
+        client_repository = ClientRepository(db)
+        owner_repository = OwnerRepository(db)
+        property_repository = PropertyRepository(db)
         
         # Service Layer
         auth_service = AuthService(user_repository, app.config['SECRET_KEY'])
         customer_service = CustomerService(customer_repository)
         pdf_service = PDFService()
+        account_service = AccountService(account_repository)
+        client_service = ClientService(client_repository)
+        owner_service = OwnerService(owner_repository)
+        property_service = PropertyService(property_repository)
+        bulk_account_service = BulkAccountCreationService(
+            account_repository, client_repository, property_repository, owner_repository
+        )
         
         # Controller Layer
         auth_controller = AuthController(auth_service)
         customer_controller = CustomerController(customer_service, auth_service)
         pdf_controller = PDFController(pdf_service, customer_service, auth_service)
+        
+        # Register account controller with routes
+        account_controller(app, account_service, bulk_account_service, auth_service)
         
         print("✓ Controllers, Services, and Repositories initialized")
     except Exception as e:

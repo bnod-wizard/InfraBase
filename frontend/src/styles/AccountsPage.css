@@ -1,0 +1,56 @@
+/* AccountsPage Styles */
+.accounts-page {
+  padding: 20px;
+}
+
+.accounts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.accounts-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.btn-add-account {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add-account:hover {
+  background-color: #2563eb;
+}
+
+.btn-add-account:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 768px) {
+  .accounts-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .btn-add-account {
+    width: 100%;
+  }
+
+  .accounts-header h1 {
+    font-size: 24px;
+  }
+}

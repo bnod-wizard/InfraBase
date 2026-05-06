@@ -1,0 +1,168 @@
+/* AccountList Styles */
+.account-list-container {
+  padding: 20px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.search-bar {
+  margin-bottom: 20px;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  background-color: white;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.account-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.account-table thead {
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.account-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+.account-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.account-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.account-name {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.inactive {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: #e5e7eb;
+}
+
+.btn-icon.delete:hover {
+  background-color: #fee2e2;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+}
+
+.page-btn {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  padding: 8px 12px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-size: 16px;
+}

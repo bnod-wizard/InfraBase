@@ -18,9 +18,9 @@ function Sidebar() {
       icon: '🏠',
     },
     {
-      label: 'Customers',
-      path: '/home/customers',
-      icon: '👥',
+      label: 'Accounts',
+      path: '/home/accounts',
+      icon: '🏢',
     },
   ];
 
