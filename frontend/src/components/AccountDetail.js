@@ -281,31 +281,7 @@ function AccountDetail() {
 
         <div className="detail-grid">
           <div className="detail-main">
-            <div className="main-card overview-card">
-              <p className="card-label">Account overview</p>
-              <div className="top-summary-row">
-                <div>
-                  <h2>{formData.account_name || 'Account details'}</h2>
-                </div>
-                <span className="status-pill">{formData.status || 'Active'}</span>
-              </div>
-              <div className="overview-metrics">
-                <div className="stat-card">
-                  <p>Clients</p>
-                  <h3>{hierarchy.clients?.length ?? 0}</h3>
-                </div>
-                <div className="stat-card">
-                  <p>Properties</p>
-                  <h3>{hierarchy.properties?.length ?? 0}</h3>
-                </div>
-                <div className="stat-card">
-                  <p>Owners</p>
-                  <h3>{hierarchy.owners?.length ?? 0}</h3>
-                </div>
-              </div>
-            </div>
-
-            <div className="main-card detail-card">
+            <div className="main-card account-info-card">
               <p className="card-label">Account information</p>
               <div className="detail-content">
                 <div className="form-section">
@@ -501,13 +477,19 @@ function AccountDetail() {
                 </div>
 
                 {error && <div className="error-message">⚠️ {error}</div>}
-
-                {renderObjects('Clients', hierarchy.clients, clientFields, 'first_name')}
-
-                {renderObjects('Properties', hierarchy.properties, propertyFields, 'property_name')}
-
-                {renderObjects('Owners', hierarchy.owners, ownerFields, 'owner_name')}
               </div>
+            </div>
+
+            <div className="main-card object-box">
+              {renderObjects('Clients', hierarchy.clients, clientFields, 'first_name')}
+            </div>
+
+            <div className="main-card object-box">
+              {renderObjects('Properties', hierarchy.properties, propertyFields, 'property_name')}
+            </div>
+
+            <div className="main-card object-box">
+              {renderObjects('Owners', hierarchy.owners, ownerFields, 'owner_name')}
             </div>
           </div>
 

@@ -230,7 +230,6 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
 }
 
 .section-actions {
@@ -305,7 +304,6 @@
 }
 
 .compact-section {
-  padding: 16px 0;
 }
 
 .object-list {
@@ -315,7 +313,6 @@
 
 .object-card {
   background: var(--card);
-  border: 1px solid var(--border);
   border-radius: 1.5rem;
   padding: 18px;
 }
