@@ -106,8 +106,6 @@ function AccountList({ onAddClick, refreshKey }) {
                   <th>Account Name</th>
                   <th>Email</th>
                   <th>Phone</th>
-                  <th>Business Type</th>
-                  <th>City</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -125,8 +123,6 @@ function AccountList({ onAddClick, refreshKey }) {
                     </td>
                     <td>{account.email}</td>
                     <td>{account.phone || '-'}</td>
-                    <td>{account.business_type || '-'}</td>
-                    <td>{account.city || '-'}</td>
                     <td>
                       <span className={`status-badge ${account.status}`}>
                         {account.status}

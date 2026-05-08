@@ -11,7 +11,9 @@ import '../styles/HomePage.css';
 const HomePage = () => {
   return (
     <div className="home-page">
-      <Sidebar />
+      <div className="sidebar-shell">
+        <Sidebar />
+      </div>
       <div className="main-content">
         <Routes>
           <Route path="/" element={<DashboardContent />} />

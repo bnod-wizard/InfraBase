@@ -2,7 +2,7 @@
 
 .sidebar {
   width: 280px;
-  min-height: calc(100vh - 48px);
+  min-height: calc(80vh - 40px);
   background: #ffffff;
   border-radius: 32px;
   padding: 28px;
@@ -84,7 +84,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 20px;
+  padding: 8px 10px;
   border-radius: 22px;
   border: 1px solid transparent;
   background: #f8fafc;
@@ -179,7 +179,7 @@
 
 .logout-button {
   width: 100%;
-  padding: 14px 18px;
+  padding: 8px 10px;
   background: #ef4444;
   color: #ffffff;
   border: none;

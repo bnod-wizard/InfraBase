@@ -1,18 +1,25 @@
 /* Home Page Styles */
 
 .home-page {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 24px;
   padding: 24px;
   background: linear-gradient(180deg, #f2efff 0%, #ded2ff 100%);
+  overflow: hidden;
+}
+
+.sidebar-shell {
+  display: flex;
+  align-items: flex-start;
 }
 
 .main-content {
   flex: 1;
   padding: 0;
   overflow-y: auto;
+  max-height: calc(100vh - 48px);
 }
 
 .page-shell {
