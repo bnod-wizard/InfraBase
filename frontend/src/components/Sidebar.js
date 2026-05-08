@@ -13,9 +13,9 @@ function Sidebar() {
 
   const menuItems = [
     {
-      label: 'Home',
+      label: 'Dashboard',
       path: '/home',
-      icon: '🏠',
+      icon: '📊',
     },
     {
       label: 'Accounts',
@@ -37,9 +37,20 @@ function Sidebar() {
   };
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-header">
-        <h2>InfraBase</h2>
+    <aside className="sidebar">
+      <div className="sidebar-top">
+        <div className="sidebar-brand">
+          <div className="brand-markers">
+            <span className="brand-dot brand-dot-1" />
+            <span className="brand-dot brand-dot-2" />
+            <span className="brand-dot brand-dot-3" />
+          </div>
+          <h2>InfraBase</h2>
+        </div>
+
+        <button className="sidebar-collapse" onClick={() => navigate('/home')}>
+          ←
+        </button>
       </div>
 
       <nav className="sidebar-nav">
@@ -49,18 +60,35 @@ function Sidebar() {
             className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
             onClick={() => navigate(item.path)}
           >
-            <span className="nav-icon">{item.icon}</span>
-            <span className="nav-label">{item.label}</span>
+            <span className="nav-item-left">
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+            </span>
+            <span className="nav-arrow">›</span>
           </button>
         ))}
       </nav>
+
+      <div className="sidebar-card assistant-card">
+        <div className="assistant-card-header">
+          <div>
+            <h3>AI Assistant</h3>
+          </div>
+          <button className="assistant-close" type="button">
+            ×
+          </button>
+        </div>
+        <p className="assistant-copy">
+          Technology that helps people complete tasks faster and more efficiently.
+        </p>
+      </div>
 
       <div className="sidebar-footer">
         <button className="logout-button" onClick={handleLogout}>
           🚪 Logout
         </button>
       </div>
-    </div>
+    </aside>
   );
 }
 

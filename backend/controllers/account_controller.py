@@ -24,10 +24,10 @@ def account_controller(app, account_service, bulk_account_service, auth_service)
                 return jsonify({'error': 'Token is missing'}), 401
 
             try:
-                user = auth_service.verify_token(token)
-                if not user:
+                payload = auth_service.verify_token(token)
+                if not payload or 'user_id' not in payload:
                     return jsonify({'error': 'Invalid token'}), 401
-                request.user = user
+                request.user_id = payload['user_id']
             except Exception as e:
                 return jsonify({'error': str(e)}), 401
 
@@ -40,7 +40,7 @@ def account_controller(app, account_service, bulk_account_service, auth_service)
     def create_account():
         try:
             data = request.get_json()
-            success, message, result = account_service.create_account(data, request.user['_id'])
+            success, message, result = account_service.create_account(data, request.user_id)
             
             if success:
                 return jsonify({'success': True, 'message': message, 'data': result}), 201
@@ -57,7 +57,7 @@ def account_controller(app, account_service, bulk_account_service, auth_service)
             payload = request.get_json()
             success, message, result = bulk_account_service.create_account_with_hierarchy(
                 payload, 
-                request.user['_id']
+                request.user_id
             )
             
             if success:

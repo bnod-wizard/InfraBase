@@ -1,14 +1,13 @@
 import axios from 'axios';
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL, STORAGE_KEYS } from '../constants/api';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL
 });
 
-// Add token to requests
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

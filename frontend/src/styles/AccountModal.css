@@ -19,10 +19,23 @@
   width: 90%;
   max-width: 700px;
   max-height: 90vh;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   animation: slideIn 0.3s ease-out;
+}
+
+.account-modal-header,
+.account-modal-stepper,
+.account-modal-step-labels,
+.account-modal-footer {
+  flex-shrink: 0;
+}
+
+.account-modal-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 20px 24px;
 }
 
 @keyframes slideIn {
@@ -125,12 +138,8 @@
 .step.active {
   background-color: #3b82f6;
   color: white;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
   transform: scale(1.05);
-}
-
-.step.active::before {
-  background-color: #3b82f6;
 }
 
 .step.completed {
@@ -138,7 +147,7 @@
   color: white;
 }
 
-.step.completed::before {
+.step.completed + .step::before {
   background-color: #10b981;
 }
 
@@ -190,6 +199,7 @@ input.error, select.error {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 20px;
 }
 
 .form-step h3 {
@@ -354,6 +364,23 @@ input.error, select.error {
 .button-group {
   display: flex;
   gap: 12px;
+}
+
+.step-error-message {
+  flex: 1;
+  text-align: center;
+  margin: 0 12px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #991b1b;
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-left: 1px solid #fca5a5;
+  border-radius: 6px;
+  animation: none;
+  line-height: 1.2;
+  align-self: center;
 }
 
 .btn-primary,

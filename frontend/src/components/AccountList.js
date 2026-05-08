@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import accountApi from '../services/accountApi';
 import '../styles/AccountList.css';
 
@@ -6,6 +7,7 @@ import '../styles/AccountList.css';
  * Account List Component - Displays all accounts in a table
  */
 function AccountList({ onAddClick, refreshKey }) {
+  const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -113,7 +115,14 @@ function AccountList({ onAddClick, refreshKey }) {
               <tbody>
                 {accounts.map((account) => (
                   <tr key={account._id}>
-                    <td className="account-name">{account.account_name}</td>
+                    <td className="account-name">
+                      <button
+                        className="account-link-button"
+                        onClick={() => navigate(`/home/accounts/${account._id}`)}
+                      >
+                        {account.account_name}
+                      </button>
+                    </td>
                     <td>{account.email}</td>
                     <td>{account.phone || '-'}</td>
                     <td>{account.business_type || '-'}</td>
@@ -127,19 +136,27 @@ function AccountList({ onAddClick, refreshKey }) {
                       <button
                         className="btn-icon"
                         title="View Details"
-                        onClick={() => {
-                          // Could implement a detail view
-                          console.log('View account:', account._id);
-                        }}
+                        aria-label="View account"
+                        onClick={() => navigate(`/home/accounts/${account._id}`)}
                       >
-                        👁️
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
                       </button>
                       <button
                         className="btn-icon delete"
                         title="Delete"
+                        aria-label="Delete account"
                         onClick={() => handleDeleteAccount(account._id)}
                       >
-                        🗑️
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                          <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+                        </svg>
                       </button>
                     </td>
                   </tr>

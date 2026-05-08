@@ -31,7 +31,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <div className="App">
+          <AppContent />
+        </div>
       </AuthProvider>
     </Router>
   );

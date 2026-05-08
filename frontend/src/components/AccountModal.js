@@ -12,6 +12,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
   const [clientErrors, setClientErrors] = useState({});
   const [propertyErrors, setPropertyErrors] = useState({});
   const [ownerErrors, setOwnerErrors] = useState({});
+  const [stepError, setStepError] = useState('');
 
   // Account Data
   const [account, setAccount] = useState({
@@ -358,6 +359,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     setClientErrors({});
     setPropertyErrors({});
     setOwnerErrors({});
+    setStepError('');
   };
 
   if (!isOpen) return null;
@@ -371,10 +373,14 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
         </div>
 
         <div className="account-modal-stepper">
-          <div className={`step ${currentStep >= 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>1</div>
-          <div className={`step ${currentStep >= 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>2</div>
-          <div className={`step ${currentStep >= 3 ? 'active' : ''} ${currentStep > 3 ? 'completed' : ''}`}>3</div>
-          <div className={`step ${currentStep >= 4 ? 'active' : ''} ${currentStep > 4 ? 'completed' : ''}`}>4</div>
+          {[1, 2, 3, 4].map((n) => (
+            <div
+              key={n}
+              className={`step ${currentStep === n ? 'active' : currentStep > n ? 'completed' : ''}`}
+            >
+              {currentStep > n ? '✓' : n}
+            </div>
+          ))}
         </div>
 
         <div className="account-modal-step-labels">
@@ -603,20 +609,25 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
         </div>
 
         <div className="account-modal-footer">
-          <button 
-            className="btn-secondary" 
+          <button
+            className="btn-secondary"
             onClick={() => {
-              if (currentStep > 1) setCurrentStep(currentStep - 1);
+              if (currentStep > 1) {
+                setStepError('');
+                setCurrentStep(currentStep - 1);
+              }
             }}
             disabled={currentStep === 1 || isLoading}
           >
             ← Back
           </button>
-          
+
+          {stepError && <span className="error-message step-error-message">{stepError}</span>}
+
           <div className="button-group">
             {currentStep < 4 ? (
-              <button 
-                className="btn-primary" 
+              <button
+                className="btn-primary"
                 onClick={() => {
                   if (currentStep === 1) {
                     const errors = {};
@@ -628,14 +639,24 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                     } else if (!/\S+@\S+\.\S+/.test(account.email)) {
                       errors.email = 'Please enter a valid email address';
                     }
-                    
+
                     setAccountErrors(errors);
-                    
+
                     if (Object.keys(errors).length === 0) {
+                      setStepError('');
                       setCurrentStep(currentStep + 1);
                     }
                     return;
                   }
+                  if (currentStep === 2 && clients.length === 0) {
+                    setStepError('Please add at least one client before continuing.');
+                    return;
+                  }
+                  if (currentStep === 3 && properties.length === 0) {
+                    setStepError('Please add at least one property before continuing.');
+                    return;
+                  }
+                  setStepError('');
                   setCurrentStep(currentStep + 1);
                 }}
                 disabled={isLoading}
@@ -643,9 +664,16 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 Next →
               </button>
             ) : (
-              <button 
-                className="btn-success" 
-                onClick={handleSubmit}
+              <button
+                className="btn-success"
+                onClick={() => {
+                  if (owners.length === 0) {
+                    setStepError('Please add at least one owner before saving.');
+                    return;
+                  }
+                  setStepError('');
+                  handleSubmit();
+                }}
                 disabled={isLoading}
               >
                 {isLoading ? 'Saving...' : 'Save All'}
