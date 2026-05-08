@@ -25,6 +25,7 @@
 .page-shell {
   max-width: 1400px;
   margin: 0;
+  padding: 25px;
 }
 
 .page-header {
