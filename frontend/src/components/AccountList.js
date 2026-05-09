@@ -31,16 +31,28 @@ const rowStatusClass = status => {
   return 'status-draft';
 };
 
-function AccountList({ onAddClick, refreshKey, statusFilter = 'all' }) {
+function AccountList({ onAddClick, refreshKey, statusFilter = 'all', searchTerm = '' }) {
   const navigate     = useNavigate();
   const [accounts,      setAccounts]      = useState([]);
   const [loading,       setLoading]       = useState(true);
-  const [searchTerm,    setSearchTerm]    = useState('');
   const [currentPage,   setCurrentPage]   = useState(1);
   const [totalAccounts, setTotalAccounts] = useState(0);
   const itemsPerPage = 10;
 
   useEffect(() => { fetchAccounts(); }, [refreshKey, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    if (searchTerm.length >= 2) {
+      setLoading(true);
+      accountApi.searchAccounts(searchTerm, 0, itemsPerPage)
+        .then(res => { if (res.data.success) setAccounts(res.data.data.data || []); })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    } else if (searchTerm.length === 0) {
+      fetchAccounts();
+    }
+  }, [searchTerm]);
 
   const fetchAccounts = async () => {
     try {
@@ -56,18 +68,6 @@ function AccountList({ onAddClick, refreshKey, statusFilter = 'all' }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSearch = async e => {
-    const term = e.target.value;
-    setSearchTerm(term);
-    setCurrentPage(1);
-    if (term.length < 2) { fetchAccounts(); return; }
-    try {
-      setLoading(true);
-      const res = await accountApi.searchAccounts(term, 0, itemsPerPage);
-      if (res.data.success) setAccounts(res.data.data.data || []);
-    } catch { /* ignore */ } finally { setLoading(false); }
   };
 
   const handleDelete = id => {
@@ -93,18 +93,6 @@ function AccountList({ onAddClick, refreshKey, statusFilter = 'all' }) {
 
   return (
     <div className="account-list-wrap">
-      <div style={{ padding: '24px 24px 0' }}>
-        <div className="table-search">
-          <span>⌕</span>
-          <input
-            type="text"
-            placeholder="Search accounts (name, email, tax ID)…"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-        </div>
-      </div>
-
       {displayed.length === 0 ? (
         <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--ink-mute)' }}>
           No accounts found.{' '}

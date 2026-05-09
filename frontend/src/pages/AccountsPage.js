@@ -17,6 +17,7 @@ function AccountsPage() {
   const [refreshKey,    setRefreshKey]    = useState(0);
   const [statusSummary, setStatusSummary] = useState({ total_accounts: 0, status_counts: {} });
   const [activeFilter,  setActiveFilter]  = useState('all');
+  const [searchTerm,    setSearchTerm]    = useState('');
 
   const handleAddClick      = () => setIsModalOpen(true);
   const handleCloseModal    = () => setIsModalOpen(false);
@@ -51,19 +52,25 @@ function AccountsPage() {
   ];
 
   return (
-    <div className="accounts-page page-shell">
-
-      {/* ── Page head ── */}
-      <div className="page-head">
-        <div>
-          <h1>Customer Accounts</h1>
-          <p className="sub">
-            {statusSummary.total_accounts} accounts
-            {active  > 0 && <> · {active} active</>}
-            {pending > 0 && <> · {pending} pending</>}
-          </p>
+    <>
+      {/* ── Topbar — matches Dashboard ── */}
+      <div className="topbar">
+        <div className="crumbs"><b>Customer Accounts</b></div>
+        <div className="search">
+          <span>⌕</span>
+          <input
+            placeholder="Search by name, email, tax ID…"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button
+              style={{background:'none',border:'none',color:'var(--ink-mute)',cursor:'pointer',padding:'0 2px',fontSize:'14px'}}
+              onClick={() => setSearchTerm('')}
+            >×</button>
+          )}
         </div>
-        <div className="right">
+        <div style={{display:'flex',gap:'6px'}}>
           {FILTERS.map(f => (
             <button
               key={f}
@@ -71,12 +78,12 @@ function AccountsPage() {
               onClick={() => setActiveFilter(f.toLowerCase())}
             >{f}</button>
           ))}
-          <button className="btn" onClick={handleAddClick}>+ New Account</button>
         </div>
+        <button className="new-btn" onClick={handleAddClick}>＋ New Account</button>
       </div>
 
       {/* ── KPI row ── */}
-      <div className="kpis">
+      <div className="kpis" style={{marginTop:'28px'}}>
         {kpis.map(k => (
           <div key={k.key} className={`kpi${k.variant === 'feature' ? ' feature' : ''}`}>
             <span className="icon-tl">{k.icon}</span>
@@ -88,12 +95,13 @@ function AccountsPage() {
       </div>
 
       {/* ── Main layout ── */}
-      <div className="layout">
+      <div className="layout" style={{marginTop:'18px'}}>
         <div className="panel accounts-card">
           <AccountList
             onAddClick={handleAddClick}
             refreshKey={refreshKey}
             statusFilter={activeFilter}
+            searchTerm={searchTerm}
           />
         </div>
 
@@ -141,7 +149,7 @@ function AccountsPage() {
         onClose={handleCloseModal}
         onSubmit={handleAccountSubmit}
       />
-    </div>
+    </>
   );
 }
 
