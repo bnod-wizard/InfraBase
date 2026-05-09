@@ -4,141 +4,136 @@ import AccountModal from '../components/AccountModal';
 import accountApi from '../services/accountApi';
 import '../styles/AccountsPage.css';
 
-/**
- * Accounts Page - Main page for managing accounts
- */
+const FILTERS = ['All', 'Active', 'Pending', 'Overdue', 'Closed'];
+
+const DOC_TEMPLATES = [
+  { tag: 'Cover',    name: 'Cover Page',    pages: '1 page'    },
+  { tag: 'Header',   name: 'Letterhead',    pages: '1 page'    },
+  { tag: 'Proposal', name: 'Full Proposal', pages: '11 pages'  },
+];
+
 function AccountsPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [isModalOpen,   setIsModalOpen]   = useState(false);
+  const [refreshKey,    setRefreshKey]    = useState(0);
   const [statusSummary, setStatusSummary] = useState({ total_accounts: 0, status_counts: {} });
+  const [activeFilter,  setActiveFilter]  = useState('all');
 
-  const handleAddClick = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleAccountSubmit = (data) => {
-    setRefreshKey((prev) => prev + 1);
-    setIsModalOpen(false);
-  };
-
-  const statusCards = [
-    {
-      key: 'total',
-      title: 'Total accounts',
-      value: statusSummary.total_accounts,
-      note: 'Included across all statuses',
-      variant: 'feature',
-      icon: '▤'
-    },
-    {
-      key: 'active',
-      title: 'Active accounts',
-      value: statusSummary.status_counts.active || 0,
-      note: 'Currently active',
-      variant: 'ok',
-      icon: '✓'
-    },
-    {
-      key: 'review',
-      title: 'In review',
-      value: statusSummary.status_counts.review || statusSummary.status_counts.pending || 0,
-      note: 'Awaiting approval',
-      variant: 'info',
-      icon: '⟳'
-    },
-    {
-      key: 'overdue',
-      title: 'Overdue accounts',
-      value: statusSummary.status_counts.due || statusSummary.status_counts.warn || 0,
-      note: 'Needs immediate attention',
-      variant: 'warn',
-      icon: '!'
-    }
-  ];
+  const handleAddClick      = () => setIsModalOpen(true);
+  const handleCloseModal    = () => setIsModalOpen(false);
+  const handleAccountSubmit = () => { setRefreshKey(k => k + 1); setIsModalOpen(false); };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await accountApi.getAccountStats();
-        if (response.data.success) {
-          setStatusSummary({ total_accounts: 0, status_counts: {}, ...response.data.data });
-        }
-      } catch (error) {
-        console.error('Error fetching account stats:', error);
-      }
-    };
-
-    fetchStats();
+    accountApi.getAccountStats()
+      .then(res => {
+        if (res.data.success)
+          setStatusSummary({ total_accounts: 0, status_counts: {}, ...res.data.data });
+      })
+      .catch(() => {});
   }, []);
+
+  const sc      = statusSummary.status_counts;
+  const active  = sc.active  || 0;
+  const pending = sc.pending || sc.review || 0;
+  const overdue = sc.due     || sc.warn   || 0;
+
+  const kpis = [
+    { key: 'total',   variant: 'feature', icon: '▤', label: 'Total Accounts',  val: statusSummary.total_accounts, delta: 'Across all statuses',    deltaClass: '' },
+    { key: 'active',  variant: 'ok',      icon: '✓', label: 'Active Accounts', val: active,                       delta: 'Currently active',         deltaClass: '' },
+    { key: 'review',  variant: 'info',    icon: '⟳', label: 'In Review',       val: pending,                      delta: 'Awaiting approval',        deltaClass: 'dim' },
+    { key: 'overdue', variant: 'warn',    icon: '!', label: 'Overdue',          val: overdue,                      delta: 'Needs immediate attention', deltaClass: 'warn' },
+  ];
+
+  const statusSideRows = [
+    { cls: '',     label: 'Total accounts', note: statusSummary.total_accounts },
+    { cls: 'ok',   label: 'Active',         note: active  },
+    { cls: 'info', label: 'Pending',        note: pending },
+    { cls: 'warn', label: 'Overdue',        note: overdue },
+  ];
 
   return (
     <div className="accounts-page page-shell">
-      <div className="page-header">
+
+      {/* ── Page head ── */}
+      <div className="page-head">
         <div>
-          <p className="eyebrow">Accounts</p>
-          <h1>Accounts management</h1>
-          <p className="page-copy">Track, view and manage company accounts with client, owner, and property details.</p>
+          <h1>Customer Accounts</h1>
+          <p className="sub">
+            {statusSummary.total_accounts} accounts
+            {active  > 0 && <> · {active} active</>}
+            {pending > 0 && <> · {pending} pending</>}
+          </p>
         </div>
-        <div className="page-actions">
-          <button className="btn btn-primary" onClick={handleAddClick}>
-            + Add New Account
-          </button>
+        <div className="right">
+          {FILTERS.map(f => (
+            <button
+              key={f}
+              className={`chip${activeFilter === f.toLowerCase() ? ' active' : ''}`}
+              onClick={() => setActiveFilter(f.toLowerCase())}
+            >{f}</button>
+          ))}
+          <button className="btn" onClick={handleAddClick}>+ New Account</button>
         </div>
       </div>
 
-      <div className="status-grid">
-        {statusCards.map((card) => (
-          <div key={card.key} className={`status-card ${card.variant}`}>
-            <div className="status-card-head">
-              <p>{card.title}</p>
-              <div className="status-card-icon">{card.icon}</div>
-            </div>
-            <div className="status-card-value">{card.value}</div>
-            <div className="status-card-note">{card.note}</div>
+      {/* ── KPI row ── */}
+      <div className="kpis">
+        {kpis.map(k => (
+          <div key={k.key} className={`kpi${k.variant === 'feature' ? ' feature' : ''}`}>
+            <span className="icon-tl">{k.icon}</span>
+            <p className="lab">{k.label}</p>
+            <div className={`val kpi-val-${k.variant}`}>{k.val}</div>
+            <p className={`delta${k.deltaClass ? ' ' + k.deltaClass : ''}`}>{k.delta}</p>
           </div>
         ))}
       </div>
 
-      <div className="page-grid">
-        <div className="accounts-main">
-          <div className="list-card">
-            <AccountList onAddClick={handleAddClick} refreshKey={refreshKey} />
-          </div>
+      {/* ── Main layout ── */}
+      <div className="layout">
+        <div className="panel accounts-card">
+          <AccountList
+            onAddClick={handleAddClick}
+            refreshKey={refreshKey}
+            statusFilter={activeFilter}
+          />
         </div>
 
-        <aside className="accounts-side">
-          <div className="side-card">
-            <p className="card-label">Quick actions</p>
-            <div className="action-list">
-              <button className="ghost-button">Filter accounts</button>
-              <button className="ghost-button">Export data</button>
-              <button className="ghost-button">Refresh list</button>
+        <div className="stack">
+          {/* Document generation widget */}
+          <div className="panel">
+            <div className="doc-gen">
+              <h3>Generate Document</h3>
+              <p className="hint">Open any account to auto-fill and download valuation documents.</p>
+              <div className="templates">
+                {DOC_TEMPLATES.map(t => (
+                  <div key={t.name} className="tpl">
+                    <span className="tag">{t.tag}</span>
+                    <b>{t.name}</b>
+                    <span className="pages">{t.pages}</span>
+                  </div>
+                ))}
+              </div>
+              <button className="gen-btn" disabled>
+                ⎙ Open an account to generate
+              </button>
             </div>
           </div>
-          <div className="side-card info-card">
-            <p className="card-label">Account status summary</p>
-            <div className="summary-row">
-              <div>
-                <p>Total accounts</p>
-                <h3>{statusSummary.total_accounts}</h3>
-              </div>
-            </div>
-            <div className="summary-row">
-              <div>
-                <p>Active</p>
-                <h3>{statusSummary.status_counts.active || 0}</h3>
-              </div>
-              <div>
-                <p>Pending</p>
-                <h3>{statusSummary.status_counts.pending || statusSummary.status_counts.review || 0}</h3>
-              </div>
+
+          {/* Account status summary */}
+          <div className="panel">
+            <div className="panel-head"><h3>Account Status</h3></div>
+            <div className="activity">
+              {statusSideRows.map(row => (
+                <div key={row.label} className={`act${row.cls ? ' ' + row.cls : ''}`}>
+                  <div className="swatch" />
+                  <div className="body">
+                    <b>{row.label}</b>
+                    <small>{row.note}</small>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </aside>
+        </div>
       </div>
 
       <AccountModal
