@@ -8,6 +8,10 @@ class AccountModel:
     """Account Model - Company/Organization level"""
     
     @staticmethod
+    def _safe_iso(value):
+        return value.isoformat() if hasattr(value, 'isoformat') else value
+
+    @staticmethod
     def to_dict(account_data):
         """Convert account data to dictionary for database storage"""
         return {
@@ -37,9 +41,9 @@ class AccountModel:
         if '_id' in account_data:
             account_data['_id'] = str(account_data['_id'])
         if 'created_at' in account_data:
-            account_data['created_at'] = account_data['created_at'].isoformat()
+            account_data['created_at'] = AccountModel._safe_iso(account_data['created_at'])
         if 'updated_at' in account_data:
-            account_data['updated_at'] = account_data['updated_at'].isoformat()
+            account_data['updated_at'] = AccountModel._safe_iso(account_data['updated_at'])
         return account_data
 
     @staticmethod

@@ -74,6 +74,15 @@ class AccountRepository:
         except Exception as e:
             raise Exception(f"Error searching accounts: {str(e)}")
 
+    def get_status_counts(self):
+        """Get count of accounts grouped by status"""
+        try:
+            pipeline = [{'$group': {'_id': '$status', 'count': {'$sum': 1}}}]
+            results = list(self.collection.aggregate(pipeline))
+            return {item['_id']: item['count'] for item in results if item['_id']}
+        except Exception as e:
+            raise Exception(f"Error aggregating status counts: {str(e)}")
+
     def get_by_email(self, email):
         """Find account by email"""
         try:

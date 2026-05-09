@@ -1,131 +1,167 @@
 /* AccountList Styles */
 .account-list-container {
   padding: 24px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-.search-bar {
+.table-search {
   margin-bottom: 20px;
-  position: relative;
-  max-width: 420px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.table-search span {
+  color: #9ca3af;
+  font-size: 16px;
 }
 
 .search-input {
-  width: 100%;
-  padding: 10px 14px 10px 38px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  flex: 1;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #0f172a;
+  font: inherit;
   font-size: 14px;
-  background-color: #f9fafb;
-  transition: all 0.2s;
-}
-
-.search-bar::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 12px;
-  width: 16px;
-  height: 16px;
-  transform: translateY(-50%);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-size: contain;
-  pointer-events: none;
+  padding: 0;
 }
 
 .search-input:focus {
   outline: none;
   background-color: #ffffff;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.09);
 }
 
 .no-data {
   text-align: center;
   padding: 56px 20px;
-  color: #6b7280;
-  background-color: #f9fafb;
-  border-radius: 10px;
-  border: 1px dashed #d1d5db;
+  color: #64748b;
+  background-color: #f8fafc;
+  border-radius: 16px;
+  border: 1px dashed rgba(148, 163, 184, 0.45);
 }
 
 .table-wrapper {
   overflow-x: auto;
-  background-color: white;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
 }
 
-.account-table {
+.accounts {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 10px;
 }
 
-.account-table thead {
-  background-color: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+.accounts thead {
+  background-color: #f8fafc;
 }
 
-.account-table th {
-  padding: 14px 16px;
+.accounts th {
+  padding: 18px 18px 12px;
   text-align: left;
-  font-weight: 600;
-  color: #6b7280;
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: #64748b;
+  font-size: 11px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-.account-table th:last-child {
+.accounts th:last-child {
   text-align: right;
 }
 
-.account-table td {
-  padding: 16px;
-  border-bottom: 1px solid #f3f4f6;
+.accounts td {
+  padding: 18px;
   font-size: 14px;
-  color: #374151;
+  color: #334155;
   vertical-align: middle;
+  background-color: #ffffff;
 }
 
-.account-table tbody tr:last-child td {
-  border-bottom: none;
+.accounts tbody tr {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 18px;
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
-.account-table tbody tr {
-  transition: background-color 0.15s;
+.accounts tbody tr td:first-child {
+  border-top-left-radius: 18px;
+  border-bottom-left-radius: 18px;
 }
 
-.account-table tbody tr:hover {
-  background-color: #f9fafb;
+.accounts tbody tr td:last-child {
+  border-top-right-radius: 18px;
+  border-bottom-right-radius: 18px;
 }
 
-.account-name {
-  font-weight: 600;
-  color: #111827;
+.accounts tbody tr:hover td {
+  background-color: #f8fafc;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.account-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.account-name .account-link-button,
+.account-name .account-link-button:hover,
+.account-name .account-link-button:focus {
+  all: unset;
+  cursor: pointer;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.account-info small {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.account-email,
+.account-phone {
+  color: #475569;
+  font-family: Inter, sans-serif;
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  justify-content: center;
+  padding: 9px 14px;
   border-radius: 999px;
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-}
-
-.status-badge::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: currentColor;
 }
 
 .status-badge.active {
@@ -139,35 +175,62 @@
 }
 
 .status-badge.pending {
-  background-color: #fef3c7;
-  color: #b45309;
+  background-color: #dbeafe;
+  color: #1d4ed8;
 }
 
 .actions {
   display: flex;
-  gap: 4px;
+  gap: 10px;
   justify-content: flex-end;
 }
 
-.btn-icon {
+.icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: #6b7280;
+  width: 40px;
+  height: 40px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  color: #475569;
   cursor: pointer;
   padding: 0;
-  border-radius: 6px;
-  transition: all 0.15s;
+  border-radius: 14px;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
-.btn-icon:hover {
-  background-color: #f3f4f6;
-  color: #1f2937;
-  border-color: #e5e7eb;
+.icon-btn:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: rgba(148, 163, 184, 0.8);
+}
+
+.icon-btn.status-icon.active {
+  border-color: #d1fae5;
+  color: #047857;
+}
+
+.icon-btn.status-icon.active:hover {
+  background-color: #dcfce7;
+}
+
+.icon-btn.status-icon.pending {
+  border-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.icon-btn.status-icon.pending:hover {
+  background-color: #dbeafe;
+}
+
+.icon-btn.status-icon.inactive {
+  border-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.icon-btn.status-icon.inactive:hover {
+  background-color: #fee2e2;
 }
 
 .btn-icon.delete:hover {
@@ -177,65 +240,65 @@
 }
 
 .btn-icon:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 1px;
+  outline: 2px solid rgba(59, 130, 246, 0.7);
+  outline-offset: 2px;
 }
 
-.account-link-button {
-  all: unset;
-  color: #111827;
-  cursor: pointer;
-  font-weight: 600;
-  line-height: 1.3;
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  margin-top: 18px;
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
 }
 
-.account-link-button:hover,
-.account-link-button:focus {
-  color: #2563eb;
-  text-decoration: underline;
+.footer-text {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-/* Pagination */
 .pagination {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 8px;
-  margin-top: 20px;
-  padding-top: 16px;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .page-btn {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  background-color: white;
-  border-radius: 4px;
+  padding: 10px 14px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background-color: #ffffff;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  transition: all 0.2s;
+  font-weight: 600;
+  color: #475569;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .page-btn:hover:not(:disabled) {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
+  background-color: #f8fafc;
 }
 
 .page-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
 .page-info {
-  padding: 8px 12px;
-  color: #6b7280;
+  padding: 10px 14px;
+  color: #64748b;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .loading {
   text-align: center;
   padding: 40px;
-  color: #6b7280;
+  color: #64748b;
   font-size: 16px;
 }

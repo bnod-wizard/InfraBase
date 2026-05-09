@@ -30,6 +30,7 @@ function AccountDetail() {
     created_at: '',
     updated_at: ''
   });
+  const [activeObjectEdit, setActiveObjectEdit] = useState({ type: null, id: null, data: null });
 
   const clientFields = [
     { accessor: 'first_name', label: 'First Name' },
@@ -109,6 +110,101 @@ function AccountDetail() {
     { accessor: 'status', label: 'Status' }
   ];
 
+  const accountFields = [
+    { accessor: 'account_name', label: 'Account Name' },
+    { accessor: 'email', label: 'Email' },
+    { accessor: 'phone', label: 'Phone' },
+    { accessor: 'business_type', label: 'Business Type' },
+    { accessor: 'company_registration', label: 'Company Reg.' },
+    { accessor: 'registration_number', label: 'Registration No.' },
+    { accessor: 'tax_id', label: 'Tax ID' },
+    { accessor: 'website', label: 'Website' },
+    { accessor: 'address', label: 'Address', fullWidth: true },
+    { accessor: 'city', label: 'City' },
+    { accessor: 'state', label: 'State' },
+    { accessor: 'zip_code', label: 'Zip Code' },
+    { accessor: 'country', label: 'Country' },
+    { accessor: 'status', label: 'Status', type: 'select', options: ['active', 'inactive', 'prospect'] }
+  ];
+
+  const renderFieldInput = (field) => {
+    const value = formData[field.accessor] || '';
+
+    if (field.type === 'select') {
+      return (
+        <select
+          name={field.accessor}
+          value={value}
+          onChange={handleInputChange}
+          disabled={!isEditing}
+        >
+          {field.options.map((option) => (
+            <option key={option} value={option}>
+              {option.charAt(0).toUpperCase() + option.slice(1)}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    return (
+      <input
+        type={field.type || 'text'}
+        name={field.accessor}
+        value={value}
+        onChange={handleInputChange}
+        disabled={!isEditing}
+      />
+    );
+  };
+
+  const renderAccountInfo = () => (
+    <div className="detail-section compact-section">
+      <div className="section-header">
+        <h2>Account Information</h2>
+        <div className="section-actions">
+          {isEditing ? (
+            <>
+              <button className="btn btn-primary" onClick={handleSave}>
+                Save Changes
+              </button>
+              <button className="btn btn-secondary" onClick={handleCancel}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
+              ✏️ Edit Account
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="object-card">
+        <div className="object-card-header">
+          <div>
+            <strong>{formData.account_name || 'Account'}</strong>
+          </div>
+          <div className="object-card-status">{formData.status || '-'}</div>
+        </div>
+        <div className="object-grid account-info-grid">
+          {accountFields.map((field) => (
+            <div
+              key={field.accessor}
+              className={`field-row${field.fullWidth ? ' full-width' : ''}`}
+            >
+              <span className="field-key">{field.label}</span>
+              {isEditing ? (
+                renderFieldInput(field)
+              ) : (
+                <span className="field-value">{renderValue(formData[field.accessor])}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   useEffect(() => {
     if (accountId) {
       fetchAccountHierarchy();
@@ -177,6 +273,74 @@ function AccountDetail() {
     setIsEditing(false);
   };
 
+  const handleObjectEditChange = (name, value) => {
+    setActiveObjectEdit((prev) => ({
+      ...prev,
+      data: {
+        ...prev.data,
+        [name]: value,
+      },
+    }));
+  };
+
+  const startObjectEdit = (type, item) => {
+    setActiveObjectEdit({
+      type,
+      id: item._id || item.id || null,
+      data: { ...item },
+    });
+  };
+
+  const cancelObjectEdit = () => {
+    setActiveObjectEdit({ type: null, id: null, data: null });
+  };
+
+  const saveObjectEdit = () => {
+    if (!activeObjectEdit.type || !activeObjectEdit.id) {
+      cancelObjectEdit();
+      return;
+    }
+
+    setHierarchy((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev };
+      const list = Array.isArray(prev[activeObjectEdit.type]) ? prev[activeObjectEdit.type] : [];
+      updated[activeObjectEdit.type] = list.map((item) =>
+        (item._id || item.id) === activeObjectEdit.id ? activeObjectEdit.data : item
+      );
+      return updated;
+    });
+
+    setActiveObjectEdit({ type: null, id: null, data: null });
+  };
+
+  const renderObjectFieldInput = (field, value) => {
+    if (field.type === 'select') {
+      return (
+        <select
+          name={field.accessor}
+          value={value || ''}
+          onChange={(e) => handleObjectEditChange(field.accessor, e.target.value)}
+        >
+          {field.options.map((option) => (
+            <option key={option} value={option}>
+              {option.charAt(0).toUpperCase() + option.slice(1)}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    return (
+      <input
+        type={field.type || 'text'}
+        name={field.accessor}
+        value={value || ''}
+        onChange={(e) => handleObjectEditChange(field.accessor, e.target.value)}
+      />
+    );
+  };
+
   const renderValue = (value) => {
     if (value === undefined || value === null || value === '') {
       return '-';
@@ -205,37 +369,72 @@ function AccountDetail() {
     return item[headerLabel] || title;
   };
 
-  const renderObjects = (title, items, fields, headerLabel) => (
-    <div className="detail-section compact-section">
-      <div className="section-header">
-        <h2>{title}</h2>
-      </div>
-      {items && items.length > 0 ? (
-        <div className="object-list">
-          {items.map((item) => (
-            <div key={item._id || Math.random()} className="object-card">
-              <div className="object-card-header">
-                <div>
-                  <strong>{getObjectHeader(item, headerLabel, title.slice(0, -1))}</strong>
-                </div>
-                <div className="object-card-status">{item.status || '-'}</div>
-              </div>
-              <div className="object-grid">
-                {fields.map((field) => (
-                  <div key={`${item._id}-${field.accessor}`} className="field-row">
-                    <span className="field-key">{field.label}</span>
-                    <span className="field-value">{renderValue(item[field.accessor])}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+  const renderObjects = (title, items, fields, headerLabel) => {
+    const type = title.toLowerCase();
+
+    return (
+      <div className="detail-section compact-section">
+        <div className="section-header">
+          <h2>{title}</h2>
         </div>
-      ) : (
-        <p className="empty-state">No {title.toLowerCase()} found for this account.</p>
-      )}
-    </div>
-  );
+        {items && items.length > 0 ? (
+          <div className="object-list">
+            {items.map((item) => {
+              const itemId = item._id || item.id || null;
+              const isEditingItem =
+                activeObjectEdit.type === type && activeObjectEdit.id === itemId;
+              const objectData = isEditingItem ? activeObjectEdit.data : item;
+
+              return (
+                <div key={itemId || Math.random()} className="object-card">
+                  <div className="object-card-header">
+                    <div>
+                      <strong>{getObjectHeader(item, headerLabel, title.slice(0, -1))}</strong>
+                    </div>
+                    <div className="object-card-actions">
+                      {isEditingItem ? (
+                        <>
+                          <button className="btn btn-sm btn-primary" onClick={saveObjectEdit}>
+                            Save
+                          </button>
+                          <button className="btn btn-sm btn-secondary" onClick={cancelObjectEdit}>
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="btn btn-sm btn-secondary"
+                          onClick={() => startObjectEdit(type, item)}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="object-grid">
+                    {fields.map((field) => (
+                      <div key={`${itemId}-${field.accessor}`} className="field-row">
+                        <span className="field-key">{field.label}</span>
+                        {isEditingItem ? (
+                          renderObjectFieldInput(field, objectData[field.accessor])
+                        ) : (
+                          <span className="field-value">
+                            {renderValue(objectData[field.accessor])}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="empty-state">No {title.toLowerCase()} found for this account.</p>
+        )}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -282,202 +481,22 @@ function AccountDetail() {
         <div className="detail-grid">
           <div className="detail-main">
             <div className="main-card account-info-card">
-              <p className="card-label">Account information</p>
-              <div className="detail-content">
-                <div className="form-section">
-                  <div className="section-header">
-                    <h2>Account Information</h2>
-                    <div className="section-actions">
-                      {isEditing ? (
-                        <>
-                          <button className="btn btn-primary" onClick={handleSave}>
-                            Save Changes
-                          </button>
-                          <button className="btn btn-secondary" onClick={handleCancel}>
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
-                          ✏️ Edit Account
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label>Account Name</label>
-                      <input
-                        type="text"
-                        name="account_name"
-                        value={formData.account_name || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Phone</label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Business Type</label>
-                      <input
-                        type="text"
-                        name="business_type"
-                        value={formData.business_type || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Company Reg.</label>
-                      <input
-                        type="text"
-                        name="company_registration"
-                        value={formData.company_registration || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Registration No.</label>
-                      <input
-                        type="text"
-                        name="registration_number"
-                        value={formData.registration_number || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Tax ID</label>
-                      <input
-                        type="text"
-                        name="tax_id"
-                        value={formData.tax_id || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Website</label>
-                      <input
-                        type="url"
-                        name="website"
-                        value={formData.website || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group full-width">
-                      <label>Address</label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={formData.address || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>City</label>
-                      <input
-                        type="text"
-                        name="city"
-                        value={formData.city || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>State</label>
-                      <input
-                        type="text"
-                        name="state"
-                        value={formData.state || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Zip Code</label>
-                      <input
-                        type="text"
-                        name="zip_code"
-                        value={formData.zip_code || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Country</label>
-                      <input
-                        type="text"
-                        name="country"
-                        value={formData.country || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Logo URL</label>
-                      <input
-                        type="url"
-                        name="logo_url"
-                        value={formData.logo_url || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Status</label>
-                      <select
-                        name="status"
-                        value={formData.status || 'active'}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="prospect">Prospect</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="account-meta-grid">
-                    <div className="meta-item">
-                      <span className="meta-key">Created By</span>
-                      <span className="meta-value">{renderValue(formData.created_by)}</span>
-                    </div>
-                    <div className="meta-item">
-                      <span className="meta-key">Created At</span>
-                      <span className="meta-value">{formatDate(formData.created_at)}</span>
-                    </div>
-                    <div className="meta-item">
-                      <span className="meta-key">Updated At</span>
-                      <span className="meta-value">{formatDate(formData.updated_at)}</span>
-                    </div>
-                  </div>
+              {renderAccountInfo()}
+              <div className="account-meta-grid">
+                <div className="meta-item">
+                  <span className="meta-key">Created By</span>
+                  <span className="meta-value">{renderValue(formData.created_by)}</span>
                 </div>
-
-                {error && <div className="error-message">⚠️ {error}</div>}
+                <div className="meta-item">
+                  <span className="meta-key">Created At</span>
+                  <span className="meta-value">{formatDate(formData.created_at)}</span>
+                </div>
+                <div className="meta-item">
+                  <span className="meta-key">Updated At</span>
+                  <span className="meta-value">{formatDate(formData.updated_at)}</span>
+                </div>
               </div>
+              {error && <div className="error-message">⚠️ {error}</div>}
             </div>
 
             <div className="main-card object-box">

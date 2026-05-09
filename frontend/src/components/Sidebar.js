@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks';
-import '../styles/Sidebar.css';
 
 /**
  * Sidebar Component - Main navigation for the application
@@ -10,19 +9,6 @@ function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
-
-  const menuItems = [
-    {
-      label: 'Dashboard',
-      path: '/home',
-      icon: '📊',
-    },
-    {
-      label: 'Accounts',
-      path: '/home/accounts',
-      icon: '🏢',
-    },
-  ];
 
   const handleLogout = () => {
     logout();
@@ -38,55 +24,56 @@ function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-top">
-        <div className="sidebar-brand">
-          <div className="brand-markers">
-            <span className="brand-dot brand-dot-1" />
-            <span className="brand-dot brand-dot-2" />
-            <span className="brand-dot brand-dot-3" />
-          </div>
-          <h2>InfraBase</h2>
-        </div>
-
-        <button className="sidebar-collapse" onClick={() => navigate('/home')}>
-          ←
-        </button>
+      <div className="brand">
+        <div className="mark">L</div>
+        <div><b>InfraBase</b></div>
       </div>
 
-      <nav className="sidebar-nav">
-        {menuItems.map((item) => (
-          <button
-            key={item.path}
-            className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
-            onClick={() => navigate(item.path)}
-          >
-            <span className="nav-item-left">
-              <span className="nav-icon">{item.icon}</span>
-              <span className="nav-label">{item.label}</span>
-            </span>
-            <span className="nav-arrow">›</span>
-          </button>
-        ))}
-      </nav>
-
-      <div className="sidebar-card assistant-card">
-        <div className="assistant-card-header">
-          <div>
-            <h3>AI Assistant</h3>
-          </div>
-          <button className="assistant-close" type="button">
-            ×
-          </button>
+      <div className="group">
+        <span className="group-label">Workspace</span>
+        <div className={`item ${isActive('/home') ? 'active' : ''}`} onClick={() => navigate('/home')}>
+          <span className="ico">▦</span> Dashboard <span className="badge">3</span>
         </div>
-        <p className="assistant-copy">
-          Technology that helps people complete tasks faster and more efficiently.
-        </p>
+
+        <div className={`item open ${isActive('/home/accounts') ? 'active' : ''}`}>
+          <span className="ico">◉</span> Accounts
+          <span className="chev">▸</span>
+        </div>
+        <div className="submenu">
+          <div className={`sub ${isActive('/home/accounts') ? 'active' : ''}`} onClick={() => navigate('/home/accounts')}>
+            <span className="dot"></span> All Customers <span className="count">248</span>
+          </div>
+          <div className="sub"><span className="dot"></span> Active Loans <span className="count">186</span></div>
+          <div className="sub"><span className="dot"></span> Pending Approval <span className="count">12</span></div>
+          <div className="sub"><span className="dot"></span> Overdue <span className="count">7</span></div>
+          <div className="sub"><span className="dot"></span> Closed <span className="count">43</span></div>
+          <div className="sub"><span className="dot"></span> Co-signers</div>
+        </div>
+
+        <div className="item"><span className="ico">▤</span> Applications <span className="badge">12</span></div>
+        <div className="item"><span className="ico">$</span> Disbursements</div>
+        <div className="item"><span className="ico">⟲</span> Repayments</div>
+        <div className="item"><span className="ico">⊟</span> Collateral</div>
       </div>
 
-      <div className="sidebar-footer">
-        <button className="logout-button" onClick={handleLogout}>
-          🚪 Logout
-        </button>
+      <div className="group">
+        <span className="group-label">Documents</span>
+        <div className="item"><span className="ico">▣</span> Templates</div>
+        <div className="item"><span className="ico">⎙</span> Generated <span className="badge">94</span></div>
+        <div className="item"><span className="ico">✎</span> E-Signatures</div>
+        <div className="item"><span className="ico">⛶</span> KYC Vault</div>
+      </div>
+
+      <div className="group">
+        <span className="group-label">Insights</span>
+        <div className="item"><span className="ico">◢</span> Reports</div>
+        <div className="item"><span className="ico">◌</span> Risk &amp; Audit</div>
+        <div className="item"><span className="ico">⚙</span> Settings</div>
+      </div>
+
+      <div className="user">
+        <div className="av">AM</div>
+        <div className="meta">Aarav Mehta<small>Loan Officer · Branch 04</small></div>
       </div>
     </aside>
   );

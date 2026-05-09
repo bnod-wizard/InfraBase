@@ -120,6 +120,10 @@ class AccountService:
         """Get account statistics"""
         try:
             total = self.account_repository.get_total_count()
-            return True, "Statistics retrieved", {'total_accounts': total}
+            status_counts = self.account_repository.get_status_counts()
+            return True, "Statistics retrieved", {
+                'total_accounts': total,
+                'status_counts': status_counts
+            }
         except Exception as e:
             return False, str(e), None

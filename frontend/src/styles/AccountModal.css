@@ -397,12 +397,13 @@ input.error, select.error {
 }
 
 .btn-secondary {
-  background-color: #6b7280;
-  color: white;
+  background-color: var(--surface);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #4b5563;
+  background-color: var(--line-2);
 }
 
 .btn-secondary:disabled {
@@ -411,12 +412,12 @@ input.error, select.error {
 }
 
 .btn-primary {
-  background-color: #3b82f6;
+  background-color: var(--brand);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #2563eb;
+  background-color: #0f2a1e;
 }
 
 .btn-primary:disabled {
@@ -426,12 +427,12 @@ input.error, select.error {
 }
 
 .btn-success {
-  background-color: #10b981;
+  background-color: var(--ok);
   color: white;
 }
 
 .btn-success:hover {
-  background-color: #059669;
+  background-color: #236b49;
 }
 
 .btn-success:disabled {
@@ -441,12 +442,13 @@ input.error, select.error {
 }
 
 .btn-cancel {
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: var(--surface);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
 }
 
 .btn-cancel:hover {
-  background-color: #d1d5db;
+  background-color: var(--line-2);
 }
 
 .btn-cancel:disabled {

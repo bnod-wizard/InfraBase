@@ -8,6 +8,10 @@ class PropertyModel:
     """Property Model - Physical asset/property"""
     
     @staticmethod
+    def _safe_iso(value):
+        return value.isoformat() if hasattr(value, 'isoformat') else value
+
+    @staticmethod
     def to_dict(property_data):
         """Convert property data to dictionary for database storage"""
         return {
@@ -66,9 +70,9 @@ class PropertyModel:
         if 'owner_id' in property_data:
             property_data['owner_id'] = str(property_data['owner_id'])
         if 'created_at' in property_data:
-            property_data['created_at'] = property_data['created_at'].isoformat()
+            property_data['created_at'] = PropertyModel._safe_iso(property_data['created_at'])
         if 'updated_at' in property_data:
-            property_data['updated_at'] = property_data['updated_at'].isoformat()
+            property_data['updated_at'] = PropertyModel._safe_iso(property_data['updated_at'])
         return property_data
 
     @staticmethod

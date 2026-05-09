@@ -77,21 +77,35 @@ function AccountList({ onAddClick, refreshKey }) {
 
   const totalPages = Math.ceil(totalAccounts / itemsPerPage);
 
+  const getInitials = (name) => {
+    if (!name) return 'AA';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const formatStatusClass = (status) => {
+    if (!status) return 'unknown';
+    return status.toString().toLowerCase().replace(/\s+/g, '-');
+  };
+
   if (loading && accounts.length === 0) {
     return <div className="loading">Loading accounts...</div>;
   }
 
   return (
-    <div className="account-list-container">
-      <div className="search-bar">
-        <input
-          type="text"
-          placeholder="Search accounts (name, email, tax ID)..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="search-input"
-        />
-      </div>
+    <div className="panel accounts-card">
+      <div className="account-list-container">
+        <div className="table-search">
+          <span>⌕</span>
+          <input
+            type="text"
+            placeholder="Search accounts (name, email, tax ID)..."
+            value={searchTerm}
+            onChange={handleSearch}
+            className="search-input"
+          />
+        </div>
 
       {accounts.length === 0 ? (
         <div className="no-data">
@@ -100,7 +114,7 @@ function AccountList({ onAddClick, refreshKey }) {
       ) : (
         <>
           <div className="table-wrapper">
-            <table className="account-table">
+            <table className="accounts">
               <thead>
                 <tr>
                   <th>Account Name</th>
@@ -114,23 +128,29 @@ function AccountList({ onAddClick, refreshKey }) {
                 {accounts.map((account) => (
                   <tr key={account._id}>
                     <td className="account-name">
-                      <button
-                        className="account-link-button"
-                        onClick={() => navigate(`/home/accounts/${account._id}`)}
-                      >
-                        {account.account_name}
-                      </button>
+                      <div className="account-row">
+                        <div className="account-avatar">{getInitials(account.account_name)}</div>
+                        <div className="account-info">
+                          <button
+                            className="account-link-button"
+                            onClick={() => navigate(`/home/accounts/${account._id}`)}
+                          >
+                            {account.account_name}
+                          </button>
+                          <small>{account.email}</small>
+                        </div>
+                      </div>
                     </td>
-                    <td>{account.email}</td>
-                    <td>{account.phone || '-'}</td>
+                    <td className="account-email">{account.email}</td>
+                    <td className="account-phone">{account.phone || '-'}</td>
                     <td>
-                      <span className={`status-badge ${account.status}`}>
+                      <span className={`status-badge ${formatStatusClass(account.status)}`}>
                         {account.status}
                       </span>
                     </td>
                     <td className="actions">
                       <button
-                        className="btn-icon"
+                        className={`icon-btn status-icon ${formatStatusClass(account.status)}`}
                         title="View Details"
                         aria-label="View account"
                         onClick={() => navigate(`/home/accounts/${account._id}`)}
@@ -141,7 +161,7 @@ function AccountList({ onAddClick, refreshKey }) {
                         </svg>
                       </button>
                       <button
-                        className="btn-icon delete"
+                        className="icon-btn delete"
                         title="Delete"
                         aria-label="Delete account"
                         onClick={() => handleDeleteAccount(account._id)}
@@ -161,44 +181,59 @@ function AccountList({ onAddClick, refreshKey }) {
             </table>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button
-                className="page-btn"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-              >
-                ← First
-              </button>
-              <button
-                className="page-btn"
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                ← Prev
-              </button>
-              <span className="page-info">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                className="page-btn"
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next →
-              </button>
-              <button
-                className="page-btn"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                Last →
-              </button>
-            </div>
-          )}
+          <div className="panel-foot">
+            Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalAccounts)}–{Math.min(currentPage * itemsPerPage, totalAccounts)} of {totalAccounts} customers
+            {totalPages > 1 && (
+              <div className="pager">
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  ‹
+                </button>
+                <button
+                  className={currentPage === 1 ? 'on' : ''}
+                  onClick={() => setCurrentPage(1)}
+                >
+                  1
+                </button>
+                {totalPages >= 2 && (
+                  <button
+                    className={currentPage === 2 ? 'on' : ''}
+                    onClick={() => setCurrentPage(2)}
+                  >
+                    2
+                  </button>
+                )}
+                {totalPages >= 3 && (
+                  <button
+                    className={currentPage === 3 ? 'on' : ''}
+                    onClick={() => setCurrentPage(3)}
+                  >
+                    3
+                  </button>
+                )}
+                {totalPages > 4 && <button disabled>…</button>}
+                {totalPages > 3 && (
+                  <button
+                    className={currentPage === totalPages ? 'on' : ''}
+                    onClick={() => setCurrentPage(totalPages)}
+                  >
+                    {totalPages}
+                  </button>
+                )}
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  ›
+                </button>
+              </div>
+            )}
+          </div>
         </>
       )}
+      </div>
     </div>
   );
 }

@@ -8,6 +8,10 @@ class ClientModel:
     """Client Model - Contact person within Account"""
     
     @staticmethod
+    def _safe_iso(value):
+        return value.isoformat() if hasattr(value, 'isoformat') else value
+
+    @staticmethod
     def to_dict(client_data):
         """Convert client data to dictionary for database storage"""
         return {
@@ -40,9 +44,9 @@ class ClientModel:
         if 'account_id' in client_data:
             client_data['account_id'] = str(client_data['account_id'])
         if 'created_at' in client_data:
-            client_data['created_at'] = client_data['created_at'].isoformat()
+            client_data['created_at'] = ClientModel._safe_iso(client_data['created_at'])
         if 'updated_at' in client_data:
-            client_data['updated_at'] = client_data['updated_at'].isoformat()
+            client_data['updated_at'] = ClientModel._safe_iso(client_data['updated_at'])
         return client_data
 
     @staticmethod

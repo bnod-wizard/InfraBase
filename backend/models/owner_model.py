@@ -8,6 +8,10 @@ class OwnerModel:
     """Owner Model - Property owner (can be individual or entity)"""
     
     @staticmethod
+    def _safe_iso(value):
+        return value.isoformat() if hasattr(value, 'isoformat') else value
+
+    @staticmethod
     def to_dict(owner_data):
         """Convert owner data to dictionary for database storage"""
         return {
@@ -48,9 +52,9 @@ class OwnerModel:
         if 'client_id' in owner_data and owner_data['client_id']:
             owner_data['client_id'] = str(owner_data['client_id'])
         if 'created_at' in owner_data:
-            owner_data['created_at'] = owner_data['created_at'].isoformat()
+            owner_data['created_at'] = OwnerModel._safe_iso(owner_data['created_at'])
         if 'updated_at' in owner_data:
-            owner_data['updated_at'] = owner_data['updated_at'].isoformat()
+            owner_data['updated_at'] = OwnerModel._safe_iso(owner_data['updated_at'])
         return owner_data
 
     @staticmethod
