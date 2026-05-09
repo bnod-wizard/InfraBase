@@ -135,6 +135,30 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
+    # Get accounts with filters and search
+    @app.route('/api/accounts/list/filtered', methods=['GET'])
+    @token_required
+    def get_accounts_filtered():
+        try:
+            query = request.args.get('q', '', type=str)
+            skip = request.args.get('skip', 0, type=int)
+            limit = request.args.get('limit', 10, type=int)
+            
+            # Parse status filters from comma-separated string
+            status_str = request.args.get('status', '', type=str)
+            status_filters = [s.strip() for s in status_str.split(',')] if status_str else None
+            
+            success, message, result = account_service.get_accounts_with_filters(
+                query, status_filters, skip, limit
+            )
+            
+            if success:
+                return jsonify({'success': True, 'message': message, 'data': result}), 200
+            else:
+                return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
     # Update account
     @app.route('/api/accounts/<account_id>', methods=['PUT'])
     @token_required

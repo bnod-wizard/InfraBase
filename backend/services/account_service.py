@@ -116,6 +116,24 @@ class AccountService:
         except Exception as e:
             return False, str(e), None
 
+    def get_accounts_with_filters(self, query='', status_filters=None, skip=0, limit=10):
+        """Get accounts with combined search and status filters"""
+        try:
+            accounts, total = self.account_repository.get_accounts_with_filters(
+                query, status_filters, skip, limit
+            )
+            accounts_json = [AccountModel.to_json(acc) for acc in accounts]
+            return True, "Accounts retrieved successfully", {
+                'data': accounts_json,
+                'total': total,
+                'skip': skip,
+                'limit': limit,
+                'query': query,
+                'filters': status_filters or []
+            }
+        except Exception as e:
+            return False, str(e), None
+
     def get_account_statistics(self):
         """Get account statistics"""
         try:

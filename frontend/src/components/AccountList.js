@@ -67,40 +67,36 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
   const [totalAccounts, setTotalAccounts] = useState(0);
   const itemsPerPage = 6;
 
-  useEffect(() => { fetchAccounts(); }, [refreshKey, currentPage]);
-
+  // Fetch accounts whenever page, search, or filters change
   useEffect(() => {
-    setCurrentPage(1);
-    if (searchTerm.length >= 2) {
-      setLoading(true);
-      accountApi.searchAccounts(searchTerm, 0, itemsPerPage)
-        .then(res => { if (res.data.success) setAccounts(res.data.data.data || []); })
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    } else if (searchTerm.length === 0) {
-      fetchAccounts();
-    }
-  }, [searchTerm]);
+    fetchAccountsWithFilters();
+  }, [refreshKey, currentPage, searchTerm, statusFilters]);
 
-  const fetchAccounts = async () => {
+  const fetchAccountsWithFilters = async () => {
     try {
       setLoading(true);
       const skip = (currentPage - 1) * itemsPerPage;
-      const res  = await accountApi.getAllAccounts(skip, itemsPerPage);
+      const res = await accountApi.getAccountsFiltered(searchTerm, statusFilters, skip, itemsPerPage);
       if (res.data.success) {
         setAccounts(res.data.data.data || []);
         setTotalAccounts(res.data.data.total || 0);
       }
     } catch {
       setAccounts([]);
+      setTotalAccounts(0);
     } finally {
       setLoading(false);
     }
   };
 
+  // Reset to page 1 when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilters]);
+
   const handleDelete = id => {
     if (!window.confirm('Delete this account?')) return;
-    accountApi.deleteAccount(id).then(fetchAccounts).catch(console.error);
+    accountApi.deleteAccount(id).then(fetchAccountsWithFilters).catch(console.error);
   };
 
   const getInitials = name => {
@@ -109,18 +105,8 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
     return p.length === 1 ? p[0].slice(0, 2).toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase();
   };
 
-  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-
-  const matchesFilters = a => {
-    if (statusFilters.length === 0) return true;
-    return statusFilters.some(f => {
-      if (f === 'added-today') return parseUtc(a.created_at) >= todayStart;
-      return (a.status || '').toLowerCase() === f.toLowerCase();
-    });
-  };
-
+  // All filtering now happens at the database level, just sort and display
   const displayed = [...accounts]
-    .filter(matchesFilters)
     .sort((a, b) => (parseUtc(b.created_at) || 0) - (parseUtc(a.created_at) || 0));
 
   const totalPages = Math.ceil(totalAccounts / itemsPerPage);

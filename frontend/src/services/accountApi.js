@@ -37,6 +37,19 @@ const accountApi = {
   searchAccounts: (query, skip = 0, limit = 10) =>
     axiosInstance.get(`/accounts/search/${query}`, { params: { skip, limit } }),
 
+  // Get accounts with filters and search
+  getAccountsFiltered: (query = '', statuses = [], skip = 0, limit = 10) => {
+    const params = {
+      q: query,
+      skip,
+      limit
+    };
+    if (statuses && statuses.length > 0) {
+      params.status = statuses.join(',');
+    }
+    return axiosInstance.get('/accounts/list/filtered', { params });
+  },
+
   // Update account
   updateAccount: (accountId, data) =>
     axiosInstance.put(`/accounts/${accountId}`, data),

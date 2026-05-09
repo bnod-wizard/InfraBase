@@ -74,6 +74,43 @@ class AccountRepository:
         except Exception as e:
             raise Exception(f"Error searching accounts: {str(e)}")
 
+    def get_accounts_with_filters(self, query='', status_filters=None, skip=0, limit=10):
+        """Get accounts with combined search and status filters"""
+        try:
+            filters = []
+            
+            # Add search filter if query is provided
+            if query and query.strip():
+                search_filter = {
+                    '$or': [
+                        {'account_name': {'$regex': query, '$options': 'i'}},
+                        {'email': {'$regex': query, '$options': 'i'}},
+                        {'tax_id': {'$regex': query, '$options': 'i'}}
+                    ]
+                }
+                filters.append(search_filter)
+            
+            # Add status filter if provided
+            if status_filters and len(status_filters) > 0:
+                status_filter = {'status': {'$in': status_filters}}
+                filters.append(status_filter)
+            
+            # Combine all filters with AND
+            if filters:
+                if len(filters) == 1:
+                    query_filter = filters[0]
+                else:
+                    query_filter = {'$and': filters}
+            else:
+                query_filter = {}
+            
+            accounts = list(self.collection.find(query_filter).skip(skip).limit(limit))
+            total = self.collection.count_documents(query_filter)
+            
+            return accounts, total
+        except Exception as e:
+            raise Exception(f"Error fetching accounts with filters: {str(e)}")
+
     def get_status_counts(self):
         """Get count of accounts grouped by status"""
         try:
