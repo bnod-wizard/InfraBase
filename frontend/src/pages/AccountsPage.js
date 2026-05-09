@@ -4,7 +4,9 @@ import AccountModal from '../components/AccountModal';
 import accountApi from '../services/accountApi';
 import '../styles/AccountsPage.css';
 
-const FILTERS = ['All', 'Active', 'Pending', 'Overdue', 'Closed'];
+const FILTERS = ['All', 'Active', 'Pending', 'Overdue', 'Closed', 'Added Today'];
+
+const FILTER_KEY = 'accounts_filter';
 
 const DOC_TEMPLATES = [
   { tag: 'Cover',    name: 'Cover Page',    pages: '1 page'    },
@@ -16,8 +18,18 @@ function AccountsPage() {
   const [isModalOpen,   setIsModalOpen]   = useState(false);
   const [refreshKey,    setRefreshKey]    = useState(0);
   const [statusSummary, setStatusSummary] = useState({ total_accounts: 0, status_counts: {} });
-  const [activeFilter,  setActiveFilter]  = useState('all');
+  const [activeFilters, setActiveFilters] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(FILTER_KEY)) || []; } catch { return []; }
+  });
   const [searchTerm,    setSearchTerm]    = useState('');
+
+  const handleFilterToggle = f => {
+    setActiveFilters(prev => {
+      const next = prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f];
+      localStorage.setItem(FILTER_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
 
   const handleAddClick      = () => setIsModalOpen(true);
   const handleCloseModal    = () => setIsModalOpen(false);
@@ -70,14 +82,24 @@ function AccountsPage() {
             >×</button>
           )}
         </div>
-        <div style={{display:'flex',gap:'6px'}}>
-          {FILTERS.map(f => (
+        <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+          {FILTERS.map(f => {
+            const key = f.toLowerCase().replace(/ /g, '-');
+            return (
+              <button
+                key={f}
+                className={`chip${activeFilters.includes(key) ? ' active' : ''}`}
+                onClick={() => handleFilterToggle(key)}
+              >{f}</button>
+            );
+          })}
+          {activeFilters.length > 0 && (
             <button
-              key={f}
-              className={`chip${activeFilter === f.toLowerCase() ? ' active' : ''}`}
-              onClick={() => setActiveFilter(f.toLowerCase())}
-            >{f}</button>
-          ))}
+              className="chip"
+              style={{opacity:.55}}
+              onClick={() => { setActiveFilters([]); localStorage.setItem(FILTER_KEY, JSON.stringify([])); }}
+            >✕ Clear</button>
+          )}
         </div>
         <button className="new-btn" onClick={handleAddClick}>＋ New Account</button>
       </div>
@@ -100,7 +122,7 @@ function AccountsPage() {
           <AccountList
             onAddClick={handleAddClick}
             refreshKey={refreshKey}
-            statusFilter={activeFilter}
+            statusFilters={activeFilters}
             searchTerm={searchTerm}
           />
         </div>

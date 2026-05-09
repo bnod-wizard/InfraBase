@@ -31,13 +31,41 @@ const rowStatusClass = status => {
   return 'status-draft';
 };
 
-function AccountList({ onAddClick, refreshKey, statusFilter = 'all', searchTerm = '' }) {
+const parseUtc = iso => {
+  if (!iso) return null;
+  // Python's isoformat() has no 'Z'; without a tz suffix JS treats it as local — force UTC.
+  const s = /[Zz]|[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso + 'Z';
+  return new Date(s);
+};
+
+const formatDate = iso => {
+  const d = parseUtc(iso);
+  if (!d) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    + ' · '
+    + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+};
+
+function buildPageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = [];
+  pages.push(1);
+  if (current > 4) pages.push('…');
+  const start = Math.max(2, current - 1);
+  const end   = Math.min(total - 1, current + 1);
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (current < total - 3) pages.push('…');
+  pages.push(total);
+  return pages;
+}
+
+function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = '' }) {
   const navigate     = useNavigate();
   const [accounts,      setAccounts]      = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [currentPage,   setCurrentPage]   = useState(1);
   const [totalAccounts, setTotalAccounts] = useState(0);
-  const itemsPerPage = 10;
+  const itemsPerPage = 6;
 
   useEffect(() => { fetchAccounts(); }, [refreshKey, currentPage]);
 
@@ -81,9 +109,19 @@ function AccountList({ onAddClick, refreshKey, statusFilter = 'all', searchTerm 
     return p.length === 1 ? p[0].slice(0, 2).toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase();
   };
 
-  const displayed = (statusFilter === 'all' || !statusFilter)
-    ? accounts
-    : accounts.filter(a => (a.status || '').toLowerCase() === statusFilter.toLowerCase());
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+
+  const matchesFilters = a => {
+    if (statusFilters.length === 0) return true;
+    return statusFilters.some(f => {
+      if (f === 'added-today') return parseUtc(a.created_at) >= todayStart;
+      return (a.status || '').toLowerCase() === f.toLowerCase();
+    });
+  };
+
+  const displayed = [...accounts]
+    .filter(matchesFilters)
+    .sort((a, b) => (parseUtc(b.created_at) || 0) - (parseUtc(a.created_at) || 0));
 
   const totalPages = Math.ceil(totalAccounts / itemsPerPage);
 
@@ -107,8 +145,8 @@ function AccountList({ onAddClick, refreshKey, statusFilter = 'all', searchTerm 
               <thead>
                 <tr>
                   <th>Account Name</th>
-                  <th className="acct-email">Email</th>
                   <th className="acct-phone">Phone</th>
+                  <th className="acct-date">Date Added</th>
                   <th>Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
@@ -135,8 +173,8 @@ function AccountList({ onAddClick, refreshKey, statusFilter = 'all', searchTerm 
                         </div>
                       </div>
                     </td>
-                    <td className="acct-email">{account.email || '—'}</td>
                     <td className="acct-phone">{account.phone || '—'}</td>
+                    <td className="acct-date">{formatDate(account.created_at)}</td>
                     <td>
                       <span className={`pill ${pillClass(account.status)}`}>
                         {account.status || 'draft'}
@@ -178,12 +216,10 @@ function AccountList({ onAddClick, refreshKey, statusFilter = 'all', searchTerm 
             {totalPages > 1 && (
               <div className="pager">
                 <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>‹</button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(n => (
-                  <button key={n} className={currentPage === n ? 'on' : ''} onClick={() => setCurrentPage(n)}>{n}</button>
-                ))}
-                {totalPages > 5 && <button disabled>…</button>}
-                {totalPages > 5 && (
-                  <button className={currentPage === totalPages ? 'on' : ''} onClick={() => setCurrentPage(totalPages)}>{totalPages}</button>
+                {buildPageNumbers(currentPage, totalPages).map((item, i) =>
+                  item === '…'
+                    ? <span key={`e${i}`} className="pager-ellipsis">…</span>
+                    : <button key={item} className={currentPage === item ? 'on' : ''} onClick={() => setCurrentPage(item)}>{item}</button>
                 )}
                 <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>›</button>
               </div>

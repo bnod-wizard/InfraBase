@@ -147,9 +147,7 @@ table.accounts tr:hover td{background:#fbfaf6}
 .cust .av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:13px;color:#fff;flex-shrink:0}
 .cust b{display:block;color:var(--ink);font-weight:700}
 .cust small{color:var(--ink-mute);font-family:var(--mono);font-size:11px;display:block;margin-top:4px}
-.acct-email,.acct-phone{font-family:var(--mono);font-size:13px;color:var(--ink-2)}
-.acct-email{min-width:220px}
-.acct-phone{min-width:140px}
+.acct-phone{font-family:var(--mono);font-size:13px;color:var(--ink-2);min-width:140px}
 .pill{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border-radius:999px;font-size:11px;font-family:var(--mono);font-weight:700;text-transform:uppercase}
 .pill.ok{background:#e6f3ec;color:var(--0f2a1e);color:var(--ok)}
 .pill.review{background:#e7f3ff;color:var(--0b2c5a91);color:var(--info)}
@@ -199,9 +197,12 @@ table.accounts tr:hover td{background:#fbfaf6}
 .doc-actions button.secondary{background:#fff;color:var(--ink-2);border-color:var(--line)}
 
 .panel-foot{padding:12px 18px;display:flex;align-items:center;font-size:12px;color:var(--ink-dim);border-top:1px solid var(--line)}
-.pager{margin-left:auto;display:flex;gap:4px}
-.pager button{width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:#fff;font-size:12px}
-.pager button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pager{margin-left:auto;display:flex;gap:4px;align-items:center}
+.pager button{min-width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:13px;padding:0 6px;color:var(--ink-2);transition:.15s}
+.pager button:hover:not(:disabled){background:var(--line-2);border-color:var(--line)}
+.pager button:disabled{opacity:.35;cursor:default}
+.pager button.on{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600}
+.pager-ellipsis{padding:0 4px;color:var(--ink-mute);font-size:13px;line-height:32px;user-select:none}
 
 .stack{display:flex;flex-direction:column;gap:18px}
 .doc-gen{padding:18px;display:flex;flex-direction:column;gap:14px}
