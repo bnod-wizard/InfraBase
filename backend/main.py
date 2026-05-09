@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 # Import layers
 from controllers import AuthController, CustomerController, PDFController
 from controllers.account_controller import account_controller
+from controllers.template_controller import template_controller
 from services import AuthService, CustomerService, PDFService
 from services.account_service import AccountService
 from services.client_service import ClientService
@@ -18,12 +19,14 @@ from services.owner_service import OwnerService
 from services.property_service import PropertyService
 from services.bulk_account_service import BulkAccountCreationService
 from services.document_service import DocumentService
+from services.template_service import TemplateService
 from repositories import UserRepository, CustomerRepository
 from repositories.account_repository import AccountRepository
 from repositories.client_repository import ClientRepository
 from repositories.owner_repository import OwnerRepository
 from repositories.property_repository import PropertyRepository
 from repositories.valuation_repository import ValuationRepository
+from repositories.template_repository import TemplateRepository
 
 load_dotenv()
 
@@ -62,6 +65,7 @@ if db is not None:
         owner_repository = OwnerRepository(db)
         property_repository = PropertyRepository(db)
         valuation_repository = ValuationRepository(db)
+        template_repository = TemplateRepository(db)
 
         # Service Layer
         auth_service = AuthService(user_repository, app.config['SECRET_KEY'])
@@ -75,7 +79,8 @@ if db is not None:
             account_repository, client_repository, property_repository, owner_repository
         )
         document_service = DocumentService()
-        
+        template_service = TemplateService(template_repository)
+
         # Controller Layer
         auth_controller = AuthController(auth_service)
         customer_controller = CustomerController(customer_service, auth_service)
@@ -87,7 +92,10 @@ if db is not None:
             valuation_repository=valuation_repository,
             document_service=document_service
         )
-        
+
+        # Register template controller
+        template_controller(app, template_service, auth_service)
+
         print("✓ Controllers, Services, and Repositories initialized")
     except Exception as e:
         print(f"✗ Error initializing layers: {e}")

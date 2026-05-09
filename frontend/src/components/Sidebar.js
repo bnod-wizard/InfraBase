@@ -59,7 +59,7 @@ function Sidebar() {
 
       <div className="group">
         <span className="group-label">Documents</span>
-        <div className="item"><span className="ico">▣</span> Templates</div>
+        <div className={`item ${isActive('/home/templates') ? 'active' : ''}`} onClick={() => navigate('/home/templates')}><span className="ico">▣</span> Templates</div>
         <div className="item"><span className="ico">⎙</span> Generated <span className="badge">94</span></div>
         <div className="item"><span className="ico">✎</span> E-Signatures</div>
         <div className="item"><span className="ico">⛶</span> KYC Vault</div>

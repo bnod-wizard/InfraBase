@@ -24,12 +24,6 @@ const AuthPage = () => {
           <h2>Property Valuation<br />Management</h2>
           <p>Streamline assessments, generate valuation documents, and manage client accounts — all in one place.</p>
         </div>
-
-        <div className="auth-brand-features">
-          <div className="auth-feature"><span className="auth-feature-dot" />Document Generation</div>
-          <div className="auth-feature"><span className="auth-feature-dot" />Account Management</div>
-          <div className="auth-feature"><span className="auth-feature-dot" />Analytics &amp; Reports</div>
-        </div>
       </div>
 
       {/* ── Form panel ── */}

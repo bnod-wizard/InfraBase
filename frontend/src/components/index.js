@@ -8,3 +8,5 @@ export { default as AccountList } from './AccountList';
 export { default as AccountModal } from './AccountModal';
 export { default as CustomerList } from './CustomerList';
 export { default as CustomerDetail } from './CustomerDetail';
+export { default as TemplateBuilder } from './TemplateBuilder';
+export { default as NewTemplateModal } from './NewTemplateModal';

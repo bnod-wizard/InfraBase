@@ -1,0 +1,151 @@
+.tpl-loading,
+.tpl-empty {
+  padding: 48px;
+  color: var(--ink-mute);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.tpl-group-label {
+  font-size: 11px;
+  font-family: var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin: 0 0 14px 2px;
+  padding: 0 28px;
+}
+
+.tpl-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 0 28px 28px;
+}
+
+/* ── Template card ── */
+.tpl-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.tpl-card:hover {
+  border-color: rgba(31, 58, 46, 0.3);
+  box-shadow: 0 4px 20px rgba(31, 58, 46, 0.07);
+}
+
+.tpl-card-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  color: var(--brand);
+  flex-shrink: 0;
+}
+
+.tpl-card-body h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 5px;
+}
+
+.tpl-card-body p {
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.tpl-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--ink-mute);
+}
+
+.tpl-card-dot {
+  opacity: 0.4;
+}
+
+.tpl-active-badge {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.tpl-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  align-items: center;
+}
+
+.tpl-card-actions .btn {
+  flex: 1;
+  text-align: center;
+  justify-content: center;
+}
+
+.tpl-del-btn {
+  flex: 0 0 auto !important;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-mute);
+  font-size: 18px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+}
+
+.tpl-del-btn:hover {
+  background: rgba(192, 57, 43, 0.07);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ── New Template Modal icon picker ── */
+.nt-icon-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.nt-icon-opt {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 20px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.nt-icon-opt:hover {
+  background: var(--line-2);
+  border-color: var(--ink-mute);
+}
+
+.nt-icon-opt.selected {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--accent);
+}

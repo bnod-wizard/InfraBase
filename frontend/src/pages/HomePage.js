@@ -7,6 +7,8 @@ import Sidebar from '../components/Sidebar';
 import AccountsPage from './AccountsPage';
 import AccountDetailPage from './AccountDetailPage';
 import AccountModal from '../components/AccountModal';
+import TemplatesPage from './TemplatesPage';
+import TemplateBuilder from '../components/TemplateBuilder';
 
 const HomePage = () => {
   return (
@@ -17,6 +19,8 @@ const HomePage = () => {
           <Route path="/" element={<DashboardContent />} />
           <Route path="accounts" element={<AccountsPage />} />
           <Route path="accounts/:accountId" element={<AccountDetailPage />} />
+          <Route path="templates" element={<TemplatesPage />} />
+          <Route path="templates/:templateId" element={<TemplateBuilder />} />
         </Routes>
       </main>
     </div>
