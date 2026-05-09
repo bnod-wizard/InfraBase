@@ -1,10 +1,7 @@
-/**
- * AuthPage - Container for Login and Register
- */
 import React, { useState } from 'react';
 import { useAuth } from '../hooks';
 import { LoginForm, RegisterForm } from '../components';
-import '../styles/AuthPage.css';
+import '../styles/AuthForm.css';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,18 +12,40 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="auth-container">
-      {isLogin ? (
-        <LoginForm
-          onSuccess={handleAuthSuccess}
-          onSwitchToRegister={() => setIsLogin(false)}
-        />
-      ) : (
-        <RegisterForm
-          onSuccess={handleAuthSuccess}
-          onSwitchToLogin={() => setIsLogin(true)}
-        />
-      )}
+    <div className="auth-page">
+      {/* ── Brand panel ── */}
+      <div className="auth-brand">
+        <div className="auth-brand-logo">
+          <div className="auth-mark">I</div>
+          <span>InfraBase</span>
+        </div>
+
+        <div className="auth-brand-body">
+          <h2>Property Valuation<br />Management</h2>
+          <p>Streamline assessments, generate valuation documents, and manage client accounts — all in one place.</p>
+        </div>
+
+        <div className="auth-brand-features">
+          <div className="auth-feature"><span className="auth-feature-dot" />Document Generation</div>
+          <div className="auth-feature"><span className="auth-feature-dot" />Account Management</div>
+          <div className="auth-feature"><span className="auth-feature-dot" />Analytics &amp; Reports</div>
+        </div>
+      </div>
+
+      {/* ── Form panel ── */}
+      <div className="auth-form-panel">
+        {isLogin ? (
+          <LoginForm
+            onSuccess={handleAuthSuccess}
+            onSwitchToRegister={() => setIsLogin(false)}
+          />
+        ) : (
+          <RegisterForm
+            onSuccess={handleAuthSuccess}
+            onSwitchToLogin={() => setIsLogin(true)}
+          />
+        )}
+      </div>
     </div>
   );
 };
