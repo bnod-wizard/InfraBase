@@ -206,20 +206,27 @@ function CustomerDetail({ customerId: customIdProp, onClose, isModal }) {
   return (
     <div className="customer-detail-container">
       {!isModal && (
-        <div className="detail-header">
-          <button
-            className="btn btn-secondary btn-back"
-            onClick={() => {
-              if (isModal && onClose) {
-                onClose();
-              } else {
-                navigate('/home/customers');
-              }
-            }}
-          >
-            ← Back to Customers
-          </button>
-          <h1>{isEditing ? 'New Customer' : formData.name}</h1>
+        <div className="topbar">
+          <div className="crumbs">
+            <span style={{color:'var(--ink-dim)',cursor:'pointer'}} onClick={() => navigate('/home/customers')}>Customers</span>
+            <span style={{margin:'0 6px',color:'var(--ink-mute)'}}>/</span>
+            <b>{isEditing ? 'New Customer' : formData.name}</b>
+          </div>
+          <div className="right">
+            <button className="btn btn-secondary btn-sm" onClick={() => navigate('/home/customers')}>← Back</button>
+            {!isEditing && (
+              <>
+                <button className="btn btn-secondary" onClick={() => setIsEditing(true)}>✏ Edit</button>
+                <button className="btn btn-danger" onClick={handleDelete}>🗑 Delete</button>
+              </>
+            )}
+            {isEditing && (
+              <>
+                <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
+                <button className="btn" onClick={handleSave}>Save Customer</button>
+              </>
+            )}
+          </div>
         </div>
       )}
       {isModal && (

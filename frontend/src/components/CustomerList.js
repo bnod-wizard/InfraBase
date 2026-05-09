@@ -148,14 +148,10 @@ function CustomerList({ onAddClick, refreshKey }) {
 
   return (
     <div className="customer-list-container">
-      <div className="customer-list-header">
-        <h1>Customers</h1>
-        <button
-          className="btn btn-primary"
-          onClick={handleAddCustomer}
-        >
-          ➕ Add New Customer
-        </button>
+      {/* ── Topbar — matches other pages ── */}
+      <div className="topbar">
+        <div className="crumbs"><b>Customers</b></div>
+        <button className="new-btn" onClick={handleAddCustomer}>＋ Add Customer</button>
       </div>
 
       <div className="customer-list-filters">

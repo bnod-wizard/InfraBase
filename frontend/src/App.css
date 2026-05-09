@@ -103,7 +103,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .page-head{padding:28px 0 22px;display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap}
 .page-head h1{font-family:var(--serif);font-size:46px;line-height:1;margin:0;letter-spacing:-.02em;font-weight:500}
 .page-head .sub{color:var(--ink-dim);font-size:14px;margin-top:8px}
-.page-head .right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.page-head .right,
+.topbar .right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .chip{padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-size:12px;color:var(--ink-2);font-family:var(--mono);letter-spacing:.04em;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 .chip:hover{background:var(--line-2)}
 .chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -130,7 +131,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .more{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
 
-.panel.accounts-card{border-radius:28px;overflow:hidden;background:var(--surface);box-shadow:0 20px 50px rgba(20,20,26,.08);border:1px solid rgba(14,19,34,.08);padding-bottom:20px}
+.panel.accounts-card{margin-top:10px;overflow:hidden;background:var(--surface);box-shadow:0 20px 50px rgba(20,20,26,.08);border:1px solid rgba(14,19,34,.08);padding-bottom:20px}
 .table-card-header{padding:24px 24px 0}
 .table-search{display:flex;align-items:center;gap:10px;width:100%;padding:14px 16px;border:1px solid rgba(203,213,225,.8);border-radius:18px;background:#fff;max-width:640px;box-shadow:none;transition:box-shadow .2s ease}
 .table-search:hover{box-shadow:0 10px 30px rgba(20,20,26,.08)}
@@ -204,7 +205,7 @@ table.accounts tr:hover td{background:#fbfaf6}
 .pager button.on{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600}
 .pager-ellipsis{padding:0 4px;color:var(--ink-mute);font-size:13px;line-height:32px;user-select:none}
 
-.stack{display:flex;flex-direction:column;gap:18px}
+.stack{display:flex;flex-direction:column;gap:18px;margin-top:10px}
 .doc-gen{padding:18px;display:flex;flex-direction:column;gap:14px}
 .doc-gen h3{margin:0;font-size:14px;font-weight:600}
 .doc-gen .hint{color:var(--ink-dim);font-size:12.5px;margin:-4px 0 0}

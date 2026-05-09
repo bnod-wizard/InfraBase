@@ -152,8 +152,10 @@ function AccountDetail() {
 
   const formatDate = value => {
     if (!value) return '—';
-    const d = new Date(value);
-    return isNaN(d.getTime()) ? value : d.toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric' });
+    const s = /[Zz]|[+-]\d{2}:\d{2}$/.test(value) ? value : value + 'Z';
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? value : d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+      + ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   };
 
   const getObjectHeader = (item, headerLabel, fallback) => {
@@ -230,29 +232,39 @@ function AccountDetail() {
   };
 
   if (loading) return (
-    <div className="page-shell">
+    <>
+      <div className="topbar">
+        <div className="crumbs"><span style={{color:'var(--ink-dim)',cursor:'pointer'}} onClick={() => navigate('/home/accounts')}>Customer Accounts</span><span style={{margin:'0 6px',color:'var(--ink-mute)'}}>/</span><b>Loading…</b></div>
+      </div>
       <div style={{ padding: '60px', textAlign: 'center', color: 'var(--ink-mute)' }}>Loading account details…</div>
-    </div>
+    </>
   );
 
   if (error && !hierarchy) return (
-    <div className="page-shell">
-      <button className="btn btn-secondary btn-sm ad-back" onClick={() => navigate('/home/accounts')}>← Back</button>
-      <div className="ad-error">⚠ {error}</div>
-    </div>
+    <>
+      <div className="topbar">
+        <div className="crumbs"><span style={{color:'var(--ink-dim)',cursor:'pointer'}} onClick={() => navigate('/home/accounts')}>Customer Accounts</span><span style={{margin:'0 6px',color:'var(--ink-mute)'}}>/</span><b>Error</b></div>
+        <button className="btn btn-secondary btn-sm" style={{marginLeft:'auto'}} onClick={() => navigate('/home/accounts')}>← Back</button>
+      </div>
+      <div className="ad-error" style={{marginTop:'24px'}}>⚠ {error}</div>
+    </>
   );
 
   return (
     <div className="page-shell">
 
-      {/* ── Page head ── */}
-      <div className="page-head">
-        <div>
-          <h1>{formData.account_name || 'Account Details'}</h1>
-          <p className="sub">
-            {formData.email && <>{formData.email} · </>}
-            <span className={`pill ${pillClass(formData.status)}`}>{formData.status || 'draft'}</span>
-          </p>
+      {/* ── Topbar — matches AccountsPage ── */}
+      <div className="topbar">
+        <div className="crumbs">
+          <span style={{color:'var(--ink-dim)',cursor:'pointer'}} onClick={() => navigate('/home/accounts')}>Customer Accounts</span>
+          <span style={{margin:'0 6px',color:'var(--ink-mute)'}}>/</span>
+          <b>{formData.account_name || 'Account Details'}</b>
+          {formData.status && (
+            <>
+              <span style={{margin:'0 6px',color:'var(--ink-mute)'}}>/</span>
+              <span className={`pill ${pillClass(formData.status)}`}>{formData.status}</span>
+            </>
+          )}
         </div>
         <div className="right">
           <button className="btn btn-secondary btn-sm" onClick={() => navigate('/home/accounts')}>← Back</button>

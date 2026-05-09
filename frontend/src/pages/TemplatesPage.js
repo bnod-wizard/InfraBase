@@ -10,6 +10,7 @@ const TemplatesPage = () => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchTemplates = useCallback(() => {
     templateApi.getAll()
@@ -52,26 +53,45 @@ const TemplatesPage = () => {
     setTemplates(prev => prev.filter(t => t.template_id !== templateId));
   };
 
-  const builtIn  = templates.filter(t => !t.is_custom);
-  const custom   = templates.filter(t => t.is_custom);
+  const filterTemplates = (templates) => {
+    if (!searchTerm.trim()) return templates;
+    const term = searchTerm.toLowerCase();
+    return templates.filter(t => 
+      t.name.toLowerCase().includes(term) || 
+      t.description?.toLowerCase().includes(term)
+    );
+  };
+
+  const builtIn  = filterTemplates(templates.filter(t => !t.is_custom));
+  const custom   = filterTemplates(templates.filter(t => t.is_custom));
 
   return (
     <>
       <div className="topbar">
         <div className="crumbs"><b>Templates</b></div>
-        <button className="new-btn" style={{marginLeft:'auto'}} onClick={() => setShowModal(true)}>
-          ＋ New Template
-        </button>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div className="search" style={{ marginLeft: 0 }}>
+            <span>⌕</span>
+            <input
+              placeholder="Search templates…"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                style={{ background: 'none', border: 'none', color: 'var(--ink-mute)', cursor: 'pointer', padding: '0 2px', fontSize: '14px' }}
+                onClick={() => setSearchTerm('')}
+              >×</button>
+            )}
+          </div>
+          <button className="new-btn" onClick={() => setShowModal(true)}>
+            ＋ New Template
+          </button>
+        </div>
       </div>
 
       <div className="page-shell">
         <div className="page-head">
-          <div>
-            <h1>Document Templates</h1>
-            <p className="sub">
-              Customize boilerplate text for generated documents · each save creates a new version
-            </p>
-          </div>
         </div>
 
         {loading ? (
