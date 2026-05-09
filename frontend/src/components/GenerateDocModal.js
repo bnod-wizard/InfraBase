@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import accountApi from '../services/accountApi';
+import { useToast } from '../context';
 import '../styles/GenerateDocModal.css';
 
 const EMPTY_VALUATION = {
@@ -23,10 +24,10 @@ const EMPTY_VALUATION = {
 };
 
 function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }) {
+  const toast = useToast();
   const [valuation, setValuation]   = useState(EMPTY_VALUATION);
   const [saving, setSaving]         = useState(false);
   const [generating, setGenerating] = useState(null);
-  const [saveMsg, setSaveMsg]       = useState('');
 
   // Pre-fill from account hierarchy and saved valuation on open
   useEffect(() => {
@@ -60,13 +61,12 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
   };
 
   const handleSave = async () => {
-    setSaving(true); setSaveMsg('');
+    setSaving(true);
     try {
       await accountApi.saveValuation(accountId, valuation);
-      setSaveMsg('Saved.');
-      setTimeout(() => setSaveMsg(''), 2000);
+      toast('Valuation info saved');
     } catch {
-      setSaveMsg('Save failed.');
+      // handle error silently or show inline error
     } finally {
       setSaving(false);
     }
@@ -85,6 +85,8 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
+      const docLabel = docType.charAt(0).toUpperCase() + docType.slice(1);
+      toast(`${docLabel} document generated`);
     } catch (err) {
       alert('Document generation failed. Check console for details.');
       console.error(err);
@@ -189,7 +191,6 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
             <button className="gdm-btn-secondary" onClick={handleSave} disabled={saving}>
               {saving ? 'Saving…' : 'Save Info'}
             </button>
-            {saveMsg && <span className="gdm-save-msg">{saveMsg}</span>}
           </div>
           <div className="gdm-footer-right">
             <button className="gdm-btn-doc" onClick={() => handleGenerate('cover')} disabled={generating !== null}>

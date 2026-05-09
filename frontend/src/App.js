@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context';
+import { AuthProvider, ToastProvider } from './context';
 import { useAuth } from './hooks';
 import { AuthPage, HomePage } from './pages';
 import './App.css';
@@ -31,9 +31,11 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="App">
-          <AppContent />
-        </div>
+        <ToastProvider>
+          <div className="App">
+            <AppContent />
+          </div>
+        </ToastProvider>
       </AuthProvider>
     </Router>
   );

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import '../styles/AccountModal.css';
 import accountApi from '../services/accountApi';
+import { useToast } from '../context';
 
 const AccountModal = ({ isOpen, onClose, onSubmit }) => {
+  const toast = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -268,6 +270,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     accountApi.createAccountWithHierarchy(payload)
       .then((response) => {
         setIsLoading(false);
+        toast('Account created successfully');
         onSubmit(response.data.data);
         resetForm();
       })

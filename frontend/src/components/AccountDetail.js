@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import accountApi from '../services/accountApi';
 import GenerateDocModal from './GenerateDocModal';
+import { useToast } from '../context';
 import '../styles/AccountDetail.css';
 
 const pillClass = status => {
@@ -16,6 +17,7 @@ const pillClass = status => {
 function AccountDetail() {
   const { accountId } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [hierarchy,        setHierarchy]        = useState(null);
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState(null);
@@ -112,6 +114,7 @@ function AccountDetail() {
         setHierarchy(prev => ({ ...prev, account: res.data.data }));
         setFormData(res.data.data);
         setIsEditing(false);
+        toast('Account details saved');
       } else {
         setError(res.data?.message || 'Failed to save changes.');
       }
@@ -130,12 +133,14 @@ function AccountDetail() {
 
   const saveObjectEdit = () => {
     if (!activeObjectEdit.type || !activeObjectEdit.id) { cancelObjectEdit(); return; }
+    const typeLabel = activeObjectEdit.type.replace(/s$/, ''); // clients→client, etc.
     setHierarchy(prev => {
       if (!prev) return prev;
       const list = Array.isArray(prev[activeObjectEdit.type]) ? prev[activeObjectEdit.type] : [];
       return { ...prev, [activeObjectEdit.type]: list.map(item => (item._id || item.id) === activeObjectEdit.id ? activeObjectEdit.data : item) };
     });
     cancelObjectEdit();
+    toast(`${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} updated`);
   };
 
   const renderValue = value => {
