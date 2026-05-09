@@ -35,25 +35,9 @@ function Sidebar() {
           <span className="ico">▦</span> Dashboard <span className="badge">3</span>
         </div>
 
-        <div className={`item open ${isActive('/home/accounts') ? 'active' : ''}`}>
-          <span className="ico">◉</span> Accounts
-          <span className="chev">▸</span>
+        <div className={`item ${isActive('/home/accounts') ? 'active' : ''}`} onClick={() => navigate('/home/accounts')}>
+          <span className="ico">◉</span> Accounts <span className="badge">12</span>
         </div>
-        <div className="submenu">
-          <div className={`sub ${isActive('/home/accounts') ? 'active' : ''}`} onClick={() => navigate('/home/accounts')}>
-            <span className="dot"></span> All Customers <span className="count">248</span>
-          </div>
-          <div className="sub"><span className="dot"></span> Active Loans <span className="count">186</span></div>
-          <div className="sub"><span className="dot"></span> Pending Approval <span className="count">12</span></div>
-          <div className="sub"><span className="dot"></span> Overdue <span className="count">7</span></div>
-          <div className="sub"><span className="dot"></span> Closed <span className="count">43</span></div>
-          <div className="sub"><span className="dot"></span> Co-signers</div>
-        </div>
-
-        <div className="item"><span className="ico">▤</span> Applications <span className="badge">12</span></div>
-        <div className="item"><span className="ico">$</span> Disbursements</div>
-        <div className="item"><span className="ico">⟲</span> Repayments</div>
-        <div className="item"><span className="ico">⊟</span> Collateral</div>
       </div>
 
       <div className="group">

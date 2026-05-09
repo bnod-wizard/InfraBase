@@ -16,22 +16,32 @@ class OwnerModel:
         """Convert owner data to dictionary for database storage"""
         return {
             'account_id': owner_data.get('account_id'),
-            'client_id': owner_data.get('client_id'),  # Reference to client if applicable
+            'client_id': owner_data.get('client_id'),
             'owner_name': owner_data.get('owner_name'),
-            'owner_type': owner_data.get('owner_type'),  # individual, corporation, etc.
+            'owner_type': owner_data.get('owner_type', 'individual'),
             'title': owner_data.get('title'),
             'email': owner_data.get('email'),
             'phone': owner_data.get('phone'),
             'mobile': owner_data.get('mobile'),
             'fax': owner_data.get('fax'),
             'address': owner_data.get('address'),
+            'ward_no': owner_data.get('ward_no'),
+            'vdc_municipality': owner_data.get('vdc_municipality'),
+            'district': owner_data.get('district'),
             'city': owner_data.get('city'),
             'state': owner_data.get('state'),
             'zip_code': owner_data.get('zip_code'),
             'country': owner_data.get('country'),
-            'id_type': owner_data.get('id_type'),  # Passport, ID card, etc.
+            # Identity fields
+            'citizenship_no': owner_data.get('citizenship_no'),
+            'citizenship_issued_date': owner_data.get('citizenship_issued_date'),
+            'citizenship_issued_office': owner_data.get('citizenship_issued_office'),
+            'father_name': owner_data.get('father_name'),
+            'grandfather_name': owner_data.get('grandfather_name'),
+            'husband_name': owner_data.get('husband_name'),
+            'id_type': owner_data.get('id_type'),
             'id_number': owner_data.get('id_number'),
-            'pan_number': owner_data.get('pan_number'),  # Tax identification
+            'pan_number': owner_data.get('pan_number'),
             'bank_account': owner_data.get('bank_account'),
             'bank_name': owner_data.get('bank_name'),
             'ifsc_code': owner_data.get('ifsc_code'),

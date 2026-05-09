@@ -17,11 +17,13 @@ from services.client_service import ClientService
 from services.owner_service import OwnerService
 from services.property_service import PropertyService
 from services.bulk_account_service import BulkAccountCreationService
+from services.document_service import DocumentService
 from repositories import UserRepository, CustomerRepository
 from repositories.account_repository import AccountRepository
 from repositories.client_repository import ClientRepository
 from repositories.owner_repository import OwnerRepository
 from repositories.property_repository import PropertyRepository
+from repositories.valuation_repository import ValuationRepository
 
 load_dotenv()
 
@@ -59,7 +61,8 @@ if db is not None:
         client_repository = ClientRepository(db)
         owner_repository = OwnerRepository(db)
         property_repository = PropertyRepository(db)
-        
+        valuation_repository = ValuationRepository(db)
+
         # Service Layer
         auth_service = AuthService(user_repository, app.config['SECRET_KEY'])
         customer_service = CustomerService(customer_repository)
@@ -71,6 +74,7 @@ if db is not None:
         bulk_account_service = BulkAccountCreationService(
             account_repository, client_repository, property_repository, owner_repository
         )
+        document_service = DocumentService()
         
         # Controller Layer
         auth_controller = AuthController(auth_service)
@@ -78,7 +82,11 @@ if db is not None:
         pdf_controller = PDFController(pdf_service, customer_service, auth_service)
         
         # Register account controller with routes
-        account_controller(app, account_service, bulk_account_service, auth_service)
+        account_controller(
+            app, account_service, bulk_account_service, auth_service,
+            valuation_repository=valuation_repository,
+            document_service=document_service
+        )
         
         print("✓ Controllers, Services, and Repositories initialized")
     except Exception as e:

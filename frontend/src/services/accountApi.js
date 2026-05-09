@@ -47,7 +47,18 @@ const accountApi = {
 
   // Get account statistics
   getAccountStats: () =>
-    axiosInstance.get('/accounts/stats/overview')
+    axiosInstance.get('/accounts/stats/overview'),
+
+  // Valuation metadata
+  getValuation: (accountId) =>
+    axiosInstance.get(`/accounts/${accountId}/valuation`),
+
+  saveValuation: (accountId, data) =>
+    axiosInstance.post(`/accounts/${accountId}/valuation`, data),
+
+  // Document generation – returns a blob
+  generateDocument: (accountId, docType) =>
+    axiosInstance.get(`/accounts/${accountId}/generate/${docType}`, { responseType: 'blob' })
 };
 
 export default accountApi;

@@ -19,38 +19,126 @@ class PropertyModel:
             'client_id': property_data.get('client_id'),
             'owner_id': property_data.get('owner_id'),
             'property_name': property_data.get('property_name'),
-            'property_type': property_data.get('property_type'),  # residential, commercial, industrial
-            'property_status': property_data.get('property_status'),  # occupied, vacant, under_development
+            'property_type': property_data.get('property_type'),
+            'property_mortgaged': property_data.get('property_mortgaged', 'Both'),  # Land, Building, Both
+            'property_status': property_data.get('property_status'),
+
+            # Location
             'address': property_data.get('address'),
+            'tole': property_data.get('tole'),  # Locality/Tole
+            'ward_no': property_data.get('ward_no'),
+            'vdc_municipality': property_data.get('vdc_municipality'),
+            'district': property_data.get('district'),
             'city': property_data.get('city'),
             'state': property_data.get('state'),
             'zip_code': property_data.get('zip_code'),
             'country': property_data.get('country'),
+            'gps_coordinates': property_data.get('gps_coordinates'),
+            'sheet_no': property_data.get('sheet_no'),  # Survey map sheet number
+            'sabik': property_data.get('sabik'),  # Historical plot reference
+            'plot_no': property_data.get('plot_no'),
             'latitude': property_data.get('latitude'),
             'longitude': property_data.get('longitude'),
-            'total_area': property_data.get('total_area'),  # in sq ft or sq meters
-            'area_unit': property_data.get('area_unit'),  # sqft, sqm
-            'built_area': property_data.get('built_area'),
-            'carpet_area': property_data.get('carpet_area'),
+
+            # Land details
+            'land_area_lorc': property_data.get('land_area_lorc'),        # As per LORC (Sq.M)
+            'land_area_lorc_trad': property_data.get('land_area_lorc_trad'),  # e.g. 0-3-0-0
+            'land_area_measured': property_data.get('land_area_measured'),   # As measured (Sq.M)
+            'land_area_meas_trad': property_data.get('land_area_meas_trad'), # e.g. 0-2-3-3.20
             'land_area': property_data.get('land_area'),
+            'area_unit': property_data.get('area_unit', 'sqm'),
+            'land_shape': property_data.get('land_shape'),
+            'land_topography': property_data.get('land_topography'),
+            'frontage': property_data.get('frontage'),
+            'water_facility': property_data.get('water_facility'),
+
+            # Boundaries
+            'north_boundary': property_data.get('north_boundary'),
+            'south_boundary': property_data.get('south_boundary'),
+            'east_boundary': property_data.get('east_boundary'),
+            'west_boundary': property_data.get('west_boundary'),
+
+            # Building details
+            'building_label': property_data.get('building_label'),
+            'structural_system': property_data.get('structural_system'),
+            'building_age': property_data.get('building_age'),
+            'building_life': property_data.get('building_life'),
+            'total_area': property_data.get('total_area'),
+            'built_area': property_data.get('built_area'),
+            'approved_area': property_data.get('approved_area'),
+            'considered_area': property_data.get('considered_area'),
+            'carpet_area': property_data.get('carpet_area'),
+            'floor_details': property_data.get('floor_details', []),  # [{floor, area, use}]
             'number_of_units': property_data.get('number_of_units'),
             'bedrooms': property_data.get('bedrooms'),
             'bathrooms': property_data.get('bathrooms'),
             'parking_spaces': property_data.get('parking_spaces'),
             'construction_year': property_data.get('construction_year'),
             'property_age': property_data.get('property_age'),
-            'facing': property_data.get('facing'),  # North, South, East, West
-            'furnishing': property_data.get('furnishing'),  # Furnished, Semi-furnished, Unfurnished
-            'amenities': property_data.get('amenities'),  # List of amenities
-            'landmark': property_data.get('landmark'),
-            'survey_number': property_data.get('survey_number'),
-            'property_id_number': property_data.get('property_id_number'),  # Legal property ID
+            'facing': property_data.get('facing'),
+            'furnishing': property_data.get('furnishing'),
+
+            # Infrastructure & Services
+            'motorable_access': property_data.get('motorable_access'),
+            'road_access_blueprint': property_data.get('road_access_blueprint'),
+            'road_access_field': property_data.get('road_access_field'),
+            'road_width': property_data.get('road_width'),
+            'road_type': property_data.get('road_type'),  # Earthen, Gravel, Concrete, Asphalt
+            'road_side': property_data.get('road_side'),  # North, South, East, West
+            'electricity_line': property_data.get('electricity_line'),
+            'water_supply': property_data.get('water_supply'),
+            'sewerage': property_data.get('sewerage'),
+            'tv_cable': property_data.get('tv_cable'),
+            'telephone': property_data.get('telephone'),
+            'public_transport_distance': property_data.get('public_transport_distance'),
+            'nearest_landmark': property_data.get('nearest_landmark'),
+            'nearest_market': property_data.get('nearest_market'),
+
+            # Valuation
+            'commercial_rate_per_aana': property_data.get('commercial_rate_per_aana'),
+            'government_rate_per_aana': property_data.get('government_rate_per_aana'),
+            'fair_market_value_land': property_data.get('fair_market_value_land'),
+            'fair_market_value_building': property_data.get('fair_market_value_building'),
+            'fair_market_value_total': property_data.get('fair_market_value_total'),
+            'distress_value_land': property_data.get('distress_value_land'),
+            'distress_value_building': property_data.get('distress_value_building'),
+            'distress_value_total': property_data.get('distress_value_total'),
+            'gross_building_value': property_data.get('gross_building_value'),
+            'depreciation_rate': property_data.get('depreciation_rate'),
+            'net_building_value': property_data.get('net_building_value'),
+            'valuation_in_words': property_data.get('valuation_in_words'),
             'purchase_price': property_data.get('purchase_price'),
             'estimated_value': property_data.get('estimated_value'),
             'rental_value': property_data.get('rental_value'),
-            'currency': property_data.get('currency', 'USD'),
-            'documents': property_data.get('documents'),  # List of document references
-            'photos': property_data.get('photos'),  # List of photo URLs
+            'currency': property_data.get('currency', 'NPR'),
+
+            # Legal
+            'survey_number': property_data.get('survey_number'),
+            'property_id_number': property_data.get('property_id_number'),
+            'ownership_type': property_data.get('ownership_type'),
+            'hold_type': property_data.get('hold_type'),
+            'mode_of_acquisition': property_data.get('mode_of_acquisition'),
+            'lorc_registration_date': property_data.get('lorc_registration_date'),
+            'land_revenue_payment_date': property_data.get('land_revenue_payment_date'),
+            'gov_ratio': property_data.get('gov_ratio'),
+            'legal_reference_no': property_data.get('legal_reference_no'),
+
+            # Influencing factors
+            'near_army_barracks': property_data.get('near_army_barracks', False),
+            'near_cremation_area': property_data.get('near_cremation_area', False),
+            'near_dumping_site': property_data.get('near_dumping_site', False),
+            'near_fuel_depot': property_data.get('near_fuel_depot', False),
+            'near_hazardous_factory': property_data.get('near_hazardous_factory', False),
+            'near_high_tension_line': property_data.get('near_high_tension_line', False),
+            'near_monument': property_data.get('near_monument', False),
+            'near_river_stream': property_data.get('near_river_stream', False),
+            'near_temple': property_data.get('near_temple', False),
+            'water_logging': property_data.get('water_logging', False),
+
+            'amenities': property_data.get('amenities', []),
+            'landmark': property_data.get('landmark'),
+            'documents': property_data.get('documents', []),
+            'photos': property_data.get('photos', []),
             'notes': property_data.get('notes'),
             'status': property_data.get('status', 'active'),
             'created_by': property_data.get('created_by'),

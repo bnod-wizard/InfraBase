@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import accountApi from '../services/accountApi';
+import GenerateDocModal from './GenerateDocModal';
 import '../styles/AccountDetail.css';
 
 function AccountDetail() {
@@ -31,6 +32,7 @@ function AccountDetail() {
     updated_at: ''
   });
   const [activeObjectEdit, setActiveObjectEdit] = useState({ type: null, id: null, data: null });
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
 
   const clientFields = [
     { accessor: 'first_name', label: 'First Name' },
@@ -476,6 +478,9 @@ function AccountDetail() {
             <h1>{formData.account_name || 'Account details'}</h1>
             <p className="subtitle">View and edit the full account hierarchy: account, clients, properties, owners.</p>
           </div>
+          <button className="btn btn-primary" onClick={() => setIsDocModalOpen(true)}>
+            ⎙ Generate Document
+          </button>
         </div>
 
         <div className="detail-grid">
@@ -562,6 +567,14 @@ function AccountDetail() {
           </aside>
         </div>
       </div>
+
+      <GenerateDocModal
+        accountId={accountId}
+        accountName={formData.account_name || 'Account'}
+        hierarchy={hierarchy}
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
+      />
     </div>
   );
 }

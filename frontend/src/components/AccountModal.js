@@ -368,7 +368,11 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     <div className="account-modal-overlay">
       <div className="account-modal">
         <div className="account-modal-header">
-          <h2>Add New Account</h2>
+          <div>
+            <p className="modal-eyebrow">Accounts</p>
+            <h2>Add New Account</h2>
+            <p className="modal-sub">Create account with clients, properties and owners</p>
+          </div>
           <button className="close-btn" onClick={() => { onClose(); resetForm(); }}>✕</button>
         </div>
 

@@ -1,12 +1,14 @@
 """
 Account Controller - API endpoints for Account operations
 """
-from flask import request, jsonify
+from flask import request, jsonify, send_file
 from datetime import datetime
 from functools import wraps
+import io
 
 
-def account_controller(app, account_service, bulk_account_service, auth_service):
+def account_controller(app, account_service, bulk_account_service, auth_service,
+                       valuation_repository=None, document_service=None):
     """Register account-related routes"""
 
     def token_required(f):
@@ -159,6 +161,74 @@ def account_controller(app, account_service, bulk_account_service, auth_service)
                 return jsonify({'success': True, 'message': message}), 200
             else:
                 return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # ── Valuation report (get / upsert) ──────────────────────────────────────
+    @app.route('/api/accounts/<account_id>/valuation', methods=['GET'])
+    @token_required
+    def get_valuation(account_id):
+        try:
+            if valuation_repository is None:
+                return jsonify({'success': False, 'message': 'Valuation service not available'}), 503
+            records = valuation_repository.find_by_account(account_id)
+            from models.valuation_model import ValuationModel
+            data = [ValuationModel.to_json(r) for r in records]
+            return jsonify({'success': True, 'data': data[0] if data else {}}), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/accounts/<account_id>/valuation', methods=['POST', 'PUT'])
+    @token_required
+    def save_valuation(account_id):
+        try:
+            if valuation_repository is None:
+                return jsonify({'success': False, 'message': 'Valuation service not available'}), 503
+            from models.valuation_model import ValuationModel
+            payload = request.get_json()
+            payload['account_id'] = account_id
+            payload['created_by'] = request.user_id
+            record = ValuationModel.to_dict(payload)
+            _id = valuation_repository.upsert_for_account(account_id, record)
+            saved = valuation_repository.find_by_id(_id)
+            return jsonify({'success': True, 'data': ValuationModel.to_json(saved)}), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # ── Document generation ───────────────────────────────────────────────────
+    @app.route('/api/accounts/<account_id>/generate/<doc_type>', methods=['GET'])
+    @token_required
+    def generate_document(account_id, doc_type):
+        try:
+            if document_service is None:
+                return jsonify({'success': False, 'message': 'Document service not available'}), 503
+
+            # Fetch hierarchy
+            ok, msg, hierarchy = bulk_account_service.get_account_hierarchy(account_id)
+            if not ok:
+                return jsonify({'success': False, 'message': msg}), 404
+
+            # Fetch valuation metadata (may be empty)
+            valuation = {}
+            if valuation_repository:
+                records = valuation_repository.find_by_account(account_id)
+                if records:
+                    from models.valuation_model import ValuationModel
+                    valuation = ValuationModel.to_json(records[0])
+
+            doc_bytes = document_service.generate(doc_type, hierarchy, valuation)
+
+            account_name = hierarchy['account'].get('account_name', 'document').replace(' ', '_')
+            filename = f'{account_name}_{doc_type}.docx'
+
+            return send_file(
+                io.BytesIO(doc_bytes),
+                as_attachment=True,
+                download_name=filename,
+                mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
+        except ValueError as e:
+            return jsonify({'success': False, 'message': str(e)}), 400
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
