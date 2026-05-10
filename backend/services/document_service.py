@@ -24,14 +24,21 @@ def _money(value):
     if value is None:
         return '—'
     try:
-        return f'{float(value):,.2f}'
+        f = float(value)
+        return f'{f:,.2f}'
     except (ValueError, TypeError):
-        return str(value)
+        return '—'
 
 def _yn(flag, yes_text='Yes', no_text='No'):
     if flag is True or str(flag).lower() in ('yes','true','1'):
         return yes_text
     return no_text
+
+def _to_float(value, fallback=0.0):
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return fallback
 
 
 # ── Parties helpers ────────────────────────────────────────────────────────────
@@ -259,6 +266,21 @@ def build_context(hierarchy, valuation):
         f'The site can be accessed from {bank_name} and travelling around '
         f'{_v(prop.get("public_transport_distance") or prop.get("nearest_landmark"), "the area")}.'
     )
+    accessibility_text = (
+        f'The said site is linked via {_road_access(prop)}. '
+        f'The site can be accessed from {bank_name} and travelling around '
+        f'{_v(prop.get("public_transport_distance") or prop.get("nearest_landmark"), "the area")}, '
+        f'We can reach this Property.'
+    )
+
+    # Land area in sq.ft (1 sqm = 10.7639 sqft)
+    lorc_sqft = round(_to_float(prop.get('land_area_lorc') or 0) * 10.7639, 2)
+    meas_sqft = round(_to_float(prop.get('land_area_measured') or 0) * 10.7639, 2)
+
+    # Did area decrease from LORC to measurement?
+    lorc_num = _to_float(prop.get('land_area_measured') or 0)
+    meas_num = _to_float(prop.get('land_area_lorc') or 0)
+    area_change = 'Decreased' if lorc_num < meas_num else 'Increased'
 
     summary_remarks_lines = [merits[i] for i in range(min(5, len(merits))) if merits[i] != '—']
     summary_remarks = '\n'.join(summary_remarks_lines) if summary_remarks_lines else '—'
@@ -270,23 +292,18 @@ def build_context(hierarchy, valuation):
     dv_total     = _money(prop.get('distress_value_total'))
 
     # Avg FMV rate per Aana
+    govt_rate = _to_float(prop.get('government_rate_per_aana') or 0)
+    comm_rate = _to_float(prop.get('commercial_rate_per_aana') or 0)
+    avg_rate  = (govt_rate + comm_rate) / 2
+    avg_fmv_rate = _money(avg_rate) if avg_rate else '—'
     try:
-        govt_rate = float(prop.get('government_rate_per_aana') or 0)
-        comm_rate = float(prop.get('commercial_rate_per_aana') or 0)
-        avg_rate  = (govt_rate + comm_rate) / 2
-        avg_fmv_rate = _money(avg_rate) if avg_rate else '—'
-        # Rough land area in Aana
         land_aana = _v(prop.get('land_area_lorc_trad', '').split('-')[1] if prop.get('land_area_lorc_trad') else '', '—')
     except Exception:
-        avg_fmv_rate = '—'
-        land_aana    = '—'
+        land_aana = '—'
 
-    govt_land_value   = _money(float(prop.get('government_rate_per_aana') or 0) *
-                               float(prop.get('land_area_lorc') or 0) / 508.72
-                               if prop.get('land_area_lorc') else None)
-    market_land_value = _money(float(prop.get('commercial_rate_per_aana') or 0) *
-                               float(prop.get('land_area_lorc') or 0) / 508.72
-                               if prop.get('land_area_lorc') else None)
+    lorc_area_num = _to_float(prop.get('land_area_lorc') or 0)
+    govt_land_value   = _money(govt_rate * lorc_area_num / 508.72) if lorc_area_num else '—'
+    market_land_value = _money(comm_rate * lorc_area_num / 508.72) if lorc_area_num else '—'
 
     ctx = {
         # Firm
@@ -390,8 +407,17 @@ def build_context(hierarchy, valuation):
         # Influence flags
         **{v: _yn(prop.get(k)) for k, v in bool_fields.items()},
 
-        # Road
-        'road_access': _road_access(prop),
+        # Road & access detail
+        'road_access':           _road_access(prop),
+        'road_access_blueprint': _v(prop.get('road_access_blueprint'), '—'),
+        'land_topography':       _v(prop.get('land_topography'), '—'),
+        'facing':                _v(prop.get('facing'), '—'),
+        'public_transport_distance': _v(prop.get('public_transport_distance'), '—'),
+        'tole':                  _v(prop.get('tole'), '—'),
+        'accessibility_text':    accessibility_text,
+        'area_change':           area_change,
+        'land_area_lorc_sqft':   str(lorc_sqft) if lorc_sqft else '—',
+        'land_area_meas_sqft':   str(meas_sqft) if meas_sqft else '—',
 
         # Rates
         'commercial_rate': _money(prop.get('commercial_rate_per_aana')),

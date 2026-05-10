@@ -563,13 +563,39 @@ def build_proposal():
     page_break(doc)
     p(doc, 'g. Importance of the Location', bold=True, size=12, space_after=6)
     p(doc, '{{ location_importance_text }}', size=10, space_after=6)
-    p(doc, 'Following are some of the merits of the location:', size=10, space_before=4)
+    p(doc, 'Followings are the some of the merits of the location', bold=True, size=10, space_before=4, space_after=4)
     for bullet in ['{{ merit_1 }}','{{ merit_2 }}','{{ merit_3 }}','{{ merit_4 }}','{{ merit_5 }}']:
-        p2(doc, [('•  ', False, 10), (bullet, False, 10)], space_after=2)
+        p2(doc, [('▪  ', False, 10), (bullet, False, 10)], space_after=3)
 
-    p(doc, '', space_before=8)
-    p(doc, 'h. Description of the Property', bold=True, size=12, space_after=4)
-    p(doc, '{{ property_description }}', size=10)
+    # ── PAGE 7: Description ────────────────────────────────────────────────────
+    page_break(doc)
+    p(doc, 'h. Description of the Property', bold=True, size=12, space_after=6)
+    p(doc, 'A. LAND', bold=True, size=10, space_after=4)
+    ldt = doc.add_table(rows=1, cols=3); ldt.style = 'Table Grid'
+    header_row(ldt, ['S.N.', 'Particulars', 'Details'])
+    set_col_widths(ldt, [0.35, 2.7, 3.15])
+    for sn, label, val_txt in [
+        ('1',  'Type of Ownership',                              '{{ ownership_type }}'),
+        ('2',  'Shape of the Land',                             '{{ land_shape }}'),
+        ('3',  'Level of the Land',                             'General'),
+        ('4',  'Topography of Land',                            '{{ land_topography }}'),
+        ('5',  'Nature of Soil',                                'N/A'),
+        ('6',  'Plot No.',                                       '{{ plot_no }}'),
+        ('7',  'Access of the Land as per Blue Print',          '{{ road_access_blueprint }}'),
+        ('8',  'Access of the Land as per Field',               '{{ road_access }}'),
+        ('9',  'Frontage of Land',                              '{{ frontage }}'),
+        ('10', 'Face of Land',                                  '{{ facing }}'),
+        ('11', 'Any Construction on the Land',                  '—'),
+        ('12', 'Sewer Facility on the Land',                    '{{ sewerage }}'),
+        ('13', 'Water Supply Facility on that Area',            '{{ water_supply }}'),
+        ('14', 'Electricity Supply on that Area',               '{{ electricity_line }}'),
+        ('15', 'Nature of the Area',                            '{{ location_type }}'),
+        ('16', 'Whether located below High Tension Electric Line', '{{ near_high_tension_line_text }}'),
+        ('17', 'Address of the Land',                           '{{ property_location_full }}'),
+        ('18', 'Positive Feature of Land',                      'N/A'),
+        ('19', 'Any Negative Feature of The Area',              'N/A'),
+    ]:
+        tbl_row(ldt, [sn, label, val_txt])
 
     # ── PAGE 7: Legal Aspects ──────────────────────────────────────────────────
     page_break(doc)
@@ -581,31 +607,39 @@ def build_proposal():
 
     legal_sections = {
         'Land Ownership Document (Lalpurja)': [
-            ('a) Type of Ownership', '{{ ownership_type }}'),
-            ('b) Ownership of Land', '{{ hold_type }}'),
-            ('c) Name of the Owner', '{{ owners_plain }}'),
-            ('d) Comments, if any', 'None'),
+            ('a) Type of Ownership',   '{{ ownership_type }}'),
+            ('b) Ownership of Land',   '{{ hold_type }}'),
+            ('c) Name of the Owner',   '{{ owners_plain }}'),
+            ('d) Comments, if any',    'None'),
         ],
         'Land Revenue (Malpot)': [
-            ('a) Current Revenue has been paid', 'Yes'),
-            ('b) Date of Payment of Receipt', '{{ land_revenue_payment_date }}'),
-            ('c) Comments, if any', 'None'),
+            ('a) Whether the Current/Revenue has been paid', 'Yes'),
+            ('b) Date of Payment of Receipt',               '{{ land_revenue_payment_date }}'),
+            ('c) Comments, if any',                         'None'),
         ],
         'Land Registration Paper': [
-            ('a) Whether Normal Sale/Gift', '{{ mode_of_acquisition }}'),
-            ('b) Date of Registration', '{{ lorc_registration_date }}'),
-            ('c) Whether 6 Month 35 days has elapsed', 'Yes'),
-            ('d) Comments, if any', 'None'),
+            ('a) Whether Normal Sale/Gift',                                                  '{{ mode_of_acquisition }}'),
+            ('b) Date of Registration',                                                       '{{ lorc_registration_date }}'),
+            ('c) Whether 6 Month 35 days in case of Normal Sale & 2 years 35 days for Gift has elapsed', 'Yes'),
+            ('d) Comments, if any',                                                           'None'),
+        ],
+        'Maps of the Plots prepared by Government Survey Department': [
+            ('a) Whether the plots are indicated',                                   'Yes'),
+            ('b) Whether access is clearly marked on the map prepared by Government Survey Department', 'Yes'),
+            ('c) Whether the shape of the land in the field tally with the map',     'Yes'),
+            ('d) Comments, if any',                                                  'None'),
+            ('e) Whether the area of land increased or decreased compared to the recorded in the existing land Ownership Document', '{{ area_change }}'),
+            ('f) Comments, if any',                                                  'None'),
         ],
         'Certificate of Parameters of Boundaries': [
-            ('a) Parameters of Boundary Available', 'Yes'),
-            ('b) Date of Certification', '{{ boundary_cert_date }}'),
-            ('c) Comments, if any', 'None'),
+            ('a) Is the Parameters of Boundary Available', 'Yes'),
+            ('b) Date of Certification',                   '{{ boundary_cert_date }}'),
+            ('c) Comments, if any',                        'None'),
         ],
         'General': [
-            ('a) Free access to the property is Available', 'Yes'),
-            ('b) Land notified for acquisition by Government', 'No'),
-            ('c) Boundary clearly defined at site', 'Yes'),
+            ('a) Whether free access to the property is Available', 'Yes'),
+            ('b) Has whole or part of the land been notified for acquisition by government', 'No'),
+            ('c) Whether the boundary of the property is clearly defined at the site', 'Yes'),
             ('d) Comments, if any', 'None'),
         ],
     }
@@ -622,28 +656,41 @@ def build_proposal():
     p(doc, '3. Summary Declaration Sheet', bold=True, size=12, space_after=6)
 
     infra_checks = [
-        ('Motorable Access',               '{{ motorable_access }}'),
-        ('Water Supply Line',              '{{ water_supply }}'),
-        ('Electricity Line',               '{{ electricity_line }}'),
-        ('Telephone Line',                 '{{ telephone }}'),
-        ('TV Cable',                       '{{ tv_cable }}'),
-        ('Sewerage Pipe Line',             '{{ sewerage }}'),
-        ('River/Stream near the property', '{{ near_river_stream_text }}'),
-        ('Fuel storage depot',             '{{ near_fuel_depot_text }}'),
-        ('Temple/Shrine near property',    '{{ near_temple_text }}'),
-        ('Water Logging',                  '{{ water_logging_text }}'),
-        ('Cremation area near property',   '{{ near_cremation_area_text }}'),
-        ('Army barracks near property',    '{{ near_army_barracks_text }}'),
-        ('Monument near property',         '{{ near_monument_text }}'),
-        ('Hazardous factory',              '{{ near_hazardous_factory_text }}'),
-        ('Dumping site near property',     '{{ near_dumping_site_text }}'),
-        ('High-tension line near property','{{ near_high_tension_line_text }}'),
+        ('Motorable Access',                   '{{ motorable_access }}'),
+        ('Water Supply Line',                  '{{ water_supply }}'),
+        ('River/Stream near the property',     '{{ near_river_stream_text }}'),
+        ('Fuel storage depot near the property','{{ near_fuel_depot_text }}'),
+        ('Electricity Line',                   '{{ electricity_line }}'),
+        ('Telephone Line',                     '{{ telephone }}'),
+        ('TV Cable',                           '{{ tv_cable }}'),
+        ('Temple/Shrine near the property',    '{{ near_temple_text }}'),
+        ('Water Logging',                      '{{ water_logging_text }}'),
+        ('Cremation area near the property',   '{{ near_cremation_area_text }}'),
+        ('Army barracks near the property',    '{{ near_army_barracks_text }}'),
+        ('Monument near the property',         '{{ near_monument_text }}'),
+        ('Hazardous factory',                  '{{ near_hazardous_factory_text }}'),
+        ('Sewerage Pipe Line',                 '{{ sewerage }}'),
+        ('Dumping site near the property',     '{{ near_dumping_site_text }}'),
+        ('High-tension line near the property','{{ near_high_tension_line_text }}'),
     ]
     inft = doc.add_table(rows=1, cols=2); inft.style = 'Table Grid'
     header_row(inft, ['Item', 'Status'])
     set_col_widths(inft, [3.8, 2.4])
     for label, val in infra_checks:
         tbl_row(inft, [label, val])
+
+    # Property Type / Ownership / Hold
+    p(doc, '', space_before=6)
+    legal_decl = [
+        ('Property Type',            '{{ location_type }}'),
+        ('Property Ownership Type',  '{{ ownership_type }}'),
+        ('Hold Type',                '{{ hold_type }}'),
+    ]
+    legalt = doc.add_table(rows=1, cols=2); legalt.style = 'Table Grid'
+    header_row(legalt, ['Item', 'Value'])
+    set_col_widths(legalt, [2.5, 3.7])
+    for label, val in legal_decl:
+        tbl_row(legalt, [label, val])
 
     p(doc, '', space_before=6)
     p(doc, '4. Commercial Importance of the Land and Building', bold=True, size=12, space_after=4)
@@ -687,28 +734,46 @@ def build_proposal():
         tbl_row(sa, list(row_data), bold_first=True)
 
     p(doc, '', space_before=6)
+    # Boundaries + Accessibility side by side
     p(doc, 'Parameters of Four Boundaries', bold=True, size=10, space_after=4)
-    bbt = doc.add_table(rows=1, cols=5); bbt.style = 'Table Grid'
-    header_row(bbt, ['Plot', 'East', 'West', 'North', 'South'])
-    tbl_row(bbt, ['{{ plot_no }}', '{{ east_boundary }}', '{{ west_boundary }}',
-                  '{{ north_boundary }}', '{{ south_boundary }}'])
-
-    p(doc, '', space_before=6)
-    p(doc, '{{ summary_remarks }}', size=10)
+    bbt = doc.add_table(rows=2, cols=6); bbt.style = 'Table Grid'
+    set_col_widths(bbt, [0.55, 1.0, 1.0, 1.0, 1.0, 1.65])
+    header_row(bbt, ['Plot', 'East', 'West', 'North', 'South', 'Accessibility'])
+    bbt.rows[1].cells[0].text = '{{ plot_no }}'
+    bbt.rows[1].cells[1].text = '{{ east_boundary }}'
+    bbt.rows[1].cells[2].text = '{{ west_boundary }}'
+    bbt.rows[1].cells[3].text = '{{ north_boundary }}'
+    bbt.rows[1].cells[4].text = '{{ south_boundary }}'
+    bbt.rows[1].cells[5].text = '{{ accessibility_text }}'
+    for cell in bbt.rows[1].cells:
+        if cell.paragraphs[0].runs:
+            cell.paragraphs[0].runs[0].font.size = Pt(9)
 
     p(doc, '', space_before=6)
     p(doc, 'Value of the Property', bold=True, size=10, space_after=4)
-    vt = doc.add_table(rows=1, cols=3); vt.style = 'Table Grid'
-    header_row(vt, ['S.N.', 'Particulars', 'Fair Market Value (NRs.)'])
-    set_col_widths(vt, [0.4, 2.4, 2.0])
-    tbl_row(vt, ['1', 'Land', '{{ fair_market_value_land }}'])
-    tbl_row(vt, ['2', 'Building', '{{ fair_market_value_building }}'])
-    tbl_row(vt, ['', 'Total Amount', '{{ fair_market_value }}'])
+    vt = doc.add_table(rows=1, cols=4); vt.style = 'Table Grid'
+    header_row(vt, ['S.N.', 'Particulars', 'Market Value (NRs.)', 'Fair Market Value (NRs.)'])
+    set_col_widths(vt, [0.4, 1.8, 1.8, 1.8])
+    tbl_row(vt, ['1', 'Land',     '{{ market_land_value }}',         '{{ fair_market_value_land }}'])
+    tbl_row(vt, ['2', 'Building', '{{ fair_market_value_building }}', '{{ fair_market_value_building }}'])
+    tbl_row(vt, ['',  'Total Amount', '{{ market_land_value }}',      '{{ fair_market_value }}'])
 
-    p2(doc, [('On the basis of the details provided by Client and Field verification, '
-              'Fair Market Value of property to be mortgaged is valued NRs. ', False, 10),
-              ('{{ fair_market_value }}', True, 10),
-              ('.', False, 10)], space_before=6)
+    # Access Road type
+    p(doc, '', space_before=6)
+    p(doc, 'Access Road', bold=True, size=10, space_after=3)
+    p(doc, 'Type: {{ road_access }}', size=10, space_after=2)
+
+    # GPS
+    p2(doc, [('GPS Co-ordinate: ', True, 10), ('{{ gps_coordinates }}', False, 10)], space_before=4)
+
+    # Remarks
+    p(doc, '', space_before=6)
+    p(doc, 'Remarks:', bold=True, size=10, space_after=3)
+    for bullet in ['{{ merit_1 }}','{{ merit_2 }}','{{ merit_3 }}','{{ merit_4 }}','{{ merit_5 }}']:
+        p(doc, bullet, size=10, space_after=2)
+
+    p2(doc, [('Fair Market Value of Property (NRs.): ', True, 10),
+              ('{{ fair_market_value }}', True, 10)], space_before=6)
     p2(doc, [('In Words: ', False, 10), ('{{ valuation_in_words }}', False, 10, True)])
 
     # ── PAGE 10: Valuation ─────────────────────────────────────────────────────
@@ -724,25 +789,30 @@ def build_proposal():
 
     p(doc, '', space_before=6)
     p(doc, 'Value of the Land', bold=True, size=10, space_after=4)
-    vlandt = doc.add_table(rows=1, cols=5); vlandt.style = 'Table Grid'
-    header_row(vlandt, ['S.N.', 'Particulars', 'Area (Aana)', 'Rate per Aana (NRs.)', 'Amount (NRs.)'])
-    set_col_widths(vlandt, [0.4, 2.0, 0.9, 1.5, 1.5])
-    tbl_row(vlandt, ['1', 'Total Government Value of Land', '{{ land_area_aana }}',
-                     '{{ government_rate }}', '{{ govt_land_value }}'])
-    tbl_row(vlandt, ['2', 'Total Market Value of Land', '{{ land_area_aana }}',
-                     '{{ commercial_rate }}', '{{ market_land_value }}'])
-    tbl_row(vlandt, ['', 'Fair Market Value of Land (50% Govt + 50% Market)',
-                     '', '', '{{ fair_market_value_land }}'])
-    tbl_row(vlandt, ['', 'Average FMV Rate per Aana', '', '{{ avg_fmv_rate }}', ''])
+    vlandt = doc.add_table(rows=1, cols=6); vlandt.style = 'Table Grid'
+    header_row(vlandt, ['S.N.', 'Particulars', 'Plot No.', 'Area (Aana)', 'Rate per Aana (NRs.)', 'Amount (NRs.)'])
+    set_col_widths(vlandt, [0.35, 1.7, 0.6, 0.75, 1.3, 1.5])
+    tbl_row(vlandt, ['1', 'Total Government Value of Land', '{{ plot_no }}',
+                     '{{ land_area_aana }}', '{{ government_rate }}', '{{ govt_land_value }}'])
+    tbl_row(vlandt, ['2', 'Total Market Value of Land', '',
+                     '{{ land_area_aana }}', '{{ commercial_rate }}', '{{ market_land_value }}'])
+    tbl_row(vlandt, ['', 'Fair Market Value of Land',   '', '', 'Sum of 50% S.N.1 & 50% S.N.2', '{{ fair_market_value_land }}'])
+    tbl_row(vlandt, ['', 'Average Rate of Land per Aana (50% Govt + 50% Market)', '', '', '{{ avg_fmv_rate }}', ''])
+
+    p(doc, '', space_before=4)
+    p(doc, '50% Of Government Value Of Land  :  {{ govt_land_value }}', size=9)
+    p(doc, '50% Of Market Value Of Land       :  {{ market_land_value }}', size=9)
+    p2(doc, [('Total Fair Market Value Of Land  :  ', False, 9), ('{{ fair_market_value_land }}', True, 9)])
 
     p(doc, '', space_before=6)
-    p(doc, 'VALUATION OF THE PROPERTY', bold=True, size=10, space_after=4)
-    vtott = doc.add_table(rows=1, cols=4); vtott.style = 'Table Grid'
-    header_row(vtott, ['S.N.', 'Particulars', 'Commercial Value (NRs.)', 'Fair Market Value (NRs.)'])
-    set_col_widths(vtott, [0.4, 1.8, 2.0, 2.0])
-    tbl_row(vtott, ['1', 'Land', '{{ market_land_value }}', '{{ fair_market_value_land }}'])
-    tbl_row(vtott, ['2', 'Building', '{{ fair_market_value_building }}', '{{ fair_market_value_building }}'])
-    tbl_row(vtott, ['', 'Total', '{{ market_land_value }}', '{{ fair_market_value }}'])
+    p(doc, 'VALUATION OF THE PROPERTY', bold=True, size=10, space_after=4,
+      align=WD_ALIGN_PARAGRAPH.CENTER)
+    vtott = doc.add_table(rows=1, cols=5); vtott.style = 'Table Grid'
+    header_row(vtott, ['S.N.', 'Particulars', 'Commercial Value (NRs.)', 'Fair Market Value (NRs.)', 'Say (FMV)'])
+    set_col_widths(vtott, [0.35, 1.65, 1.5, 1.5, 1.2])
+    tbl_row(vtott, ['1', 'Land',     '{{ market_land_value }}',         '{{ fair_market_value_land }}',     '{{ fair_market_value_land }}'])
+    tbl_row(vtott, ['2', 'Building', '{{ fair_market_value_building }}', '{{ fair_market_value_building }}', '{{ fair_market_value_building }}'])
+    tbl_row(vtott, ['',  'Total',    '{{ market_land_value }}',          '{{ fair_market_value }}',           '{{ fair_market_value }}'])
 
     p2(doc, [('Fair Market Value of Property (NRs.): ', True, 10), ('{{ fair_market_value }}', True, 10)],
        space_before=6)
@@ -835,6 +905,73 @@ def build_proposal():
                 cell.paragraphs[0].runs[0].font.size = Pt(10)
     cert_tbl.rows[0].cells[0].paragraphs[0].runs[0].bold = True
     cert_tbl.rows[0].cells[1].paragraphs[0].runs[0].bold = True
+
+    # ── PAGE 13: Area Calculation ──────────────────────────────────────────────
+    page_break(doc)
+    p(doc, '13. Site Measurement of the Land (Area Calculation)', bold=True, size=12, space_after=6)
+
+    # A. Total land area as per measurement (triangulation)
+    p(doc, 'A. Total Land Area as per Measurement', bold=True, size=10, space_after=4)
+    triat = doc.add_table(rows=1, cols=7); triat.style = 'Table Grid'
+    header_row(triat, ['Triangle', 'Side a (ft)', 'Side b (ft)', 'Side c (ft)',
+                       'S=(a+b+c)/2', 'Total (Sqft)', 'Land (Aana)'])
+    set_col_widths(triat, [0.7, 0.85, 0.85, 0.85, 0.85, 0.9, 0.8])
+    tbl_row(triat, ['A', '—', '—', '—', '—', '—', '—'])
+    tbl_row(triat, ['B', '—', '—', '—', '—', '—', '—'])
+    total_row = triat.add_row()
+    total_row.cells[0].text = 'Total'
+    total_row.cells[5].text = '{{ land_area_meas_sqft }}'
+    total_row.cells[6].text = '{{ land_area_measured }}'
+    for cell in total_row.cells:
+        if cell.paragraphs[0].runs:
+            cell.paragraphs[0].runs[0].bold = True
+            cell.paragraphs[0].runs[0].font.size = Pt(9.5)
+
+    # B. Total land area after deduction
+    p(doc, '', space_before=8)
+    p(doc, 'B. Total Land Area as per Measurement after Deduction', bold=True, size=10, space_after=4)
+    triat2 = doc.add_table(rows=1, cols=7); triat2.style = 'Table Grid'
+    header_row(triat2, ['Triangle', 'Side a (ft)', 'Side b (ft)', 'Side c (ft)',
+                        'S=(a+b+c)/2', 'Total (Sqft)', 'Land (Aana)'])
+    set_col_widths(triat2, [0.7, 0.85, 0.85, 0.85, 0.85, 0.9, 0.8])
+    tbl_row(triat2, ['A', '—', '—', '—', '—', '—', '—'])
+    tbl_row(triat2, ['B', '—', '—', '—', '—', '—', '—'])
+    deduct_row = triat2.add_row()
+    deduct_row.cells[0].text = 'Total'
+    deduct_row.cells[5].text = '{{ land_area_deducted }}'
+    deduct_row.cells[6].text = '{{ deduct_a }}'
+    for cell in deduct_row.cells:
+        if cell.paragraphs[0].runs:
+            cell.paragraphs[0].runs[0].bold = True
+            cell.paragraphs[0].runs[0].font.size = Pt(9.5)
+
+    # C. Total land area as per Lalpurja
+    p(doc, '', space_before=8)
+    p(doc, 'C. Total Land Area as per Lalpurja', bold=True, size=10, space_after=4)
+    lorct = doc.add_table(rows=1, cols=7); lorct.style = 'Table Grid'
+    header_row(lorct, ['Location', 'Plot No.', 'R', 'A', 'P', 'D', 'Sqft'])
+    set_col_widths(lorct, [2.0, 0.7, 0.5, 0.5, 0.5, 0.5, 0.8])
+    tbl_row(lorct, ['{{ property_location_full }}', '{{ plot_no }}',
+                    '{{ lorc_r }}', '{{ lorc_a }}', '{{ lorc_p }}', '{{ lorc_d }}',
+                    '{{ land_area_lorc_sqft }}'])
+    lorc_total = lorct.add_row()
+    lorc_total.cells[0].text = 'Total'
+    lorc_total.cells[6].text = '{{ land_area_lorc_sqft }}'
+    for cell in lorc_total.cells:
+        if cell.paragraphs[0].runs:
+            cell.paragraphs[0].runs[0].bold = True
+            cell.paragraphs[0].runs[0].font.size = Pt(9.5)
+
+    # Summary
+    p(doc, '', space_before=8)
+    p(doc, 'Summary', bold=True, size=10, space_after=4)
+    sumt = doc.add_table(rows=1, cols=2); sumt.style = 'Table Grid'
+    header_row(sumt, ['Particulars', 'Area (Sqft)'])
+    set_col_widths(sumt, [3.5, 2.7])
+    tbl_row(sumt, ['Area as per Lalpurja',             '{{ land_area_lorc_sqft }}'])
+    tbl_row(sumt, ['Area as per Measurement',           '{{ land_area_meas_sqft }}'])
+    tbl_row(sumt, ['Area after Deduction',              '{{ land_area_deducted }}'])
+    tbl_row(sumt, ['Area Considered for Valuation',     '{{ land_area_considered }}'])
 
     doc.save(os.path.join(DIR, 'proposal_template.docx'))
     print('  ✓ proposal_template.docx')
