@@ -1,14 +1,12 @@
-/**
- * HomePage - Main page after login
- */
-import React, { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import AccountsPage from './AccountsPage';
 import AccountDetailPage from './AccountDetailPage';
 import AccountModal from '../components/AccountModal';
 import TemplatesPage from './TemplatesPage';
 import TemplateBuilder from '../components/TemplateBuilder';
+import accountApi from '../services/accountApi';
 
 const HomePage = () => {
   return (
@@ -27,8 +25,89 @@ const HomePage = () => {
   );
 };
 
+/* ── status → swatch color ─────────────────────────────────── */
+const SWATCH = {
+  active:             'var(--ok)',
+  paid:               'var(--ok)',
+  'bank verified':    '#00897b',
+  'bank verification':'var(--info)',
+  prospect:           'var(--info)',
+  'payment pending':  'var(--warn)',
+  pending:            'var(--warn)',
+  lost:               'var(--danger)',
+  overdue:            'var(--danger)',
+  deleted:            'var(--ink-dim)',
+  archived:           'var(--ink-dim)',
+  inactive:           'var(--ink-dim)',
+};
+
+const swatchColor = status => SWATCH[(status || '').toLowerCase()] || 'var(--ink-dim)';
+
+/* ── time formatter ────────────────────────────────────────── */
+const parseUtc = iso => {
+  if (!iso) return null;
+  const s = /[Zz]|[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso + 'Z';
+  return new Date(s);
+};
+
+const fmtTime = iso => {
+  const d = parseUtc(iso);
+  if (!d) return '';
+  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+};
+
+const fmtFull = iso => {
+  const d = parseUtc(iso);
+  if (!d) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    + ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+};
+
+/* ── message builder (mirrors AccountDetail logic) ─────────── */
+const buildMessage = log => {
+  const actor    = log.changed_by_name || log.changed_by || 'System';
+  const acctName = log.account_name    || 'an account';
+  const isCreate = !log.old_status;
+
+  return isCreate
+    ? { title: <>An account for <b>{acctName}</b> has been added by {actor}</>,
+        sub:   `Status of the account is ${log.new_status}` }
+    : { title: <><b>{actor}</b> changed status to {log.new_status}</>,
+        sub:   `${acctName} · was ${log.old_status}` };
+};
+
+/* ── Pipeline stage definitions ────────────────────────────── */
+const PIPELINE_STAGES = [
+  { label: 'Active',            key: 'Active',            color: '#2e8b57', bg: '#e6f3ec' },
+  { label: 'Prospect',          key: 'Prospect',          color: '#3b6fb6', bg: '#e7f3ff' },
+  { label: 'Bank Verification', key: 'Bank Verification', color: '#3b6fb6', bg: '#e7f3ff' },
+  { label: 'Bank Verified',     key: 'Bank Verified',     color: '#00695c', bg: '#e0f2f1' },
+  { label: 'Payment Pending',   key: 'Payment Pending',   color: '#e8743b', bg: '#fff0ed' },
+  { label: 'Paid',              key: 'Paid',              color: '#2e8b57', bg: '#e6f3ec' },
+];
+
+/* ── DashboardContent ──────────────────────────────────────── */
 const DashboardContent = () => {
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpen,    setModalOpen]    = useState(false);
+  const [activity,     setActivity]     = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [statusCounts, setStatusCounts] = useState({});
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    accountApi.getRecentChangelogs(20)
+      .then(res => {
+        if (res.data?.success) setActivity(res.data.data || []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+
+    accountApi.getAccountStats()
+      .then(res => {
+        if (res.data?.success) setStatusCounts(res.data.data?.status_counts || {});
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <>
@@ -48,28 +127,82 @@ const DashboardContent = () => {
         <div className="panel">
           <div className="panel-head">
             <h3>Recent Activity</h3>
-            <div className="more"><span className="chip">View all</span></div>
+            <div className="more">
+              <span className="chip" style={{cursor:'pointer'}} onClick={() => navigate('/home/accounts')}>
+                View all
+              </span>
+            </div>
           </div>
+
           <div className="activity">
-            <div className="act ok"><div className="swatch"></div><div className="time">14:22</div><div className="body"><b>Sanction Letter</b> generated for Rohan Sharma<small>LL-00248 · sent for e-signature</small></div></div>
-            <div className="act warn"><div className="swatch"></div><div className="time">12:08</div><div className="body">Repayment <b>missed</b> by Vikram Singh<small>LL-00245 · ₹ 12,400 · 14 days overdue</small></div></div>
-            <div className="act info"><div className="swatch"></div><div className="time">10:51</div><div className="body"><b>KYC verified</b> for Priya Verma<small>PAN, Aadhaar, Bank statement</small></div></div>
-            <div className="act"><div className="swatch"></div><div className="time">09:34</div><div className="body">New application from <b>Devansh Chauhan</b><small>Personal loan · ₹ 4,40,000 requested</small></div></div>
-            <div className="act ok"><div className="swatch"></div><div className="time">08:12</div><div className="body"><b>EMI received</b> from Ananya Kapoor<small>LL-00246 · ₹ 28,750 auto-debit</small></div></div>
+            {loading && (
+              <div style={{padding:'24px',color:'var(--ink-mute)',fontSize:'13px'}}>Loading…</div>
+            )}
+
+            {!loading && activity.length === 0 && (
+              <div style={{padding:'24px',color:'var(--ink-mute)',fontSize:'13px'}}>
+                No activity yet. Create an account to get started.
+              </div>
+            )}
+
+            {!loading && activity.map((log, idx) => {
+              const msg = buildMessage(log);
+              return (
+                <div
+                  key={log._id || idx}
+                  className="act"
+                  style={{cursor: log.account_id ? 'pointer' : 'default'}}
+                  onClick={() => log.account_id && navigate(`/home/accounts/${log.account_id}`)}
+                >
+                  <div className="swatch" style={{background: swatchColor(log.new_status)}} />
+                  <div className="time">{fmtTime(log.changed_at)}</div>
+                  <div className="body">
+                    {msg.title}
+                    <small style={{display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap'}}>
+                      <span style={{
+                        display:'inline-block', padding:'1px 7px', borderRadius:'999px',
+                        fontSize:'10px', fontWeight:700, fontFamily:'var(--mono)',
+                        textTransform:'uppercase',
+                        background: swatchColor(log.new_status) + '22',
+                        color: swatchColor(log.new_status),
+                        border: `1px solid ${swatchColor(log.new_status)}44`,
+                      }}>{log.new_status}</span>
+                      {msg.sub}
+                      <span style={{marginLeft:'auto', color:'var(--ink-mute)', fontSize:'11px'}}>
+                        {fmtFull(log.changed_at)}
+                      </span>
+                    </small>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         <aside className="stack">
           <div className="panel pipeline" style={{padding:'18px'}}>
-            <div style={{display:'flex',alignItems:'center',marginBottom:'14px'}}>
-              <h3 style={{margin:'0',fontSize:'14px',fontWeight:'600'}}>Application Pipeline</h3>
-              <span style={{marginLeft:'auto',fontFamily:'var(--mono)',fontSize:'11px',color:'var(--ink-mute)'}}>36 in flow</span>
-            </div>
-            <div className="stage"><span className="lab">New leads</span><div className="bar"><i style={{width:'90%',background:'#dcdcd2'}}></i></div><span className="num">14</span></div>
-            <div className="stage"><span className="lab">KYC pending</span><div className="bar"><i style={{width:'62%',background:'#3b6fb6'}}></i></div><span className="num">9</span></div>
-            <div className="stage"><span className="lab">Underwriting</span><div className="bar"><i style={{width:'48%',background:'#e8743b'}}></i></div><span className="num">7</span></div>
-            <div className="stage"><span className="lab">Sanctioned</span><div className="bar"><i style={{width:'30%',background:'#1f3a2e'}}></i></div><span className="num">4</span></div>
-            <div className="stage"><span className="lab">Disbursed</span><div className="bar"><i style={{width:'14%',background:'#2e8b57'}}></i></div><span className="num">2</span></div>
+            {(() => {
+              const counts = PIPELINE_STAGES.map(s => statusCounts[s.key] || 0);
+              const inFlow = counts.reduce((a, b) => a + b, 0);
+              const total  = Math.max(inFlow, 1);
+              return (
+                <>
+                  <div style={{display:'flex',alignItems:'center',marginBottom:'14px'}}>
+                    <h3 style={{margin:'0',fontSize:'14px',fontWeight:'600'}}>Application Pipeline</h3>
+                    <span style={{marginLeft:'auto',fontFamily:'var(--mono)',fontSize:'11px',color:'var(--ink-mute)'}}>{inFlow} in flow</span>
+                  </div>
+                  {PIPELINE_STAGES.map((stage, i) => (
+                    <div key={stage.key} className="stage">
+                      <span className="lab">{stage.label}</span>
+                      <div className="bar" style={{background: stage.bg}}>
+                        <i style={{width: `${(counts[i] / total) * 100}%`, background: stage.color}}></i>
+                      </div>
+                      <span className="num" style={{color: stage.color}}>{counts[i]}</span>
+                    </div>
+                  ))}
+                </>
+              );
+            })()}
           </div>
         </aside>
       </section>
@@ -114,7 +247,6 @@ const DashboardContent = () => {
             <span style={{marginLeft:'auto',color:'var(--ink-mute)'}}>Apr peak — ₹ 1.84 Cr disbursed</span>
           </div>
         </div>
-
       </section>
 
       <AccountModal

@@ -1,8 +1,10 @@
 """
 Account Repository - Data access layer for Account model
 """
+import re
 from bson import ObjectId
 from datetime import datetime
+from models.account_changelog_model import AccountChangelogModel
 
 
 class AccountRepository:
@@ -11,12 +13,23 @@ class AccountRepository:
     def __init__(self, db):
         self.db = db
         self.collection = db['accounts']
+        self.changelog_model = AccountChangelogModel(db)
 
-    def create_account(self, account_data):
+    def create_account(self, account_data, changed_by_name=None):
         """Create a new account"""
         try:
             result = self.collection.insert_one(account_data)
-            return result.inserted_id
+            account_id = result.inserted_id
+            self.changelog_model.insert_log(
+                str(account_id),
+                old_status=None,
+                new_status=account_data.get('status', 'Active'),
+                changed_by=account_data.get('created_by'),
+                changed_by_name=changed_by_name,
+                account_name=account_data.get('account_name'),
+                note='Account created',
+            )
+            return account_id
         except Exception as e:
             raise Exception(f"Error creating account: {str(e)}")
 
@@ -26,6 +39,13 @@ class AccountRepository:
             return self.collection.find_one({'_id': ObjectId(account_id)})
         except Exception as e:
             raise Exception(f"Error finding account: {str(e)}")
+
+    def get_by_email(self, email):
+        """Find account by email"""
+        try:
+            return self.collection.find_one({'email': email})
+        except Exception as e:
+            raise Exception(f"Error finding account by email: {str(e)}")
 
     def find_all(self, skip=0, limit=10):
         """Get all accounts with pagination"""
@@ -41,22 +61,57 @@ class AccountRepository:
         except Exception as e:
             raise Exception(f"Error counting accounts: {str(e)}")
 
-    def update_account(self, account_id, account_data):
+    def update_account(self, account_id, account_data, changed_by=None, changed_by_name=None):
         """Update account"""
         try:
+            current_account = self.collection.find_one({'_id': ObjectId(account_id)})
+            old_status   = current_account.get('status')   if current_account else None
+            account_name = current_account.get('account_name') if current_account else None
+            new_status   = account_data.get('status')
+
             result = self.collection.update_one(
                 {'_id': ObjectId(account_id)},
                 {'$set': account_data}
             )
+
+            if old_status != new_status and new_status is not None:
+                self.changelog_model.insert_log(
+                    account_id,
+                    old_status=old_status,
+                    new_status=new_status,
+                    changed_by=changed_by,
+                    changed_by_name=changed_by_name,
+                    account_name=account_name,
+                )
+
             return result.modified_count > 0
         except Exception as e:
             raise Exception(f"Error updating account: {str(e)}")
 
-    def delete_account(self, account_id):
-        """Delete account"""
+    def delete_account(self, account_id, changed_by=None, changed_by_name=None):
+        """Soft delete account by setting status to Deleted"""
         try:
-            result = self.collection.delete_one({'_id': ObjectId(account_id)})
-            return result.deleted_count > 0
+            current_account = self.collection.find_one({'_id': ObjectId(account_id)})
+            old_status   = current_account.get('status')       if current_account else None
+            account_name = current_account.get('account_name') if current_account else None
+
+            result = self.collection.update_one(
+                {'_id': ObjectId(account_id)},
+                {'$set': {'status': 'Deleted', 'updated_at': datetime.utcnow()}}
+            )
+
+            if old_status != 'Deleted':
+                self.changelog_model.insert_log(
+                    account_id,
+                    old_status=old_status,
+                    new_status='Deleted',
+                    changed_by=changed_by,
+                    changed_by_name=changed_by_name,
+                    account_name=account_name,
+                    note='Account marked as Deleted',
+                )
+
+            return result.modified_count > 0
         except Exception as e:
             raise Exception(f"Error deleting account: {str(e)}")
 
@@ -90,10 +145,12 @@ class AccountRepository:
                 }
                 filters.append(search_filter)
             
-            # Add status filter if provided
             if status_filters and len(status_filters) > 0:
-                status_filter = {'status': {'$in': status_filters}}
-                filters.append(status_filter)
+                status_conditions = [
+                    {'status': {'$regex': f'^{re.escape(s)}$', '$options': 'i'}}
+                    for s in status_filters
+                ]
+                filters.append({'$or': status_conditions} if len(status_conditions) > 1 else status_conditions[0])
             
             # Combine all filters with AND
             if filters:
@@ -120,9 +177,16 @@ class AccountRepository:
         except Exception as e:
             raise Exception(f"Error aggregating status counts: {str(e)}")
 
-    def get_by_email(self, email):
-        """Find account by email"""
+    def get_changelog(self, account_id, limit=50):
+        """Get changelog for an account"""
         try:
-            return self.collection.find_one({'email': email})
+            return list(self.changelog_model.collection.find({'account_id': account_id}).sort('changed_at', -1).limit(limit))
         except Exception as e:
-            raise Exception(f"Error finding account by email: {str(e)}")
+            raise Exception(f"Error fetching changelog: {str(e)}")
+
+    def get_recent_changelogs(self, limit=20):
+        """Get most recent changelog entries across all accounts"""
+        try:
+            return list(self.changelog_model.collection.find().sort('changed_at', -1).limit(limit))
+        except Exception as e:
+            raise Exception(f"Error fetching recent changelogs: {str(e)}")

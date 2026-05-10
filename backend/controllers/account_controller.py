@@ -9,7 +9,8 @@ import io
 
 def account_controller(app, account_service, bulk_account_service, auth_service,
                        valuation_repository=None, document_service=None,
-                       client_service=None, owner_service=None, property_service=None):
+                       client_service=None, owner_service=None, property_service=None,
+                       user_repository=None):
     """Register account-related routes"""
 
     def token_required(f):
@@ -43,12 +44,13 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
     def create_account():
         try:
             data = request.get_json()
-            success, message, result = account_service.create_account(data, request.user_id)
-            
+            username = _resolve_username(request.user_id)
+            success, message, result = account_service.create_account(
+                data, request.user_id, created_by_name=username
+            )
             if success:
                 return jsonify({'success': True, 'message': message, 'data': result}), 201
-            else:
-                return jsonify({'success': False, 'message': message}), 400
+            return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -71,6 +73,41 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 }), 201
             else:
                 return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    def _resolve_username(user_id):
+        """Return the username for a user_id, falling back to the id string."""
+        if user_repository is None:
+            return user_id
+        try:
+            user = user_repository.find_by_id(user_id)
+            return user.get('username') or user.get('email') or user_id if user else user_id
+        except Exception:
+            return user_id
+
+    # Recent changelogs across all accounts (must precede /<account_id> route)
+    @app.route('/api/accounts/changelog/recent', methods=['GET'])
+    @token_required
+    def get_recent_changelogs():
+        try:
+            limit = request.args.get('limit', 20, type=int)
+            success, message, result = account_service.get_recent_changelogs(limit)
+            if success:
+                return jsonify({'success': True, 'message': message, 'data': result}), 200
+            return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # Account stats overview (must precede /<account_id> route)
+    @app.route('/api/accounts/stats/overview', methods=['GET'])
+    @token_required
+    def get_account_stats():
+        try:
+            success, message, result = account_service.get_stats_overview()
+            if success:
+                return jsonify({'success': True, 'message': message, 'data': result}), 200
+            return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -166,12 +203,14 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
     def update_account(account_id):
         try:
             data = request.get_json()
-            success, message, result = account_service.update_account(account_id, data)
-            
+            username = _resolve_username(request.user_id)
+            success, message, result = account_service.update_account(
+                account_id, data,
+                changed_by=request.user_id, changed_by_name=username
+            )
             if success:
                 return jsonify({'success': True, 'message': message, 'data': result}), 200
-            else:
-                return jsonify({'success': False, 'message': message}), 400
+            return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -180,12 +219,13 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
     @token_required
     def delete_account(account_id):
         try:
-            success, message, result = account_service.delete_account(account_id)
-            
+            username = _resolve_username(request.user_id)
+            success, message, result = account_service.delete_account(
+                account_id, changed_by=request.user_id, changed_by_name=username
+            )
             if success:
                 return jsonify({'success': True, 'message': message}), 200
-            else:
-                return jsonify({'success': False, 'message': message}), 400
+            return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -302,12 +342,13 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
-    # Get account statistics
-    @app.route('/api/accounts/stats/overview', methods=['GET'])
+    # Get account changelog
+    @app.route('/api/accounts/<account_id>/changelog', methods=['GET'])
     @token_required
-    def get_account_stats():
+    def get_account_changelog(account_id):
         try:
-            success, message, result = account_service.get_account_statistics()
+            limit = int(request.args.get('limit', 10))
+            success, message, result = account_service.get_account_changelog(account_id, limit)
             
             if success:
                 return jsonify({'success': True, 'message': message, 'data': result}), 200

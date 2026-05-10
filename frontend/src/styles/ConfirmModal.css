@@ -1,0 +1,64 @@
+.cm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 31, 23, 0.35);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: cm-fade-in 0.15s ease;
+}
+
+@keyframes cm-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.cm-box {
+  background: var(--surface, #fff);
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 20px;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 24px 64px -12px rgba(15, 31, 23, 0.28);
+  animation: cm-slide-up 0.18s cubic-bezier(.4, 0, .2, 1);
+}
+
+@keyframes cm-slide-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.cm-title {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.cm-message {
+  margin: 0 0 22px;
+  font-size: 13.5px;
+  color: var(--ink-mute, #6b7280);
+  line-height: 1.55;
+}
+
+.cm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.cm-confirm {
+  background: var(--brand, #1f3a2e);
+  color: #fff;
+  border-color: var(--brand, #1f3a2e);
+}
+
+.cm-confirm--danger {
+  background: var(--danger, #c0392b);
+  border-color: var(--danger, #c0392b);
+}

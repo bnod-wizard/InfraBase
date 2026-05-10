@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import accountApi from '../services/accountApi';
+import ConfirmModal from './ConfirmModal';
 import '../styles/AccountList.css';
 
 const AVATAR_COLORS = [
@@ -15,20 +16,41 @@ const avatarColor = name => {
 };
 
 const pillClass = status => {
-  const s = (status || '').toLowerCase();
-  if (s === 'active')                        return 'ok';
-  if (s === 'pending' || s === 'review' || s === 'in review') return 'review';
-  if (s === 'overdue' || s === 'due')        return 'due';
-  if (s === 'inactive' || s === 'closed')    return 'draft';
-  return 'draft';
+  switch ((status || '').toLowerCase()) {
+    case 'active':            return 'ok';
+    case 'paid':              return 'ok';
+    case 'bank verified':     return 'info';
+    case 'bank verification': return 'review';
+    case 'prospect':          return 'review';
+    case 'payment pending':   return 'warn';
+    case 'pending':           return 'warn';
+    case 'lost':
+    case 'overdue':           return 'due';
+    case 'deleted':
+    case 'archived':
+    case 'inactive':
+    case 'closed':            return 'draft';
+    default:                  return 'draft';
+  }
 };
 
 const rowStatusClass = status => {
-  const s = (status || '').toLowerCase();
-  if (s === 'active')                        return 'status-ok';
-  if (s === 'pending' || s === 'review')     return 'status-review';
-  if (s === 'overdue' || s === 'due')        return 'status-due';
-  return 'status-draft';
+  switch ((status || '').toLowerCase()) {
+    case 'active':
+    case 'paid':
+    case 'bank verified':     return 'status-ok';
+    case 'bank verification':
+    case 'prospect':          return 'status-review';
+    case 'payment pending':
+    case 'pending':           return 'status-review';
+    case 'lost':
+    case 'overdue':           return 'status-due';
+    case 'deleted':
+    case 'archived':
+    case 'inactive':
+    case 'closed':            return 'status-draft';
+    default:                  return 'status-draft';
+  }
 };
 
 const parseUtc = iso => {
@@ -65,6 +87,7 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
   const [loading,       setLoading]       = useState(true);
   const [currentPage,   setCurrentPage]   = useState(1);
   const [totalAccounts, setTotalAccounts] = useState(0);
+  const [deleteTarget,  setDeleteTarget]  = useState(null); // account id pending deletion
   const itemsPerPage = 6;
 
   // Fetch accounts whenever page, search, or filters change
@@ -94,9 +117,14 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
     setCurrentPage(1);
   }, [searchTerm, statusFilters]);
 
-  const handleDelete = id => {
-    if (!window.confirm('Delete this account?')) return;
-    accountApi.deleteAccount(id).then(fetchAccountsWithFilters).catch(console.error);
+  const handleDelete = id => setDeleteTarget(id);
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    accountApi.deleteAccount(deleteTarget)
+      .then(fetchAccountsWithFilters)
+      .catch(console.error)
+      .finally(() => setDeleteTarget(null));
   };
 
   const getInitials = name => {
@@ -117,6 +145,16 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
 
   return (
     <div className="account-list-wrap">
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        title="Mark account as Deleted?"
+        message="The account will be marked as Deleted and hidden from active views. This action is logged and can be reversed by changing the status."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
       {displayed.length === 0 ? (
         <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--ink-mute)' }}>
           No accounts found.{' '}

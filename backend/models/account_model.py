@@ -29,7 +29,7 @@ class AccountModel:
             'zip_code': account_data.get('zip_code'),
             'country': account_data.get('country'),
             'logo_url': account_data.get('logo_url'),
-            'status': account_data.get('status', 'active'),
+            'status': account_data.get('status', 'Active'),
             'created_by': account_data.get('created_by'),
             'created_at': account_data.get('created_at', datetime.utcnow()),
             'updated_at': datetime.utcnow()

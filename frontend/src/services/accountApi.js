@@ -29,6 +29,12 @@ const accountApi = {
   getAllAccounts: (skip = 0, limit = 10) =>
     axiosInstance.get('/accounts', { params: { skip, limit } }),
 
+  // Get accounts with search + status filters
+  getAccountsFiltered: (q = '', statusFilters = [], skip = 0, limit = 10) =>
+    axiosInstance.get('/accounts/list/filtered', {
+      params: { q, skip, limit, status: statusFilters.join(',') }
+    }),
+
   // Get single account
   getAccount: (accountId) =>
     axiosInstance.get(`/accounts/${accountId}`),
@@ -37,18 +43,13 @@ const accountApi = {
   searchAccounts: (query, skip = 0, limit = 10) =>
     axiosInstance.get(`/accounts/search/${query}`, { params: { skip, limit } }),
 
-  // Get accounts with filters and search
-  getAccountsFiltered: (query = '', statuses = [], skip = 0, limit = 10) => {
-    const params = {
-      q: query,
-      skip,
-      limit
-    };
-    if (statuses && statuses.length > 0) {
-      params.status = statuses.join(',');
-    }
-    return axiosInstance.get('/accounts/list/filtered', { params });
-  },
+  // Get account changelog
+  getAccountChangelog: (accountId, limit = 50) =>
+    axiosInstance.get(`/accounts/${accountId}/changelog`, { params: { limit } }),
+
+  // Get recent changelogs across all accounts (for dashboard)
+  getRecentChangelogs: (limit = 20) =>
+    axiosInstance.get('/accounts/changelog/recent', { params: { limit } }),
 
   // Update account
   updateAccount: (accountId, data) =>

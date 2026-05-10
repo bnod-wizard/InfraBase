@@ -155,6 +155,7 @@ table.accounts tr:hover td{background:#fbfaf6}
 .pill.due{background:#fde3e0;color:var(--danger)}
 .pill.draft{background:#f3f1f0;color:var(--ink-dim)}
 .pill.warn{background:#fff0ed;color:var(--warn)}
+.pill.info{background:#e0f2f1;color:#00695c}
 .table-actions{display:flex;gap:10px;justify-content:flex-end}
 .icon-btn.small{width:38px;height:38px;border-radius:12px;border:1px solid rgba(203,213,225,.9);background:#fff;color:var(--ink-2);font-size:15px;display:grid;place-items:center;transition:.15s}
 .icon-btn.small:hover{background:var(--line-2)}

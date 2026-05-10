@@ -94,6 +94,7 @@ if db is not None:
             client_service=client_service,
             owner_service=owner_service,
             property_service=property_service,
+            user_repository=user_repository,
         )
 
         # Register template controller

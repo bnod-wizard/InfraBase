@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AccountList from '../components/AccountList';
 import AccountModal from '../components/AccountModal';
 import GenerateDocModal from '../components/GenerateDocModal';
 import accountApi from '../services/accountApi';
 import '../styles/AccountsPage.css';
 
-const FILTERS = ['All', 'Active', 'Pending', 'Overdue', 'Closed', 'Added Today'];
-
 const FILTER_KEY = 'accounts_filter';
+
+// Each chip label is the exact status value stored in the DB
+const STATUS_CHIPS = [
+  'Active', 'Prospect', 'Bank Verification', 'Bank Verified',
+  'Payment Pending', 'Paid', 'Lost', 'Archived', 'Deleted',
+];
 
 const DOC_TEMPLATES = [
   { tag: 'Cover',    name: 'Cover Page',    pages: '1 page'    },
@@ -15,27 +19,89 @@ const DOC_TEMPLATES = [
   { tag: 'Proposal', name: 'Full Proposal', pages: '11 pages'  },
 ];
 
+const PILL_COLOR = {
+  Active:             { bg: '#e6f3ec', color: '#166534' },
+  Prospect:           { bg: '#e7f3ff', color: '#1e4d8c' },
+  'Bank Verification':{ bg: '#e7f3ff', color: '#1e4d8c' },
+  'Bank Verified':    { bg: '#e0f2f1', color: '#00695c' },
+  'Payment Pending':  { bg: '#fff0ed', color: '#c2410c' },
+  Paid:               { bg: '#e6f3ec', color: '#166534' },
+  Lost:               { bg: '#fde3e0', color: '#991b1b' },
+  Archived:           { bg: '#f3f1f0', color: '#6b7280' },
+  Deleted:            { bg: '#f3f1f0', color: '#6b7280' },
+};
+
+function FilterDropdown({ options, selected, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const toggle = val =>
+    onChange(selected.includes(val) ? selected.filter(x => x !== val) : [...selected, val]);
+
+  return (
+    <div className="filter-dropdown" ref={ref}>
+      <button
+        className={`filter-trigger${open ? ' open' : ''}${selected.length > 0 ? ' has-filters' : ''}`}
+        onClick={() => setOpen(o => !o)}
+      >
+        ⊟ {selected.length > 0 ? `${selected.length} filter${selected.length > 1 ? 's' : ''} active` : 'Filter by status'}
+        <span className="caret">▾</span>
+      </button>
+
+      {open && (
+        <div className="filter-menu">
+          {options.map(opt => (
+            <label key={opt} className="filter-menu-item">
+              <input
+                type="checkbox"
+                checked={selected.includes(opt)}
+                onChange={() => toggle(opt)}
+              />
+              <span
+                className="status-dot"
+                style={{ background: PILL_COLOR[opt]?.color || '#9ca3af' }}
+              />
+              {opt}
+            </label>
+          ))}
+          {selected.length > 0 && (
+            <div className="filter-menu-footer">
+              <button onClick={() => onChange([])}>Clear all</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AccountsPage() {
   const [isModalOpen,   setIsModalOpen]   = useState(false);
   const [refreshKey,    setRefreshKey]    = useState(0);
-  const [statusSummary, setStatusSummary] = useState({ total_accounts: 0, status_counts: {} });
+  const [stats,         setStats]         = useState({ total_accounts: 0, active: 0, in_process: 0, lost: 0, status_counts: {} });
   const [activeFilters, setActiveFilters] = useState(() => {
     try { return JSON.parse(localStorage.getItem(FILTER_KEY)) || []; } catch { return []; }
   });
   const [searchTerm,    setSearchTerm]    = useState('');
-  const [selectedAccountId, setSelectedAccountId] = useState(null);
-  const [selectedAccountName, setSelectedAccountName] = useState('');
+  const [selectedAccountId,        setSelectedAccountId]        = useState(null);
+  const [selectedAccountName,      setSelectedAccountName]      = useState('');
   const [selectedAccountHierarchy, setSelectedAccountHierarchy] = useState(null);
-  const [selectedDocType, setSelectedDocType] = useState('');
-  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [selectedDocType,          setSelectedDocType]          = useState('');
+  const [isDocModalOpen,           setIsDocModalOpen]           = useState(false);
 
-  const handleFilterToggle = f => {
-    setActiveFilters(prev => {
-      const next = prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f];
-      localStorage.setItem(FILTER_KEY, JSON.stringify(next));
-      return next;
-    });
-  };
+  const loadStats = useCallback(() => {
+    accountApi.getAccountStats()
+      .then(res => { if (res.data.success) setStats(res.data.data); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { loadStats(); }, [loadStats, refreshKey]);
 
   const handleAddClick      = () => setIsModalOpen(true);
   const handleCloseModal    = () => setIsModalOpen(false);
@@ -57,37 +123,23 @@ function AccountsPage() {
     }
   };
 
-  useEffect(() => {
-    accountApi.getAccountStats()
-      .then(res => {
-        if (res.data.success)
-          setStatusSummary({ total_accounts: 0, status_counts: {}, ...res.data.data });
-      })
-      .catch(() => {});
-  }, []);
-
-  const sc      = statusSummary.status_counts;
-  const active  = sc.active  || 0;
-  const pending = sc.pending || sc.review || 0;
-  const overdue = sc.due     || sc.warn   || 0;
-
   const kpis = [
-    { key: 'total',   variant: 'feature', icon: '▤', label: 'Total Accounts',  val: statusSummary.total_accounts, delta: 'Across all statuses',    deltaClass: '' },
-    { key: 'active',  variant: 'ok',      icon: '✓', label: 'Active Accounts', val: active,                       delta: 'Currently active',         deltaClass: '' },
-    { key: 'review',  variant: 'info',    icon: '⟳', label: 'In Review',       val: pending,                      delta: 'Awaiting approval',        deltaClass: 'dim' },
-    { key: 'overdue', variant: 'warn',    icon: '!', label: 'Overdue',          val: overdue,                      delta: 'Needs immediate attention', deltaClass: 'warn' },
+    { key: 'total',      variant: 'feature', icon: '▤', label: 'Total Accounts', val: stats.total_accounts, delta: 'Across all statuses',          deltaClass: '' },
+    { key: 'active',     variant: 'ok',      icon: '✓', label: 'Active',         val: stats.active,         delta: 'Status = Active',               deltaClass: '' },
+    { key: 'in_process', variant: 'info',    icon: '⟳', label: 'In-Process',     val: stats.in_process,     delta: 'Pipeline — excl. lost/archived', deltaClass: 'dim' },
+    { key: 'lost',       variant: 'warn',    icon: '✕', label: 'Lost / Closed',  val: stats.lost,           delta: 'Lost, Deleted, Archived',        deltaClass: 'warn' },
   ];
 
-  const statusSideRows = [
-    { cls: '',     label: 'Total accounts', note: statusSummary.total_accounts },
-    { cls: 'ok',   label: 'Active',         note: active  },
-    { cls: 'info', label: 'Pending',        note: pending },
-    { cls: 'warn', label: 'Overdue',        note: overdue },
-  ];
+  // Build sidebar rows from live status_counts
+  const sideRows = STATUS_CHIPS.map(label => ({
+    label,
+    note: stats.status_counts[label] || 0,
+    style: PILL_COLOR[label] || {},
+  }));
 
   return (
     <>
-      {/* ── Topbar — matches Dashboard ── */}
+      {/* ── Topbar ── */}
       <div className="topbar">
         <div className="crumbs"><b>Customer Accounts</b></div>
         <div className="search">
@@ -104,25 +156,16 @@ function AccountsPage() {
             >×</button>
           )}
         </div>
-        <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
-          {FILTERS.map(f => {
-            const key = f.toLowerCase().replace(/ /g, '-');
-            return (
-              <button
-                key={f}
-                className={`chip${activeFilters.includes(key) ? ' active' : ''}`}
-                onClick={() => handleFilterToggle(key)}
-              >{f}</button>
-            );
-          })}
-          {activeFilters.length > 0 && (
-            <button
-              className="chip"
-              style={{opacity:.55}}
-              onClick={() => { setActiveFilters([]); localStorage.setItem(FILTER_KEY, JSON.stringify([])); }}
-            >✕ Clear</button>
-          )}
-        </div>
+
+        <FilterDropdown
+          options={STATUS_CHIPS}
+          selected={activeFilters}
+          onChange={next => {
+            setActiveFilters(next);
+            localStorage.setItem(FILTER_KEY, JSON.stringify(next));
+          }}
+        />
+
         <button className="new-btn" onClick={handleAddClick}>＋ New Account</button>
       </div>
 
@@ -182,16 +225,28 @@ function AccountsPage() {
             </div>
           </div>
 
-          {/* Account status summary */}
+          {/* Account status breakdown */}
           <div className="panel">
             <div className="panel-head"><h3>Account Status</h3></div>
             <div className="activity">
-              {statusSideRows.map(row => (
-                <div key={row.label} className={`act${row.cls ? ' ' + row.cls : ''}`}>
-                  <div className="swatch" />
+              <div className="act">
+                <div className="swatch" />
+                <div className="body"><b>Total</b><small>{stats.total_accounts} accounts</small></div>
+              </div>
+              {sideRows.map(row => (
+                <div key={row.label} className="act">
+                  <div className="swatch" style={{ background: row.style.color || 'var(--ink-dim)' }} />
                   <div className="body">
-                    <b>{row.label}</b>
-                    <small>{row.note}</small>
+                    <b style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+                      <span
+                        style={{
+                          display:'inline-block', padding:'2px 8px', borderRadius:'999px',
+                          fontSize:'10px', fontWeight:700, fontFamily:'var(--mono)',
+                          textTransform:'uppercase', background: row.style.bg, color: row.style.color
+                        }}
+                      >{row.label}</span>
+                    </b>
+                    <small>{row.note} account{row.note !== 1 ? 's' : ''}</small>
                   </div>
                 </div>
               ))}

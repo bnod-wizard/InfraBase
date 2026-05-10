@@ -3,16 +3,32 @@ import { useParams, useNavigate } from 'react-router-dom';
 import accountApi from '../services/accountApi';
 import GenerateDocModal from './GenerateDocModal';
 import PropertyMapModal from './PropertyMapModal';
+import AccountStagePath from './AccountStagePath';
 import { useToast } from '../context';
 import '../styles/AccountDetail.css';
 
+const STATUS_OPTIONS = [
+  'Active', 'Prospect', 'Bank Verification', 'Bank Verified',
+  'Payment Pending', 'Paid', 'Lost', 'Archived', 'Inactive',
+];
+
 const pillClass = status => {
-  const s = (status || '').toLowerCase();
-  if (s === 'active')                       return 'ok';
-  if (s === 'pending' || s === 'review')    return 'review';
-  if (s === 'overdue' || s === 'due')       return 'due';
-  if (s === 'inactive' || s === 'closed')   return 'draft';
-  return 'draft';
+  switch ((status || '').toLowerCase()) {
+    case 'active':            return 'ok';
+    case 'paid':              return 'ok';
+    case 'bank verified':     return 'info';
+    case 'bank verification': return 'review';
+    case 'prospect':          return 'review';
+    case 'payment pending':   return 'warn';
+    case 'pending':           return 'warn';
+    case 'lost':
+    case 'overdue':           return 'due';
+    case 'deleted':
+    case 'archived':
+    case 'inactive':
+    case 'closed':            return 'draft';
+    default:                  return 'draft';
+  }
 };
 
 function AccountDetail() {
@@ -20,6 +36,7 @@ function AccountDetail() {
   const navigate = useNavigate();
   const toast = useToast();
   const [hierarchy,        setHierarchy]        = useState(null);
+  const [changelog,         setChangelog]         = useState([]);
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState(null);
   const [isEditing,        setIsEditing]        = useState(false);
@@ -32,6 +49,7 @@ function AccountDetail() {
   const [activeObjectEdit, setActiveObjectEdit] = useState({ type: null, id: null, data: null });
   const [isDocModalOpen,   setIsDocModalOpen]   = useState(false);
   const [mapProperty,      setMapProperty]      = useState(null);
+  const [stageSaving,      setStageSaving]      = useState(false);
 
   const accountFields = [
     { accessor: 'account_name',         label: 'Account Name' },
@@ -47,7 +65,7 @@ function AccountDetail() {
     { accessor: 'state',                label: 'State' },
     { accessor: 'zip_code',             label: 'Zip Code' },
     { accessor: 'country',              label: 'Country' },
-    { accessor: 'status',               label: 'Status', type: 'select', options: ['active', 'inactive', 'prospect'] }
+    { accessor: 'status',               label: 'Status', type: 'select', options: STATUS_OPTIONS }
   ];
 
   const clientFields = [
@@ -204,6 +222,7 @@ function AccountDetail() {
       if (res.data?.success) {
         setHierarchy(res.data.data);
         setFormData(res.data.data.account || {});
+        await fetchChangelog(); // Fetch changelog after hierarchy
       } else {
         setError(res.data?.message || 'Unable to load account details.');
       }
@@ -211,6 +230,17 @@ function AccountDetail() {
       setError('Failed to load account details.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchChangelog = async () => {
+    try {
+      const res = await accountApi.getAccountChangelog(accountId);
+      if (res.data?.success) {
+        setChangelog(res.data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to load changelog:', err);
     }
   };
 
@@ -229,6 +259,7 @@ function AccountDetail() {
         setFormData(res.data.data);
         setIsEditing(false);
         toast('Account details saved');
+        await fetchChangelog(); // Refresh changelog after status change
       } else {
         setError(res.data?.message || 'Failed to save changes.');
       }
@@ -239,6 +270,26 @@ function AccountDetail() {
     setError(null);
     if (hierarchy?.account) setFormData(hierarchy.account);
     setIsEditing(false);
+  };
+
+  const handleStageChange = async newStatus => {
+    setStageSaving(true);
+    try {
+      const payload = { ...formData, status: newStatus };
+      const res = await accountApi.updateAccount(accountId, payload);
+      if (res.data?.success) {
+        setFormData(res.data.data);
+        setHierarchy(prev => ({ ...prev, account: res.data.data }));
+        toast(`Status moved to ${newStatus}`);
+        await fetchChangelog();
+      } else {
+        toast(res.data?.message || 'Failed to update status.');
+      }
+    } catch {
+      toast('Network error — status not updated.');
+    } finally {
+      setStageSaving(false);
+    }
   };
 
   const startObjectEdit  = (type, item) => setActiveObjectEdit({ type, id: item._id || item.id || null, data: { ...item } });
@@ -455,8 +506,18 @@ function AccountDetail() {
         </div>
       </div> 
 
+      {/* ── Stage Path ── */}
+      <div style={{ marginTop: '20px' }}>
+        <AccountStagePath
+          currentStatus={formData.status}
+          changelog={changelog}
+          onStatusChange={handleStageChange}
+          saving={stageSaving}
+        />
+      </div>
+
       {/* ── Main layout ── */}
-      <div className="layout">
+      <div className="layout" style={{ marginTop: '18px' }}>
         <div className="stack">
 
           {/* Account Info */}
@@ -561,6 +622,54 @@ function AccountDetail() {
                   <strong>{row.val}</strong>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-head"><h3>Recent Activity</h3></div>
+            <div className="activity">
+              {changelog.length > 0 ? changelog.map((log, idx) => {
+                const actor = log.changed_by_name || log.changed_by || 'System';
+                const acctName = log.account_name || formData.account_name || 'this account';
+                const isCreation = !log.old_status;
+
+                const title = isCreation
+                  ? `An account for ${acctName} has been added by ${actor}`
+                  : `${actor} changed status to ${log.new_status}`;
+
+                const subtitle = isCreation
+                  ? `Status of the account is ${log.new_status}`
+                  : `Previous status was ${log.old_status}`;
+
+                return (
+                  <div key={idx} className={`act ${pillClass(log.new_status)}`}>
+                    <div className="swatch" />
+                    <div className="body">
+                      <b>{title}</b>
+                      <small style={{display:'flex',flexDirection:'column',gap:'2px',marginTop:'3px'}}>
+                        <span style={{display:'flex',alignItems:'center',gap:'6px'}}>
+                          <span className={`pill ${pillClass(log.new_status)}`}
+                            style={{padding:'2px 8px',fontSize:'10px',display:'inline-flex'}}>
+                            {log.new_status}
+                          </span>
+                          <span style={{color:'var(--ink-mute)'}}>{subtitle}</span>
+                        </span>
+                        <span style={{color:'var(--ink-mute)',fontSize:'11px'}}>
+                          {formatDate(log.changed_at)}
+                        </span>
+                      </small>
+                    </div>
+                  </div>
+                );
+              }) : (
+                <div className="act">
+                  <div className="swatch" />
+                  <div className="body">
+                    <b>No activity yet</b>
+                    <small>Status changes will appear here</small>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </aside>
