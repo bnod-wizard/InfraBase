@@ -104,6 +104,40 @@ def _owners_detail_block(owners):
         blocks.append(block)
     return '\n\n'.join(blocks)
 
+def _client_entity_label(c):
+    """Returns e.g. 'Individual (Male)' or 'Company'."""
+    et = _v(c.get('entity_type'), 'individual').capitalize()
+    if et.lower() == 'individual':
+        gender = _v(c.get('gender'), '').capitalize()
+        return f'Individual ({gender})' if gender else 'Individual'
+    return et
+
+def _client_detail_block(c):
+    """Formatted block matching the owners_detail_block style."""
+    name   = _client_full_name(c)
+    ward   = _v(c.get('ward_no'), '—')
+    vdc    = _v(c.get('vdc_municipality'), '—')
+    dist   = _v(c.get('district'), '—')
+    cit    = _v(c.get('citizenship_no'), '—')
+    cit_date   = _v(c.get('citizenship_issued_date'), '—')
+    cit_office = _v(c.get('citizenship_issued_office'), '—')
+    father     = _v(c.get('father_name'), '—')
+    grand      = _v(c.get('grandfather_name') or c.get('husband_name'), '—')
+    grand_label = "Husband's Name" if c.get('husband_name') else "Grand Father's Name"
+    phone  = _v(c.get('phone') or c.get('mobile'), '—')
+    return (
+        f'Client             : {name}\n'
+        f'Ward No.           : {ward}\n'
+        f'Municipality/VDC   : {vdc}\n'
+        f'District           : {dist}\n'
+        f'Citizenship No.    : {cit}\n'
+        f'Issued Date        : {cit_date}\n'
+        f'Issued Office      : {cit_office}\n'
+        f"Father's Name      : {father}\n"
+        f'{grand_label:<19}: {grand}\n'
+        f'Contact No.        : {phone}'
+    )
+
 def _road_access(prop):
     field = _v(prop.get('road_access_field'), '')
     if field and field != '—':
@@ -181,11 +215,18 @@ def build_context(hierarchy, valuation):
     client_district_country = f'{c_dist} District, Nepal' if c_dist else _v(c.get('country'), '')
 
     # Property location string
-    p_ward = _v(prop.get('ward_no'), '')
-    p_vdc  = _v(prop.get('vdc_municipality'), '')
-    p_dist = _v(prop.get('district'), '')
-    sabik  = _v(prop.get('sabik'), '')
-    prop_loc_parts = [p for p in [f'{p_vdc}-{p_ward}' if p_ward else p_vdc, sabik and f'(Sabik {sabik})', p_dist and f'{p_dist} District'] if p]
+    p_ward      = _v(prop.get('ward_no'), '')
+    p_vdc       = _v(prop.get('vdc_municipality'), '')
+    p_dist      = _v(prop.get('district'), '')
+    sabik_vdc   = _v(prop.get('sabik_vdc'), '')
+    sabik_ward  = _v(prop.get('sabik_ward_no'), '')
+    # Build sabik string: prefer separate fields, fall back to legacy combined `sabik`
+    if sabik_vdc or sabik_ward:
+        sabik_str = f'{sabik_vdc}-{sabik_ward}' if sabik_vdc and sabik_ward else (sabik_vdc or sabik_ward)
+    else:
+        sabik_str = _v(prop.get('sabik'), '')
+    present_part = f'{p_vdc}-{p_ward}' if p_ward else p_vdc
+    prop_loc_parts = [p for p in [present_part, sabik_str and f'(Sabik {sabik_str})', p_dist and f'{p_dist} District'] if p]
     property_location_full = ', '.join(prop_loc_parts) or _v(prop.get('address'), '—')
 
     # Land area traditional
@@ -267,6 +308,9 @@ def build_context(hierarchy, valuation):
         'bank_address': _v(val.get('bank_address'), '—'),
 
         # Client (first client)
+        'client_entity_type_label':    _client_entity_label(c) if c else '—',
+        'client_entity_type':          _v(c.get('entity_type'), 'individual'),
+        'client_gender':               _v(c.get('gender'), '—'),
         'client_full_name':            client_name,
         'client_address_line':         client_address_line,
         'client_address_full':         client_address_full,
@@ -280,6 +324,9 @@ def build_context(hierarchy, valuation):
         'client_citizenship_issued_office': _v(c.get('citizenship_issued_office'), '—'),
         'client_father_name':          _v(c.get('father_name'), '—'),
         'client_grandfather_name':     _v(c.get('grandfather_name') or c.get('husband_name'), '—'),
+        'client_husband_name':         _v(c.get('husband_name'), '—'),
+        'client_pan_no':               _v(c.get('pan_no'), '—'),
+        'client_detail_block':         _client_detail_block(c) if c else '—',
 
         # Owners
         'owners_plain':        _owners_plain(owners),
@@ -295,7 +342,9 @@ def build_context(hierarchy, valuation):
         'property_ward_no':      p_ward or '—',
         'vdc_municipality':      p_vdc or '—',
         'district':              p_dist or '—',
-        'sabik':                 sabik,
+        'sabik_vdc':             sabik_vdc or '—',
+        'sabik_ward_no':         sabik_ward or '—',
+        'sabik':                 sabik_str,
         'property_mortgaged':    _v(prop.get('property_mortgaged'), 'Land'),
         'gps_coordinates':       _v(prop.get('gps_coordinates'), '—'),
         'sheet_no':              _v(prop.get('sheet_no'), '—'),

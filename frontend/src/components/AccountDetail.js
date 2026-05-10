@@ -49,25 +49,136 @@ function AccountDetail() {
   ];
 
   const clientFields = [
-    { accessor: 'first_name',  label: 'First Name' }, { accessor: 'last_name',   label: 'Last Name' },
-    { accessor: 'title',       label: 'Title' },       { accessor: 'designation', label: 'Designation' },
-    { accessor: 'email',       label: 'Email' },       { accessor: 'phone',       label: 'Phone' },
-    { accessor: 'mobile',      label: 'Mobile' },      { accessor: 'address',     label: 'Address' },
-    { accessor: 'city',        label: 'City' },        { accessor: 'state',       label: 'State' },
-    { accessor: 'zip_code',    label: 'Zip Code' },    { accessor: 'country',     label: 'Country' },
-    { accessor: 'notes',       label: 'Notes' },       { accessor: 'status',      label: 'Status' }
+    { title: 'Identity', fields: [
+      { accessor: 'entity_type', label: 'Entity Type', type: 'select', options: ['individual', 'company'] },
+      { accessor: 'gender',      label: 'Gender',      type: 'select', options: ['male', 'female'] },
+      { accessor: 'title',       label: 'Title' },
+      { accessor: 'first_name',  label: 'First Name' },
+      { accessor: 'last_name',   label: 'Last Name' },
+      { accessor: 'designation', label: 'Designation' },
+      { accessor: 'status',      label: 'Status', type: 'select', options: ['active', 'inactive'] },
+    ]},
+    { title: 'Contact', fields: [
+      { accessor: 'email',  label: 'Email' },
+      { accessor: 'phone',  label: 'Contact No.' },
+      { accessor: 'mobile', label: 'Mobile' },
+    ]},
+    { title: 'Address', fields: [
+      { accessor: 'address',          label: 'Address', fullWidth: true },
+      { accessor: 'ward_no',          label: 'Ward No.' },
+      { accessor: 'vdc_municipality', label: 'Municipality / VDC' },
+      { accessor: 'district',         label: 'District' },
+      { accessor: 'city',             label: 'City' },
+      { accessor: 'state',            label: 'State' },
+      { accessor: 'zip_code',         label: 'Zip Code' },
+      { accessor: 'country',          label: 'Country' },
+    ]},
+    { title: 'Citizenship', fields: [
+      { accessor: 'citizenship_no',            label: 'Citizenship No.' },
+      { accessor: 'citizenship_issued_date',   label: 'Issued Date' },
+      { accessor: 'citizenship_issued_office', label: 'Issued Office', fullWidth: true },
+    ]},
+    { title: 'Family', fields: [
+      { accessor: 'father_name',      label: "Father's Name" },
+      { accessor: 'grandfather_name', label: "Grandfather's Name" },
+      { accessor: 'husband_name',     label: "Husband's Name" },
+    ]},
+    { title: 'Other', fields: [
+      { accessor: 'pan_no', label: 'PAN No.' },
+      { accessor: 'notes',  label: 'Notes', fullWidth: true },
+    ]},
   ];
 
   const propertyFields = [
-    { accessor: 'property_name',   label: 'Property Name' },  { accessor: 'property_type',   label: 'Type' },
-    { accessor: 'property_status', label: 'Status' },         { accessor: 'address',         label: 'Address' },
-    { accessor: 'city',            label: 'City' },           { accessor: 'state',           label: 'State' },
-    { accessor: 'zip_code',        label: 'Zip Code' },       { accessor: 'country',         label: 'Country' },
-    { accessor: 'total_area',      label: 'Total Area' },     { accessor: 'area_unit',       label: 'Area Unit' },
-    { accessor: 'land_area',       label: 'Land Area' },      { accessor: 'built_area',      label: 'Built Area' },
-    { accessor: 'bedrooms',        label: 'Bedrooms' },       { accessor: 'bathrooms',       label: 'Bathrooms' },
-    { accessor: 'construction_year', label: 'Built Year' },   { accessor: 'estimated_value', label: 'Estimated Value' },
-    { accessor: 'notes',           label: 'Notes' }
+    { title: 'Property Info', fields: [
+      { accessor: 'property_name',      label: 'Property Name' },
+      { accessor: 'property_type',      label: 'Type',      type: 'select', options: ['land', 'building', 'land_and_building', 'apartment', 'commercial', 'industrial'] },
+      { accessor: 'property_mortgaged', label: 'Mortgaged', type: 'select', options: ['Land', 'Building', 'Both'] },
+      { accessor: 'property_status',    label: 'Status',    type: 'select', options: ['active', 'inactive', 'vacant', 'occupied'] },
+      { accessor: 'plot_no',            label: 'Plot No.' },
+      { accessor: 'sheet_no',           label: 'Sheet No.' },
+    ]},
+    { title: 'Location', fields: [
+      { accessor: 'district',         label: 'District' },
+      { accessor: 'ward_no',          label: 'Present Ward No.' },
+      { accessor: 'vdc_municipality', label: 'Present Municipality / VDC' },
+      { accessor: 'sabik_vdc',        label: 'Sabik VDC' },
+      { accessor: 'sabik_ward_no',    label: 'Sabik Ward No.' },
+      { accessor: 'tole',             label: 'Tole / Locality' },
+      { accessor: 'address',          label: 'Address', fullWidth: true },
+      { accessor: 'gps_coordinates',  label: 'GPS Coordinates' },
+    ]},
+    { title: 'Land Area', fields: [
+      { accessor: 'land_area_lorc',      label: 'LORC Area (Sq.M)' },
+      { accessor: 'land_area_lorc_trad', label: 'LORC (R-A-P-D)' },
+      { accessor: 'land_area_measured',  label: 'Measured Area (Sq.M)' },
+      { accessor: 'land_area_meas_trad', label: 'Measured (R-A-P-D)' },
+      { accessor: 'land_shape',          label: 'Land Shape' },
+      { accessor: 'land_topography',     label: 'Topography' },
+      { accessor: 'frontage',            label: 'Frontage (ft)' },
+    ]},
+    { title: 'Boundaries', fields: [
+      { accessor: 'north_boundary', label: 'North' },
+      { accessor: 'south_boundary', label: 'South' },
+      { accessor: 'east_boundary',  label: 'East' },
+      { accessor: 'west_boundary',  label: 'West' },
+    ]},
+    { title: 'Building', fields: [
+      { accessor: 'total_area',        label: 'Total Area' },
+      { accessor: 'built_area',        label: 'Built Area' },
+      { accessor: 'bedrooms',          label: 'Bedrooms' },
+      { accessor: 'bathrooms',         label: 'Bathrooms' },
+      { accessor: 'construction_year', label: 'Built Year' },
+    ]},
+    { title: 'Road & Access', fields: [
+      { accessor: 'road_access_field',          label: 'Road Access' },
+      { accessor: 'road_width',                 label: 'Road Width (ft)' },
+      { accessor: 'road_type',                  label: 'Road Type' },
+      { accessor: 'road_side',                  label: 'Road Side' },
+      { accessor: 'nearest_landmark',           label: 'Nearest Landmark' },
+      { accessor: 'nearest_market',             label: 'Nearest Market' },
+      { accessor: 'public_transport_distance',  label: 'Public Transport Distance' },
+    ]},
+    { title: 'Services', fields: [
+      { accessor: 'motorable_access', label: 'Motorable Access',   type: 'bool' },
+      { accessor: 'water_supply',     label: 'Water Supply Line',  type: 'bool' },
+      { accessor: 'sewerage',         label: 'Sewerage Pipe Line', type: 'bool' },
+      { accessor: 'electricity_line', label: 'Electricity Line',   type: 'bool' },
+      { accessor: 'telephone',        label: 'Telephone Line',     type: 'bool' },
+      { accessor: 'tv_cable',         label: 'TV Cable',           type: 'bool' },
+    ]},
+    { title: 'Influencing Factors', fields: [
+      { accessor: 'near_river_stream',      label: 'River / Stream nearby',      type: 'bool' },
+      { accessor: 'near_high_tension_line', label: 'High-tension Line nearby',   type: 'bool' },
+      { accessor: 'near_fuel_depot',        label: 'Fuel Depot nearby',          type: 'bool' },
+      { accessor: 'near_temple',            label: 'Temple / Shrine nearby',     type: 'bool' },
+      { accessor: 'water_logging',          label: 'Water Logging',              type: 'bool' },
+      { accessor: 'near_cremation_area',    label: 'Cremation Area nearby',      type: 'bool' },
+      { accessor: 'near_army_barracks',     label: 'Army Barracks nearby',       type: 'bool' },
+      { accessor: 'near_monument',          label: 'Monument nearby',            type: 'bool' },
+      { accessor: 'near_hazardous_factory', label: 'Hazardous Factory nearby',   type: 'bool' },
+      { accessor: 'near_dumping_site',      label: 'Dumping Site nearby',        type: 'bool' },
+    ]},
+    { title: 'Valuation', fields: [
+      { accessor: 'government_rate_per_aana',   label: 'Govt Rate / Aana' },
+      { accessor: 'commercial_rate_per_aana',   label: 'Market Rate / Aana' },
+      { accessor: 'fair_market_value_land',     label: 'FMV — Land' },
+      { accessor: 'fair_market_value_building', label: 'FMV — Building' },
+      { accessor: 'fair_market_value_total',    label: 'FMV — Total' },
+      { accessor: 'distress_value_total',       label: 'Distress Value' },
+      { accessor: 'valuation_in_words',         label: 'Value in Words', fullWidth: true },
+    ]},
+    { title: 'Legal', fields: [
+      { accessor: 'ownership_type',            label: 'Ownership Type' },
+      { accessor: 'hold_type',                 label: 'Hold Type' },
+      { accessor: 'mode_of_acquisition',       label: 'Mode of Acquisition' },
+      { accessor: 'lorc_registration_date',    label: 'Date of Certification' },
+      { accessor: 'land_revenue_payment_date', label: 'Land Revenue Paid' },
+      { accessor: 'legal_reference_no',        label: 'Reference No.' },
+    ]},
+    { title: 'Notes', fields: [
+      { accessor: 'notes', label: 'Notes', fullWidth: true },
+    ]},
   ];
 
   const ownerFields = [
@@ -145,10 +256,18 @@ function AccountDetail() {
 
   const renderValue = value => {
     if (value === undefined || value === null || value === '') return '—';
+    if (value === true  || value === 'true')  return 'Yes';
+    if (value === false || value === 'false') return 'No';
     if (Array.isArray(value)) return value.length ? value.join(', ') : '—';
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
   };
+
+  const handleBoolChange = (name, checked) =>
+    setFormData(prev => ({ ...prev, [name]: checked }));
+
+  const handleObjectBoolChange = (name, checked) =>
+    handleObjectEditChange(name, checked);
 
   const formatDate = value => {
     if (!value) return '—';
@@ -164,12 +283,22 @@ function AccountDetail() {
   };
 
   const renderFieldInput = field => {
-    const value = formData[field.accessor] || '';
+    const raw   = formData[field.accessor];
+    const value = raw ?? '';
     if (field.type === 'select') return (
       <select name={field.accessor} value={value} onChange={handleInputChange}>
         {field.options.map(o => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
       </select>
     );
+    if (field.type === 'bool') {
+      const checked = raw === true || raw === 'true';
+      return (
+        <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer'}}>
+          <input type="checkbox" checked={checked} onChange={e => handleBoolChange(field.accessor, e.target.checked)} />
+          {checked ? 'Yes' : 'No'}
+        </label>
+      );
+    }
     return <input type={field.type || 'text'} name={field.accessor} value={value} onChange={handleInputChange} />;
   };
 
@@ -179,7 +308,35 @@ function AccountDetail() {
         {field.options.map(o => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
       </select>
     );
+    if (field.type === 'bool') {
+      const checked = value === true || value === 'true';
+      return (
+        <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer'}}>
+          <input type="checkbox" checked={checked} onChange={e => handleObjectBoolChange(field.accessor, e.target.checked)} />
+          {checked ? 'Yes' : 'No'}
+        </label>
+      );
+    }
     return <input type={field.type || 'text'} name={field.accessor} value={value || ''} onChange={e => handleObjectEditChange(field.accessor, e.target.value)} />;
+  };
+
+  const renderFieldGrid = (fieldDefs, itemId, isEditingItem, data) => {
+    const isGrouped = fieldDefs.length > 0 && 'fields' in fieldDefs[0];
+    const renderOneField = field => (
+      <div key={`${itemId}-${field.accessor}`} className={`ad-field${field.fullWidth ? ' full' : ''}`}>
+        <label>{field.label}</label>
+        {isEditingItem
+          ? renderObjectFieldInput(field, data[field.accessor])
+          : <span>{renderValue(data[field.accessor])}</span>}
+      </div>
+    );
+    if (!isGrouped) return <div className="ad-grid-2">{fieldDefs.map(renderOneField)}</div>;
+    return fieldDefs.map(group => (
+      <div key={group.title} className="ad-field-group">
+        <div className="ad-group-label">{group.title}</div>
+        <div className="ad-grid-2">{group.fields.map(renderOneField)}</div>
+      </div>
+    ));
   };
 
   const renderSection = (title, items, fields, headerLabel) => {
@@ -210,16 +367,7 @@ function AccountDetail() {
                       )}
                     </div>
                   </div>
-                  <div className="ad-grid-2">
-                    {fields.map(field => (
-                      <div key={`${itemId}-${field.accessor}`} className={`ad-field${field.fullWidth ? ' full' : ''}`}>
-                        <label>{field.label}</label>
-                        {isEditingItem
-                          ? renderObjectFieldInput(field, data[field.accessor])
-                          : <span>{renderValue(data[field.accessor])}</span>}
-                      </div>
-                    ))}
-                  </div>
+                  {renderFieldGrid(fields, itemId, isEditingItem, data)}
                 </div>
               );
             })}

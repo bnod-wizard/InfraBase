@@ -3,366 +3,165 @@ import '../styles/AccountModal.css';
 import accountApi from '../services/accountApi';
 import { useToast } from '../context';
 
+const ClearInput = ({ name, value, onChange, ...rest }) => (
+  <div className="field-wrap">
+    <input name={name} value={value} onChange={onChange} {...rest} />
+    {value ? (
+      <button
+        type="button"
+        className="field-clear"
+        tabIndex={-1}
+        onClick={() => onChange({ target: { name, value: '' } })}
+      >✕</button>
+    ) : null}
+  </div>
+);
+
+const SectionHead = ({ children }) => (
+  <p className="form-section-head">{children}</p>
+);
+
 const AccountModal = ({ isOpen, onClose, onSubmit }) => {
   const toast = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Error states for field-level validation
   const [accountErrors, setAccountErrors] = useState({});
   const [clientErrors, setClientErrors] = useState({});
   const [propertyErrors, setPropertyErrors] = useState({});
   const [ownerErrors, setOwnerErrors] = useState({});
   const [stepError, setStepError] = useState('');
 
-  // Account Data
   const [account, setAccount] = useState({
-    account_name: '',
-    company_registration: '',
-    registration_number: '',
-    tax_id: '',
-    business_type: '',
-    phone: '',
-    email: '',
-    website: '',
-    address: '',
-    city: '',
-    state: '',
-    zip_code: '',
-    country: ''
+    account_name: '', company_registration: '', registration_number: '',
+    tax_id: '', business_type: '', phone: '', email: '', website: '',
+    address: '', city: '', state: '', zip_code: '', country: ''
   });
 
-  // Clients List
   const [clients, setClients] = useState([]);
-  const [currentClient, setCurrentClient] = useState({
-    first_name: '',
-    last_name: '',
-    title: '',
-    designation: '',
-    email: '',
-    phone: '',
-    mobile: '',
-    fax: '',
-    address: '',
-    city: '',
-    state: '',
-    zip_code: '',
-    country: ''
-  });
+  const EMPTY_CLIENT = {
+    entity_type: 'individual', gender: 'male', title: '', first_name: '', last_name: '',
+    designation: '', email: '', phone: '', mobile: '', address: '', ward_no: '',
+    vdc_municipality: '', district: '', city: '', state: '', zip_code: '', country: '',
+    citizenship_no: '', citizenship_issued_date: '', citizenship_issued_office: '',
+    father_name: '', grandfather_name: '', husband_name: '', pan_no: '',
+  };
+  const [currentClient, setCurrentClient] = useState(EMPTY_CLIENT);
 
-  // Properties List
   const [properties, setProperties] = useState([]);
-  const [currentProperty, setCurrentProperty] = useState({
-    property_name: '',
-    property_type: 'residential',
-    property_status: 'vacant',
-    address: '',
-    city: '',
-    state: '',
-    zip_code: '',
-    country: '',
-    total_area: '',
-    area_unit: 'sqft',
-    bedrooms: '',
-    bathrooms: '',
-    parking_spaces: '',
-    construction_year: '',
-    furnishing: 'unfurnished',
-    purchase_price: '',
-    estimated_value: '',
-    rental_value: '',
-    survey_number: ''
-  });
+  const EMPTY_PROPERTY = {
+    // Identity
+    property_name: '', property_type: 'land', property_status: 'vacant',
+    // Location
+    plot_no: '', district: '', vdc_municipality: '', ward_no: '',
+    sabik_vdc: '', sabik_ward_no: '', tole: '', address: '',
+    city: '', state: '', zip_code: '', country: '',
+    // Land detail
+    mode_of_acquisition: '', lorc_registration_date: '', land_revenue_payment_date: '',
+    sheet_no: '', gps_coordinates: '', land_shape: '', land_topography: '',
+    road_access_blueprint: '', road_access_field: '', frontage: '', facing: '',
+    nearest_landmark: '', nearest_market: '', public_transport_distance: '',
+    land_area_lorc: '', land_area_lorc_trad: '',
+    land_area_measured: '', land_area_meas_trad: '',
+    // Boundaries
+    north_boundary: '', south_boundary: '', east_boundary: '', west_boundary: '',
+    legal_reference_no: '',
+    // Legal
+    ownership_type: '', hold_type: '',
+    // Building / Other
+    total_area: '', area_unit: 'sqm', bedrooms: '', bathrooms: '',
+    construction_year: '', estimated_value: '', purchase_price: '',
+    rental_value: '', survey_number: '',
+    // Services (boolean)
+    motorable_access: false, water_supply: false, sewerage: false,
+    electricity_line: false, telephone: false, tv_cable: false,
+    // Influencing Factors (boolean)
+    near_river_stream: false, near_high_tension_line: false, near_fuel_depot: false,
+    near_temple: false, water_logging: false, near_cremation_area: false,
+    near_army_barracks: false, near_monument: false, near_hazardous_factory: false,
+    near_dumping_site: false,
+  };
+  const [currentProperty, setCurrentProperty] = useState(EMPTY_PROPERTY);
 
-  // Owners List
   const [owners, setOwners] = useState([]);
-  const [currentOwner, setCurrentOwner] = useState({
-    owner_name: '',
-    owner_type: 'individual',
-    title: '',
-    email: '',
-    phone: '',
-    mobile: '',
-    address: '',
-    city: '',
-    state: '',
-    zip_code: '',
-    country: '',
-    id_type: 'passport',
-    id_number: '',
-    pan_number: '',
-    bank_account: '',
-    bank_name: ''
-  });
-
-  const handleAccountChange = (e) => {
-    const { name, value } = e.target;
-    setAccount(prev => ({ ...prev, [name]: value }));
+  const EMPTY_OWNER = {
+    owner_name: '', owner_type: 'individual', title: '', email: '', phone: '',
+    mobile: '', address: '', city: '', state: '', zip_code: '', country: '',
+    id_type: 'passport', id_number: '', pan_number: '', bank_account: '', bank_name: ''
   };
+  const [currentOwner, setCurrentOwner] = useState(EMPTY_OWNER);
 
-  const handleClientChange = (e) => {
-    const { name, value } = e.target;
-    setCurrentClient(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handlePropertyChange = (e) => {
-    const { name, value } = e.target;
-    setCurrentProperty(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleOwnerChange = (e) => {
-    const { name, value } = e.target;
-    setCurrentOwner(prev => ({ ...prev, [name]: value }));
-  };
+  const handleAccountChange  = e => { const { name, value } = e.target; setAccount(prev => ({ ...prev, [name]: value })); };
+  const handleClientChange   = e => { const { name, value } = e.target; setCurrentClient(prev => ({ ...prev, [name]: value })); };
+  const handlePropertyChange = e => { const { name, value } = e.target; setCurrentProperty(prev => ({ ...prev, [name]: value })); };
+  const handleOwnerChange    = e => { const { name, value } = e.target; setCurrentOwner(prev => ({ ...prev, [name]: value })); };
 
   const addClient = () => {
     const errors = {};
-    if (!currentClient.first_name.trim()) {
-      errors.first_name = 'First name is required';
-    }
-    if (!currentClient.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(currentClient.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
+    if (!currentClient.first_name.trim()) errors.first_name = 'First name is required';
+    if (currentClient.email && !/\S+@\S+\.\S+/.test(currentClient.email)) errors.email = 'Please enter a valid email address';
     setClientErrors(errors);
-
     if (Object.keys(errors).length === 0) {
       setClients([...clients, { ...currentClient, id: Date.now() }]);
-      setCurrentClient({
-        first_name: '',
-        last_name: '',
-        title: '',
-        designation: '',
-        email: '',
-        phone: '',
-        mobile: '',
-        fax: '',
-        address: '',
-        city: '',
-        state: '',
-        zip_code: '',
-        country: ''
-      });
+      setCurrentClient(EMPTY_CLIENT);
       setClientErrors({});
     }
   };
 
-  const removeClient = (id) => {
-    setClients(clients.filter(c => c.id !== id));
-  };
+  const removeClient = id => setClients(clients.filter(c => c.id !== id));
 
   const addProperty = () => {
     const errors = {};
-    if (!currentProperty.property_name.trim()) {
-      errors.property_name = 'Property name is required';
-    }
-    if (!currentProperty.address.trim()) {
-      errors.address = 'Address is required';
-    }
-
+    if (!currentProperty.property_name.trim()) errors.property_name = 'Property name is required';
+    if (!currentProperty.address.trim()) errors.address = 'Address is required';
     setPropertyErrors(errors);
-
     if (Object.keys(errors).length === 0) {
       setProperties([...properties, { ...currentProperty, id: Date.now() }]);
-      setCurrentProperty({
-        property_name: '',
-        property_type: 'residential',
-        property_status: 'vacant',
-        address: '',
-        city: '',
-        state: '',
-        zip_code: '',
-        country: '',
-        total_area: '',
-        area_unit: 'sqft',
-        bedrooms: '',
-        bathrooms: '',
-        parking_spaces: '',
-        construction_year: '',
-        furnishing: 'unfurnished',
-        purchase_price: '',
-        estimated_value: '',
-        rental_value: '',
-        survey_number: ''
-      });
+      setCurrentProperty(EMPTY_PROPERTY);
       setPropertyErrors({});
     }
   };
 
-  const removeProperty = (id) => {
-    setProperties(properties.filter(p => p.id !== id));
-    setSelectedPropertyId(null);
-  };
+  const removeProperty = id => { setProperties(properties.filter(p => p.id !== id)); setSelectedPropertyId(null); };
 
   const addOwner = () => {
     const errors = {};
-
-    if (!selectedPropertyId) {
-      errors.property_selection = 'Please select a property';
-    }
-    if (!currentOwner.owner_name.trim()) {
-      errors.owner_name = 'Owner name is required';
-    }
-    if (!currentOwner.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(currentOwner.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
+    if (!selectedPropertyId) errors.property_selection = 'Please select a property';
+    if (!currentOwner.owner_name.trim()) errors.owner_name = 'Owner name is required';
+    if (!currentOwner.email.trim()) { errors.email = 'Email is required'; }
+    else if (!/\S+@\S+\.\S+/.test(currentOwner.email)) { errors.email = 'Please enter a valid email address'; }
     setOwnerErrors(errors);
-
     if (Object.keys(errors).length === 0) {
       setOwners([...owners, { ...currentOwner, property_id: selectedPropertyId, id: Date.now() }]);
-      setCurrentOwner({
-        owner_name: '',
-        owner_type: 'individual',
-        title: '',
-        email: '',
-        phone: '',
-        mobile: '',
-        address: '',
-        city: '',
-        state: '',
-        zip_code: '',
-        country: '',
-        id_type: 'passport',
-        id_number: '',
-        pan_number: '',
-        bank_account: '',
-        bank_name: ''
-      });
+      setCurrentOwner(EMPTY_OWNER);
       setOwnerErrors({});
     }
   };
 
-  const removeOwner = (id) => {
-    setOwners(owners.filter(o => o.id !== id));
-  };
+  const removeOwner = id => setOwners(owners.filter(o => o.id !== id));
 
   const handleSubmit = () => {
     const payload = {
-      account: {
-        account_name: account.account_name,
-        company_registration: account.company_registration,
-        registration_number: account.registration_number,
-        tax_id: account.tax_id,
-        business_type: account.business_type,
-        phone: account.phone,
-        email: account.email,
-        website: account.website,
-        address: account.address,
-        city: account.city,
-        state: account.state,
-        zip_code: account.zip_code,
-        country: account.country
-      },
+      account,
       clients: clients.map(({ id, ...rest }) => rest),
       properties: properties.map(({ id, ...rest }) => rest),
       owners: owners.map(({ id, ...rest }) => rest)
     };
-
     setIsLoading(true);
-
-    // Call API
     accountApi.createAccountWithHierarchy(payload)
-      .then((response) => {
-        setIsLoading(false);
-        toast('Account created successfully');
-        onSubmit(response.data.data);
-        resetForm();
-      })
-      .catch((error) => {
-        setIsLoading(false);
-        console.error('Error creating account:', error);
-        // Error handling can be improved with a toast notification system
-        // For now, we'll keep it simple
-      });
+      .then(response => { setIsLoading(false); toast('Account created successfully'); onSubmit(response.data.data); resetForm(); })
+      .catch(error => { setIsLoading(false); console.error('Error creating account:', error); });
   };
 
   const resetForm = () => {
     setCurrentStep(1);
-    setAccount({
-      account_name: '',
-      company_registration: '',
-      registration_number: '',
-      tax_id: '',
-      business_type: '',
-      phone: '',
-      email: '',
-      website: '',
-      address: '',
-      city: '',
-      state: '',
-      zip_code: '',
-      country: ''
-    });
-    setClients([]);
-    setCurrentClient({
-      first_name: '',
-      last_name: '',
-      title: '',
-      designation: '',
-      email: '',
-      phone: '',
-      mobile: '',
-      fax: '',
-      address: '',
-      city: '',
-      state: '',
-      zip_code: '',
-      country: ''
-    });
-    setProperties([]);
-    setCurrentProperty({
-      property_name: '',
-      property_type: 'residential',
-      property_status: 'vacant',
-      address: '',
-      city: '',
-      state: '',
-      zip_code: '',
-      country: '',
-      total_area: '',
-      area_unit: 'sqft',
-      bedrooms: '',
-      bathrooms: '',
-      parking_spaces: '',
-      construction_year: '',
-      furnishing: 'unfurnished',
-      purchase_price: '',
-      estimated_value: '',
-      rental_value: '',
-      survey_number: ''
-    });
-    setOwners([]);
-    setCurrentOwner({
-      owner_name: '',
-      owner_type: 'individual',
-      title: '',
-      email: '',
-      phone: '',
-      mobile: '',
-      address: '',
-      city: '',
-      state: '',
-      zip_code: '',
-      country: '',
-      id_type: 'passport',
-      id_number: '',
-      pan_number: '',
-      bank_account: '',
-      bank_name: ''
-    });
+    setAccount({ account_name: '', company_registration: '', registration_number: '', tax_id: '', business_type: '', phone: '', email: '', website: '', address: '', city: '', state: '', zip_code: '', country: '' });
+    setClients([]); setCurrentClient(EMPTY_CLIENT);
+    setProperties([]); setCurrentProperty(EMPTY_PROPERTY);
+    setOwners([]); setCurrentOwner(EMPTY_OWNER);
     setSelectedPropertyId(null);
-    // Clear all error states
-    setAccountErrors({});
-    setClientErrors({});
-    setPropertyErrors({});
-    setOwnerErrors({});
-    setStepError('');
+    setAccountErrors({}); setClientErrors({}); setPropertyErrors({}); setOwnerErrors({}); setStepError('');
   };
 
   if (!isOpen) return null;
@@ -380,11 +179,8 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
         </div>
 
         <div className="account-modal-stepper">
-          {[1, 2, 3, 4].map((n) => (
-            <div
-              key={n}
-              className={`step ${currentStep === n ? 'active' : currentStep > n ? 'completed' : ''}`}
-            >
+          {[1, 2, 3, 4].map(n => (
+            <div key={n} className={`step ${currentStep === n ? 'active' : currentStep > n ? 'completed' : ''}`}>
               {currentStep > n ? '✓' : n}
             </div>
           ))}
@@ -398,64 +194,81 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
         </div>
 
         <div className="account-modal-content">
-          {/* Step 1: Account Details */}
+
+          {/* ── Step 1: Account ── */}
           {currentStep === 1 && (
             <div className="form-step">
               <h3>Account Information</h3>
               <div className="form-grid">
                 <div className="form-field">
-                  <input type="text" name="account_name" placeholder="Account Name *" value={account.account_name} onChange={handleAccountChange} required />
+                  <ClearInput type="text" name="account_name" placeholder="Account Name *" value={account.account_name} onChange={handleAccountChange} />
                   {accountErrors.account_name && <span className="error-message">{accountErrors.account_name}</span>}
                 </div>
-                <input type="text" name="company_registration" placeholder="Company Registration" value={account.company_registration} onChange={handleAccountChange} />
-                <input type="text" name="registration_number" placeholder="Registration Number" value={account.registration_number} onChange={handleAccountChange} />
-                <input type="text" name="tax_id" placeholder="Tax ID" value={account.tax_id} onChange={handleAccountChange} />
-                <input type="text" name="business_type" placeholder="Business Type" value={account.business_type} onChange={handleAccountChange} />
+                <ClearInput type="text" name="company_registration" placeholder="Company Registration" value={account.company_registration} onChange={handleAccountChange} />
+                <ClearInput type="text" name="registration_number" placeholder="Registration Number" value={account.registration_number} onChange={handleAccountChange} />
+                <ClearInput type="text" name="tax_id" placeholder="Tax ID" value={account.tax_id} onChange={handleAccountChange} />
+                <ClearInput type="text" name="business_type" placeholder="Business Type" value={account.business_type} onChange={handleAccountChange} />
                 <div className="form-field">
-                  <input type="email" name="email" placeholder="Email *" value={account.email} onChange={handleAccountChange} required />
+                  <ClearInput type="email" name="email" placeholder="Email *" value={account.email} onChange={handleAccountChange} />
                   {accountErrors.email && <span className="error-message">{accountErrors.email}</span>}
                 </div>
-                <input type="tel" name="phone" placeholder="Phone" value={account.phone} onChange={handleAccountChange} />
-                <input type="text" name="website" placeholder="Website" value={account.website} onChange={handleAccountChange} />
-                <input type="text" name="address" placeholder="Address" value={account.address} onChange={handleAccountChange} />
-                <input type="text" name="city" placeholder="City" value={account.city} onChange={handleAccountChange} />
-                <input type="text" name="state" placeholder="State" value={account.state} onChange={handleAccountChange} />
-                <input type="text" name="zip_code" placeholder="Zip Code" value={account.zip_code} onChange={handleAccountChange} />
-                <input type="text" name="country" placeholder="Country" value={account.country} onChange={handleAccountChange} />
+                <ClearInput type="tel" name="phone" placeholder="Phone" value={account.phone} onChange={handleAccountChange} />
+                <ClearInput type="text" name="website" placeholder="Website" value={account.website} onChange={handleAccountChange} />
+                <ClearInput type="text" name="address" placeholder="Address" value={account.address} onChange={handleAccountChange} />
+                <ClearInput type="text" name="city" placeholder="City" value={account.city} onChange={handleAccountChange} />
+                <ClearInput type="text" name="state" placeholder="State" value={account.state} onChange={handleAccountChange} />
+                <ClearInput type="text" name="zip_code" placeholder="Zip Code" value={account.zip_code} onChange={handleAccountChange} />
+                <ClearInput type="text" name="country" placeholder="Country" value={account.country} onChange={handleAccountChange} />
               </div>
             </div>
           )}
 
-          {/* Step 2: Clients */}
+          {/* ── Step 2: Clients ── */}
           {currentStep === 2 && (
             <div className="form-step">
               <h3>Add Clients</h3>
               <div className="form-grid">
+                <select name="entity_type" value={currentClient.entity_type} onChange={handleClientChange}>
+                  <option value="individual">Individual</option>
+                  <option value="company">Company</option>
+                </select>
+                <select name="gender" value={currentClient.gender} onChange={handleClientChange}>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+                <ClearInput type="text" name="title" placeholder="Title (Mr., Ms., Dr.)" value={currentClient.title} onChange={handleClientChange} />
                 <div className="form-field">
-                  <input type="text" name="first_name" placeholder="First Name *" value={currentClient.first_name} onChange={handleClientChange} required />
+                  <ClearInput type="text" name="first_name" placeholder="First Name *" value={currentClient.first_name} onChange={handleClientChange} />
                   {clientErrors.first_name && <span className="error-message">{clientErrors.first_name}</span>}
                 </div>
-                <input type="text" name="last_name" placeholder="Last Name" value={currentClient.last_name} onChange={handleClientChange} />
-                <input type="text" name="title" placeholder="Title (Mr., Ms., Dr.)" value={currentClient.title} onChange={handleClientChange} />
-                <input type="text" name="designation" placeholder="Designation (Manager, Director)" value={currentClient.designation} onChange={handleClientChange} />
+                <ClearInput type="text" name="last_name" placeholder="Last Name" value={currentClient.last_name} onChange={handleClientChange} />
+                <ClearInput type="text" name="designation" placeholder="Designation" value={currentClient.designation} onChange={handleClientChange} />
                 <div className="form-field">
-                  <input type="email" name="email" placeholder="Email *" value={currentClient.email} onChange={handleClientChange} required />
+                  <ClearInput type="email" name="email" placeholder="Email" value={currentClient.email} onChange={handleClientChange} />
                   {clientErrors.email && <span className="error-message">{clientErrors.email}</span>}
                 </div>
-                <input type="tel" name="phone" placeholder="Phone" value={currentClient.phone} onChange={handleClientChange} />
-                <input type="tel" name="mobile" placeholder="Mobile" value={currentClient.mobile} onChange={handleClientChange} />
-                <input type="tel" name="fax" placeholder="Fax" value={currentClient.fax} onChange={handleClientChange} />
-                <input type="text" name="address" placeholder="Address" value={currentClient.address} onChange={handleClientChange} />
-                <input type="text" name="city" placeholder="City" value={currentClient.city} onChange={handleClientChange} />
-                <input type="text" name="state" placeholder="State" value={currentClient.state} onChange={handleClientChange} />
-                <input type="text" name="zip_code" placeholder="Zip Code" value={currentClient.zip_code} onChange={handleClientChange} />
-                <input type="text" name="country" placeholder="Country" value={currentClient.country} onChange={handleClientChange} />
+                <ClearInput type="tel" name="phone" placeholder="Contact No." value={currentClient.phone} onChange={handleClientChange} />
+                <ClearInput type="tel" name="mobile" placeholder="Mobile" value={currentClient.mobile} onChange={handleClientChange} />
+                <ClearInput type="text" name="address" placeholder="Address" value={currentClient.address} onChange={handleClientChange} />
+                <ClearInput type="text" name="ward_no" placeholder="Ward No." value={currentClient.ward_no} onChange={handleClientChange} />
+                <ClearInput type="text" name="vdc_municipality" placeholder="Municipality / VDC" value={currentClient.vdc_municipality} onChange={handleClientChange} />
+                <ClearInput type="text" name="district" placeholder="District" value={currentClient.district} onChange={handleClientChange} />
+                <ClearInput type="text" name="city" placeholder="City" value={currentClient.city} onChange={handleClientChange} />
+                <ClearInput type="text" name="state" placeholder="State" value={currentClient.state} onChange={handleClientChange} />
+                <ClearInput type="text" name="zip_code" placeholder="Zip Code" value={currentClient.zip_code} onChange={handleClientChange} />
+                <ClearInput type="text" name="country" placeholder="Country" value={currentClient.country} onChange={handleClientChange} />
+                <ClearInput type="text" name="citizenship_no" placeholder="Citizenship No." value={currentClient.citizenship_no} onChange={handleClientChange} />
+                <ClearInput type="text" name="citizenship_issued_date" placeholder="Citizenship Issued Date (e.g. 2060/02/27)" value={currentClient.citizenship_issued_date} onChange={handleClientChange} />
+                <ClearInput type="text" name="citizenship_issued_office" placeholder="Citizenship Issued Office" value={currentClient.citizenship_issued_office} onChange={handleClientChange} />
+                <ClearInput type="text" name="father_name" placeholder="Father's Name" value={currentClient.father_name} onChange={handleClientChange} />
+                <ClearInput type="text" name="grandfather_name" placeholder="Grandfather's Name" value={currentClient.grandfather_name} onChange={handleClientChange} />
+                <ClearInput type="text" name="husband_name" placeholder="Husband's Name" value={currentClient.husband_name} onChange={handleClientChange} />
+                <ClearInput type="text" name="pan_no" placeholder="PAN No." value={currentClient.pan_no} onChange={handleClientChange} />
               </div>
               <button className="add-btn" onClick={addClient}>+ Add Client</button>
-
               <div className="items-list">
                 <h4>Clients Added: {clients.length}</h4>
-                {clients.map((client, idx) => (
+                {clients.map(client => (
                   <div key={client.id} className="item-card">
                     <div className="item-info">
                       <strong>{client.first_name} {client.last_name}</strong>
@@ -468,62 +281,131 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
             </div>
           )}
 
-          {/* Step 3: Properties */}
+          {/* ── Step 3: Properties ── */}
           {currentStep === 3 && (
             <div className="form-step">
               <h3>Add Properties</h3>
+
+              {/* — Location of Site — */}
+              <SectionHead>Location of Site</SectionHead>
               <div className="form-grid">
                 <div className="form-field">
-                  <input type="text" name="property_name" placeholder="Property Name *" value={currentProperty.property_name} onChange={handlePropertyChange} required />
+                  <ClearInput type="text" name="property_name" placeholder="Property Name *" value={currentProperty.property_name} onChange={handlePropertyChange} />
                   {propertyErrors.property_name && <span className="error-message">{propertyErrors.property_name}</span>}
                 </div>
                 <select name="property_type" value={currentProperty.property_type} onChange={handlePropertyChange}>
-                  <option value="residential">Residential</option>
+                  <option value="land">Land</option>
+                  <option value="building">Building</option>
+                  <option value="land_and_building">Land &amp; Building</option>
+                  <option value="apartment">Apartment</option>
                   <option value="commercial">Commercial</option>
-                  <option value="industrial">Industrial</option>
                 </select>
-                <select name="property_status" value={currentProperty.property_status} onChange={handlePropertyChange}>
-                  <option value="vacant">Vacant</option>
-                  <option value="occupied">Occupied</option>
-                  <option value="under_development">Under Development</option>
-                </select>
-                <div className="form-field">
-                  <input type="text" name="address" placeholder="Address *" value={currentProperty.address} onChange={handlePropertyChange} required />
+                <ClearInput type="text" name="plot_no" placeholder="Plot No." value={currentProperty.plot_no} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="district" placeholder="District" value={currentProperty.district} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="vdc_municipality" placeholder="Present Municipality / VDC" value={currentProperty.vdc_municipality} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="ward_no" placeholder="Present Ward No." value={currentProperty.ward_no} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="sabik_vdc" placeholder="Sabik VDC (e.g. Jorpati VDC)" value={currentProperty.sabik_vdc} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="sabik_ward_no" placeholder="Sabik Ward No." value={currentProperty.sabik_ward_no} onChange={handlePropertyChange} />
+                <div className="form-field form-col-2">
+                  <ClearInput type="text" name="address" placeholder="Property Address *" value={currentProperty.address} onChange={handlePropertyChange} />
                   {propertyErrors.address && <span className="error-message">{propertyErrors.address}</span>}
                 </div>
-                <input type="text" name="city" placeholder="City" value={currentProperty.city} onChange={handlePropertyChange} />
-                <input type="text" name="state" placeholder="State" value={currentProperty.state} onChange={handlePropertyChange} />
-                <input type="text" name="zip_code" placeholder="Zip Code" value={currentProperty.zip_code} onChange={handlePropertyChange} />
-                <input type="text" name="country" placeholder="Country" value={currentProperty.country} onChange={handlePropertyChange} />
-                <input type="number" name="total_area" placeholder="Total Area" value={currentProperty.total_area} onChange={handlePropertyChange} />
-                <select name="area_unit" value={currentProperty.area_unit} onChange={handlePropertyChange}>
-                  <option value="sqft">sq ft</option>
-                  <option value="sqm">sq m</option>
-                </select>
-                <input type="number" name="bedrooms" placeholder="Bedrooms" value={currentProperty.bedrooms} onChange={handlePropertyChange} />
-                <input type="number" name="bathrooms" placeholder="Bathrooms" value={currentProperty.bathrooms} onChange={handlePropertyChange} />
-                <input type="number" name="parking_spaces" placeholder="Parking Spaces" value={currentProperty.parking_spaces} onChange={handlePropertyChange} />
-                <input type="number" name="construction_year" placeholder="Construction Year" value={currentProperty.construction_year} onChange={handlePropertyChange} />
-                <select name="furnishing" value={currentProperty.furnishing} onChange={handlePropertyChange}>
-                  <option value="unfurnished">Unfurnished</option>
-                  <option value="semi_furnished">Semi-furnished</option>
-                  <option value="furnished">Furnished</option>
-                </select>
-                <input type="number" name="purchase_price" placeholder="Purchase Price" value={currentProperty.purchase_price} onChange={handlePropertyChange} />
-                <input type="number" name="estimated_value" placeholder="Estimated Value" value={currentProperty.estimated_value} onChange={handlePropertyChange} />
-                <input type="number" name="rental_value" placeholder="Rental Value" value={currentProperty.rental_value} onChange={handlePropertyChange} />
-                <input type="text" name="survey_number" placeholder="Survey Number" value={currentProperty.survey_number} onChange={handlePropertyChange} />
               </div>
-              <button className="add-btn" onClick={addProperty}>+ Add Property</button>
 
+              {/* — Land Detail Information — */}
+              <SectionHead>Land Detail Information</SectionHead>
+              <div className="form-grid">
+                <ClearInput type="text" name="mode_of_acquisition" placeholder="Mode of Acquisition (e.g. Sale)" value={currentProperty.mode_of_acquisition} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="land_revenue_payment_date" placeholder="Land Revenue Payment Date" value={currentProperty.land_revenue_payment_date} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="sheet_no" placeholder="Sheet No." value={currentProperty.sheet_no} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="tole" placeholder="Locality (Tole)" value={currentProperty.tole} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="gps_coordinates" placeholder='GPS Co-ordinates (e.g. 27°43′23.40"N, 85°22′35.91"E)' value={currentProperty.gps_coordinates} onChange={handlePropertyChange} className="form-col-2" />
+                <ClearInput type="text" name="land_shape" placeholder="Shape of the Land (e.g. Regular)" value={currentProperty.land_shape} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="land_topography" placeholder="Topography of Land (e.g. Plain)" value={currentProperty.land_topography} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="road_access_blueprint" placeholder="Road Access as per Blueprint / Trace Map" value={currentProperty.road_access_blueprint} onChange={handlePropertyChange} className="form-col-2" />
+                <ClearInput type="text" name="road_access_field" placeholder="Road Access as per Field" value={currentProperty.road_access_field} onChange={handlePropertyChange} className="form-col-2" />
+                <ClearInput type="text" name="frontage" placeholder='Frontage of the Land (e.g. 28′-00")' value={currentProperty.frontage} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="facing" placeholder='Face of the Land (e.g. 28′-00" West Side)' value={currentProperty.facing} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="nearest_landmark" placeholder="Nearest Landmark" value={currentProperty.nearest_landmark} onChange={handlePropertyChange} className="form-col-2" />
+                <ClearInput type="text" name="nearest_market" placeholder="Nearest Market" value={currentProperty.nearest_market} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="public_transport_distance" placeholder="Public Transport Distance" value={currentProperty.public_transport_distance} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="land_area_lorc" placeholder="LORC Area (Sq.M)" value={currentProperty.land_area_lorc} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="land_area_lorc_trad" placeholder="LORC Traditional (R-A-P-D)" value={currentProperty.land_area_lorc_trad} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="land_area_measured" placeholder="Measured Area (Sq.M)" value={currentProperty.land_area_measured} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="land_area_meas_trad" placeholder="Measured Traditional (R-A-P-D)" value={currentProperty.land_area_meas_trad} onChange={handlePropertyChange} />
+              </div>
+
+              {/* — Boundaries — */}
+              <SectionHead>Parameters of the Four Boundaries</SectionHead>
+              <div className="form-grid">
+                <ClearInput type="text" name="north_boundary" placeholder="North Boundary" value={currentProperty.north_boundary} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="south_boundary" placeholder="South Boundary" value={currentProperty.south_boundary} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="east_boundary" placeholder="East Boundary" value={currentProperty.east_boundary} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="west_boundary" placeholder="West Boundary" value={currentProperty.west_boundary} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="lorc_registration_date" placeholder="Date of Certification" value={currentProperty.lorc_registration_date} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="legal_reference_no" placeholder="Reference No." value={currentProperty.legal_reference_no} onChange={handlePropertyChange} />
+              </div>
+
+              {/* — Services — */}
+              <SectionHead>Services</SectionHead>
+              <div className="check-grid">
+                {[
+                  ['motorable_access','Motorable Access'],['water_supply','Water Supply Line'],
+                  ['sewerage','Sewerage Pipe Line'],['electricity_line','Electricity Line'],
+                  ['telephone','Telephone Line'],['tv_cable','TV Cable'],
+                ].map(([name, label]) => (
+                  <label key={name} className="check-label">
+                    <input type="checkbox" name={name} checked={!!currentProperty[name]}
+                      onChange={e => setCurrentProperty(p => ({...p, [name]: e.target.checked}))} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+
+              {/* — Influencing Factors — */}
+              <SectionHead>Influencing Factors</SectionHead>
+              <div className="check-grid">
+                {[
+                  ['near_river_stream','River / Stream nearby'],['near_high_tension_line','High-tension Line nearby'],
+                  ['near_fuel_depot','Fuel Depot nearby'],['near_temple','Temple / Shrine nearby'],
+                  ['water_logging','Water Logging'],['near_cremation_area','Cremation Area nearby'],
+                  ['near_army_barracks','Army Barracks nearby'],['near_monument','Monument nearby'],
+                  ['near_hazardous_factory','Hazardous Factory nearby'],['near_dumping_site','Dumping Site nearby'],
+                ].map(([name, label]) => (
+                  <label key={name} className="check-label">
+                    <input type="checkbox" name={name} checked={!!currentProperty[name]}
+                      onChange={e => setCurrentProperty(p => ({...p, [name]: e.target.checked}))} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+
+              {/* — Land Legal Aspect — */}
+              <SectionHead>Land Legal Aspect</SectionHead>
+              <div className="form-grid">
+                <ClearInput type="text" name="ownership_type" placeholder="Ownership Type (e.g. Joint)" value={currentProperty.ownership_type} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="hold_type" placeholder="Hold Type (e.g. Freehold)" value={currentProperty.hold_type} onChange={handlePropertyChange} />
+              </div>
+
+              {/* — Building / Other — */}
+              <SectionHead>Building / Other Details</SectionHead>
+              <div className="form-grid">
+                <ClearInput type="text" name="total_area" placeholder="Total Built Area" value={currentProperty.total_area} onChange={handlePropertyChange} />
+                <ClearInput type="number" name="bedrooms" placeholder="Bedrooms" value={currentProperty.bedrooms} onChange={handlePropertyChange} />
+                <ClearInput type="number" name="bathrooms" placeholder="Bathrooms" value={currentProperty.bathrooms} onChange={handlePropertyChange} />
+                <ClearInput type="number" name="construction_year" placeholder="Construction Year" value={currentProperty.construction_year} onChange={handlePropertyChange} />
+                <ClearInput type="number" name="estimated_value" placeholder="Estimated Value" value={currentProperty.estimated_value} onChange={handlePropertyChange} />
+                <ClearInput type="number" name="purchase_price" placeholder="Purchase Price" value={currentProperty.purchase_price} onChange={handlePropertyChange} />
+              </div>
+
+              <button className="add-btn" onClick={addProperty}>+ Add Property</button>
               <div className="items-list">
                 <h4>Properties Added: {properties.length}</h4>
-                {properties.map((prop, idx) => (
+                {properties.map(prop => (
                   <div key={prop.id} className="item-card">
                     <div className="item-info">
                       <strong>{prop.property_name}</strong>
-                      <p>{prop.property_type} - {prop.address}, {prop.city}</p>
-                      {prop.total_area && <p>Area: {prop.total_area} {prop.area_unit}</p>}
+                      <p>{prop.property_type} · {prop.vdc_municipality}{prop.ward_no ? `-${prop.ward_no}` : ''}{prop.district ? `, ${prop.district}` : ''}</p>
                     </div>
                     <button className="remove-btn" onClick={() => removeProperty(prop.id)}>Remove</button>
                   </div>
@@ -532,31 +414,27 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
             </div>
           )}
 
-          {/* Step 4: Owners */}
+          {/* ── Step 4: Owners ── */}
           {currentStep === 4 && (
             <div className="form-step">
               <h3>Add Owners</h3>
-              
               {properties.length === 0 ? (
                 <p className="info-text">No properties added. Please go back and add at least one property.</p>
               ) : (
                 <>
                   <div className="property-selector">
                     <label>Select Property for Owner *</label>
-                    <select value={selectedPropertyId || ''} onChange={(e) => setSelectedPropertyId(Number(e.target.value))}>
+                    <select value={selectedPropertyId || ''} onChange={e => setSelectedPropertyId(Number(e.target.value))}>
                       <option value="">-- Select a property --</option>
-                      {properties.map((prop) => (
-                        <option key={prop.id} value={prop.id}>
-                          {prop.property_name} - {prop.address}
-                        </option>
+                      {properties.map(prop => (
+                        <option key={prop.id} value={prop.id}>{prop.property_name} - {prop.address}</option>
                       ))}
                     </select>
                     {ownerErrors.property_selection && <span className="error-message">{ownerErrors.property_selection}</span>}
                   </div>
-
                   <div className="form-grid">
                     <div className="form-field">
-                      <input type="text" name="owner_name" placeholder="Owner Name *" value={currentOwner.owner_name} onChange={handleOwnerChange} required />
+                      <ClearInput type="text" name="owner_name" placeholder="Owner Name *" value={currentOwner.owner_name} onChange={handleOwnerChange} />
                       {ownerErrors.owner_name && <span className="error-message">{ownerErrors.owner_name}</span>}
                     </div>
                     <select name="owner_type" value={currentOwner.owner_type} onChange={handleOwnerChange}>
@@ -564,37 +442,36 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                       <option value="corporation">Corporation</option>
                       <option value="partnership">Partnership</option>
                     </select>
-                    <input type="text" name="title" placeholder="Title" value={currentOwner.title} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="title" placeholder="Title" value={currentOwner.title} onChange={handleOwnerChange} />
                     <div className="form-field">
-                      <input type="email" name="email" placeholder="Email *" value={currentOwner.email} onChange={handleOwnerChange} required />
+                      <ClearInput type="email" name="email" placeholder="Email *" value={currentOwner.email} onChange={handleOwnerChange} />
                       {ownerErrors.email && <span className="error-message">{ownerErrors.email}</span>}
                     </div>
-                    <input type="tel" name="phone" placeholder="Phone" value={currentOwner.phone} onChange={handleOwnerChange} />
-                    <input type="tel" name="mobile" placeholder="Mobile" value={currentOwner.mobile} onChange={handleOwnerChange} />
-                    <input type="text" name="address" placeholder="Address" value={currentOwner.address} onChange={handleOwnerChange} />
-                    <input type="text" name="city" placeholder="City" value={currentOwner.city} onChange={handleOwnerChange} />
-                    <input type="text" name="state" placeholder="State" value={currentOwner.state} onChange={handleOwnerChange} />
-                    <input type="text" name="zip_code" placeholder="Zip Code" value={currentOwner.zip_code} onChange={handleOwnerChange} />
-                    <input type="text" name="country" placeholder="Country" value={currentOwner.country} onChange={handleOwnerChange} />
+                    <ClearInput type="tel" name="phone" placeholder="Phone" value={currentOwner.phone} onChange={handleOwnerChange} />
+                    <ClearInput type="tel" name="mobile" placeholder="Mobile" value={currentOwner.mobile} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="address" placeholder="Address" value={currentOwner.address} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="city" placeholder="City" value={currentOwner.city} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="state" placeholder="State" value={currentOwner.state} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="zip_code" placeholder="Zip Code" value={currentOwner.zip_code} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="country" placeholder="Country" value={currentOwner.country} onChange={handleOwnerChange} />
                     <select name="id_type" value={currentOwner.id_type} onChange={handleOwnerChange}>
                       <option value="passport">Passport</option>
                       <option value="id_card">ID Card</option>
                       <option value="driving_license">Driving License</option>
                       <option value="other">Other</option>
                     </select>
-                    <input type="text" name="id_number" placeholder="ID Number" value={currentOwner.id_number} onChange={handleOwnerChange} />
-                    <input type="text" name="pan_number" placeholder="PAN/Tax ID" value={currentOwner.pan_number} onChange={handleOwnerChange} />
-                    <input type="text" name="bank_account" placeholder="Bank Account" value={currentOwner.bank_account} onChange={handleOwnerChange} />
-                    <input type="text" name="bank_name" placeholder="Bank Name" value={currentOwner.bank_name} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="id_number" placeholder="ID Number" value={currentOwner.id_number} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="pan_number" placeholder="PAN / Tax ID" value={currentOwner.pan_number} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="bank_account" placeholder="Bank Account" value={currentOwner.bank_account} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="bank_name" placeholder="Bank Name" value={currentOwner.bank_name} onChange={handleOwnerChange} />
                   </div>
                   <button className="add-btn" onClick={addOwner}>+ Add Owner</button>
-
                   <div className="items-list">
                     <h4>Owners Added: {owners.length}</h4>
                     {owners.length === 0 ? (
                       <p className="info-text">No owners added yet.</p>
                     ) : (
-                      owners.map((owner, idx) => {
+                      owners.map(owner => {
                         const ownerProperty = properties.find(p => p.id === owner.property_id);
                         return (
                           <div key={owner.id} className="item-card">
@@ -618,12 +495,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
         <div className="account-modal-footer">
           <button
             className="btn-secondary"
-            onClick={() => {
-              if (currentStep > 1) {
-                setStepError('');
-                setCurrentStep(currentStep - 1);
-              }
-            }}
+            onClick={() => { if (currentStep > 1) { setStepError(''); setCurrentStep(currentStep - 1); } }}
             disabled={currentStep === 1 || isLoading}
           >
             ← Back
@@ -638,57 +510,32 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 onClick={() => {
                   if (currentStep === 1) {
                     const errors = {};
-                    if (!account.account_name.trim()) {
-                      errors.account_name = 'Account name is required';
-                    }
-                    if (!account.email.trim()) {
-                      errors.email = 'Email is required';
-                    } else if (!/\S+@\S+\.\S+/.test(account.email)) {
-                      errors.email = 'Please enter a valid email address';
-                    }
-
+                    if (!account.account_name.trim()) errors.account_name = 'Account name is required';
+                    if (!account.email.trim()) { errors.email = 'Email is required'; }
+                    else if (!/\S+@\S+\.\S+/.test(account.email)) { errors.email = 'Please enter a valid email address'; }
                     setAccountErrors(errors);
-
-                    if (Object.keys(errors).length === 0) {
-                      setStepError('');
-                      setCurrentStep(currentStep + 1);
-                    }
+                    if (Object.keys(errors).length === 0) { setStepError(''); setCurrentStep(currentStep + 1); }
                     return;
                   }
-                  if (currentStep === 2 && clients.length === 0) {
-                    setStepError('Please add at least one client before continuing.');
-                    return;
-                  }
-                  if (currentStep === 3 && properties.length === 0) {
-                    setStepError('Please add at least one property before continuing.');
-                    return;
-                  }
+                  if (currentStep === 2 && clients.length === 0) { setStepError('Please add at least one client before continuing.'); return; }
+                  if (currentStep === 3 && properties.length === 0) { setStepError('Please add at least one property before continuing.'); return; }
                   setStepError('');
                   setCurrentStep(currentStep + 1);
                 }}
                 disabled={isLoading}
-              >
-                Next →
-              </button>
+              >Next →</button>
             ) : (
               <button
                 className="btn-success"
                 onClick={() => {
-                  if (owners.length === 0) {
-                    setStepError('Please add at least one owner before saving.');
-                    return;
-                  }
+                  if (owners.length === 0) { setStepError('Please add at least one owner before saving.'); return; }
                   setStepError('');
                   handleSubmit();
                 }}
                 disabled={isLoading}
-              >
-                {isLoading ? 'Saving...' : 'Save All'}
-              </button>
+              >{isLoading ? 'Saving...' : 'Save All'}</button>
             )}
-            <button className="btn-cancel" onClick={() => { onClose(); resetForm(); }} disabled={isLoading}>
-              Cancel
-            </button>
+            <button className="btn-cancel" onClick={() => { onClose(); resetForm(); }} disabled={isLoading}>Cancel</button>
           </div>
         </div>
       </div>
