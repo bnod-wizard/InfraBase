@@ -28,6 +28,16 @@ const ClearInput = ({ name, value, onChange, error, className, placeholder, ...r
   );
 };
 
+const SelectInput = ({ name, value, onChange, error, label, children }) => (
+  <div className={`field-wrap${error ? ' has-error' : ''}`}>
+    <select name={name} value={value} onChange={onChange}>
+      {children}
+    </select>
+    <label>{label}</label>
+    {error && <span className="field-error">{error}</span>}
+  </div>
+);
+
 const SectionHead = ({ children }) => (
   <p className="form-section-head">{children}</p>
 );
@@ -238,14 +248,14 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
             <div className="form-step">
               <h3>Add Clients (ग्राहक थप्नुहोस्)</h3>
               <div className="form-grid">
-                <select name="entity_type" value={currentClient.entity_type} onChange={handleClientChange}>
+                <SelectInput name="entity_type" value={currentClient.entity_type} onChange={handleClientChange} label="Client Type (ग्राहक प्रकार)">
                   <option value="individual">Individual (व्यक्तिगत)</option>
                   <option value="company">Company (कम्पनी)</option>
-                </select>
-                <select name="gender" value={currentClient.gender} onChange={handleClientChange}>
+                </SelectInput>
+                <SelectInput name="gender" value={currentClient.gender} onChange={handleClientChange} label="Gender (लिङ्ग)">
                   <option value="male">Male (पुरुष)</option>
                   <option value="female">Female (महिला)</option>
-                </select>
+                </SelectInput>
                 <ClearInput type="text" name="title" placeholder="Title (उपाधि – Mr., Ms., Dr.)" value={currentClient.title} onChange={handleClientChange} />
                 <ClearInput type="text" name="first_name" placeholder="First Name (पहिलो नाम) *" value={currentClient.first_name} onChange={handleClientChange} error={clientErrors.first_name} />
                 <ClearInput type="text" name="last_name" placeholder="Last Name (थर)" value={currentClient.last_name} onChange={handleClientChange} />
@@ -294,13 +304,13 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
               <SectionHead>Location of Site (सम्पत्तिको स्थान)</SectionHead>
               <div className="form-grid">
                 <ClearInput type="text" name="property_name" placeholder="Property Name (सम्पत्तिको नाम) *" value={currentProperty.property_name} onChange={handlePropertyChange} error={propertyErrors.property_name} />
-                <select name="property_type" value={currentProperty.property_type} onChange={handlePropertyChange}>
+                <SelectInput name="property_type" value={currentProperty.property_type} onChange={handlePropertyChange} label="Property Type (सम्पत्ति प्रकार)">
                   <option value="land">Land (जग्गा)</option>
                   <option value="building">Building (भवन)</option>
                   <option value="land_and_building">Land &amp; Building (जग्गा र भवन)</option>
                   <option value="apartment">Apartment (अपार्टमेन्ट)</option>
                   <option value="commercial">Commercial (व्यावसायिक)</option>
-                </select>
+                </SelectInput>
                 <ClearInput type="text" name="plot_no" placeholder="Plot No. (कित्ता नं.)" value={currentProperty.plot_no} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={currentProperty.district} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="vdc_municipality" placeholder="Present Municipality / VDC (वर्तमान नगरपालिका / गाविस)" value={currentProperty.vdc_municipality} onChange={handlePropertyChange} />
@@ -430,21 +440,26 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 <>
                   <div className="property-selector">
                     <label>Select Property for Owner (मालिकको लागि सम्पत्ति छान्नुहोस्) *</label>
-                    <select value={selectedPropertyId || ''} onChange={e => setSelectedPropertyId(Number(e.target.value))}>
+                    <SelectInput
+                      name="property_selection"
+                      value={selectedPropertyId || ''}
+                      onChange={e => setSelectedPropertyId(Number(e.target.value))}
+                      label="Select Property for Owner (मालिकको लागि सम्पत्ति छान्नुहोस्)"
+                      error={ownerErrors.property_selection}
+                    >
                       <option value="">-- Select a property (सम्पत्ति छान्नुहोस्) --</option>
                       {properties.map(prop => (
                         <option key={prop.id} value={prop.id}>{prop.property_name} - {prop.address}</option>
                       ))}
-                    </select>
-                    {ownerErrors.property_selection && <span className="error-message">{ownerErrors.property_selection}</span>}
+                    </SelectInput>
                   </div>
                   <div className="form-grid">
                     <ClearInput type="text" name="owner_name" placeholder="Owner Name (मालिकको नाम) *" value={currentOwner.owner_name} onChange={handleOwnerChange} error={ownerErrors.owner_name} />
-                    <select name="owner_type" value={currentOwner.owner_type} onChange={handleOwnerChange}>
+                    <SelectInput name="owner_type" value={currentOwner.owner_type} onChange={handleOwnerChange} label="Owner Type (मालिक प्रकार)">
                       <option value="individual">Individual (व्यक्तिगत)</option>
                       <option value="corporation">Corporation (निगम)</option>
                       <option value="partnership">Partnership (साझेदारी)</option>
-                    </select>
+                    </SelectInput>
                     <ClearInput type="text" name="title" placeholder="Title (उपाधि)" value={currentOwner.title} onChange={handleOwnerChange} />
                     <ClearInput type="email" name="email" placeholder="Email (इमेल) *" value={currentOwner.email} onChange={handleOwnerChange} error={ownerErrors.email} />
                     <ClearInput type="tel" name="phone" placeholder="Phone (फोन)" value={currentOwner.phone} onChange={handleOwnerChange} />
@@ -454,12 +469,12 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                     <ClearInput type="text" name="state" placeholder="State (प्रदेश)" value={currentOwner.state} onChange={handleOwnerChange} />
                     <ClearInput type="text" name="zip_code" placeholder="Zip Code (हुलाक संकेत)" value={currentOwner.zip_code} onChange={handleOwnerChange} />
                     <ClearInput type="text" name="country" placeholder="Country (देश)" value={currentOwner.country} onChange={handleOwnerChange} />
-                    <select name="id_type" value={currentOwner.id_type} onChange={handleOwnerChange}>
+                    <SelectInput name="id_type" value={currentOwner.id_type} onChange={handleOwnerChange} label="ID Type (पहिचान प्रकार)">
                       <option value="passport">Passport (राहदानी)</option>
                       <option value="id_card">ID Card (परिचयपत्र)</option>
                       <option value="driving_license">Driving License (सवारी अनुमतिपत्र)</option>
                       <option value="other">Other (अन्य)</option>
-                    </select>
+                    </SelectInput>
                     <ClearInput type="text" name="id_number" placeholder="ID Number (परिचयपत्र नं.)" value={currentOwner.id_number} onChange={handleOwnerChange} />
                     <ClearInput type="text" name="pan_number" placeholder="PAN / Tax ID (स्थायी लेखा नं. / कर)" value={currentOwner.pan_number} onChange={handleOwnerChange} />
                     <ClearInput type="text" name="bank_account" placeholder="Bank Account (बैंक खाता नं.)" value={currentOwner.bank_account} onChange={handleOwnerChange} />

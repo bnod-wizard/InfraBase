@@ -188,9 +188,14 @@
 
 /* Float up when focused or has content */
 .field-wrap:focus-within label,
-.field-wrap input:not(:placeholder-shown) ~ label {
+.field-wrap input:not(:placeholder-shown) ~ label,
+.field-wrap select:not([value=""]) ~ label {
   top: -8px;
   font-size: 10px;
+  color: var(--brand, #1f3a2e);
+}
+
+.field-wrap select:focus ~ label {
   color: var(--brand, #1f3a2e);
 }
 
