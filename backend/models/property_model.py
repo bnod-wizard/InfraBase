@@ -69,20 +69,11 @@ class PropertyModel:
             'negative_features': property_data.get('negative_features', ''), # Negative feature of area
             'frontage': property_data.get('frontage'),
             'water_facility': property_data.get('water_facility'),
-            # Field survey triangle measurements — Land Area (Table 23)
-            'lm_tri_a_a': property_data.get('lm_tri_a_a', ''), 'lm_tri_a_b': property_data.get('lm_tri_a_b', ''),
-            'lm_tri_a_c': property_data.get('lm_tri_a_c', ''), 'lm_tri_a_s': property_data.get('lm_tri_a_s', ''),
-            'lm_tri_a_sqft': property_data.get('lm_tri_a_sqft', ''), 'lm_tri_a_aana': property_data.get('lm_tri_a_aana', ''),
-            'lm_tri_b_a': property_data.get('lm_tri_b_a', ''), 'lm_tri_b_b': property_data.get('lm_tri_b_b', ''),
-            'lm_tri_b_c': property_data.get('lm_tri_b_c', ''), 'lm_tri_b_s': property_data.get('lm_tri_b_s', ''),
-            'lm_tri_b_sqft': property_data.get('lm_tri_b_sqft', ''), 'lm_tri_b_aana': property_data.get('lm_tri_b_aana', ''),
-            # Field survey triangle measurements — Road Deduction (Table 24)
-            'ded_tri_a_a': property_data.get('ded_tri_a_a', ''), 'ded_tri_a_b': property_data.get('ded_tri_a_b', ''),
-            'ded_tri_a_c': property_data.get('ded_tri_a_c', ''), 'ded_tri_a_s': property_data.get('ded_tri_a_s', ''),
-            'ded_tri_a_sqft': property_data.get('ded_tri_a_sqft', ''), 'ded_tri_a_aana': property_data.get('ded_tri_a_aana', ''),
-            'ded_tri_b_a': property_data.get('ded_tri_b_a', ''), 'ded_tri_b_b': property_data.get('ded_tri_b_b', ''),
-            'ded_tri_b_c': property_data.get('ded_tri_b_c', ''), 'ded_tri_b_s': property_data.get('ded_tri_b_s', ''),
-            'ded_tri_b_sqft': property_data.get('ded_tri_b_sqft', ''), 'ded_tri_b_aana': property_data.get('ded_tri_b_aana', ''),
+            # Dynamic triangle measurements — three area types
+            # Each object: { triangles: [{side_a, side_b, side_c, semi_perimeter, area_sqft, aana}], total_sqft, total_sqm, total_aana, rapd }
+            'land_area_as_per_measurement': property_data.get('land_area_as_per_measurement', {'triangles': [], 'total_sqft': '', 'total_sqm': '', 'total_aana': '', 'rapd': ''}),
+            'land_area_as_per_lalpurja':    property_data.get('land_area_as_per_lalpurja',    {'triangles': [], 'total_sqft': '', 'total_sqm': '', 'total_aana': '', 'rapd': ''}),
+            'land_area_after_deduction':    property_data.get('land_area_after_deduction',    {'triangles': [], 'total_sqft': '', 'total_sqm': '', 'total_aana': '', 'rapd': ''}),
 
             # Boundaries
             'north_boundary': property_data.get('north_boundary'),
@@ -273,18 +264,9 @@ class PropertyModel:
             'positive_features': data.get('positive_features', ''),
             'negative_features': data.get('negative_features', ''),
             'frontage': data.get('frontage'),
-            'lm_tri_a_a': data.get('lm_tri_a_a', ''), 'lm_tri_a_b': data.get('lm_tri_a_b', ''),
-            'lm_tri_a_c': data.get('lm_tri_a_c', ''), 'lm_tri_a_s': data.get('lm_tri_a_s', ''),
-            'lm_tri_a_sqft': data.get('lm_tri_a_sqft', ''), 'lm_tri_a_aana': data.get('lm_tri_a_aana', ''),
-            'lm_tri_b_a': data.get('lm_tri_b_a', ''), 'lm_tri_b_b': data.get('lm_tri_b_b', ''),
-            'lm_tri_b_c': data.get('lm_tri_b_c', ''), 'lm_tri_b_s': data.get('lm_tri_b_s', ''),
-            'lm_tri_b_sqft': data.get('lm_tri_b_sqft', ''), 'lm_tri_b_aana': data.get('lm_tri_b_aana', ''),
-            'ded_tri_a_a': data.get('ded_tri_a_a', ''), 'ded_tri_a_b': data.get('ded_tri_a_b', ''),
-            'ded_tri_a_c': data.get('ded_tri_a_c', ''), 'ded_tri_a_s': data.get('ded_tri_a_s', ''),
-            'ded_tri_a_sqft': data.get('ded_tri_a_sqft', ''), 'ded_tri_a_aana': data.get('ded_tri_a_aana', ''),
-            'ded_tri_b_a': data.get('ded_tri_b_a', ''), 'ded_tri_b_b': data.get('ded_tri_b_b', ''),
-            'ded_tri_b_c': data.get('ded_tri_b_c', ''), 'ded_tri_b_s': data.get('ded_tri_b_s', ''),
-            'ded_tri_b_sqft': data.get('ded_tri_b_sqft', ''), 'ded_tri_b_aana': data.get('ded_tri_b_aana', ''),
+            'land_area_as_per_measurement': data.get('land_area_as_per_measurement', {'triangles': [], 'total_sqft': '', 'total_sqm': '', 'total_aana': '', 'rapd': ''}),
+            'land_area_as_per_lalpurja':    data.get('land_area_as_per_lalpurja',    {'triangles': [], 'total_sqft': '', 'total_sqm': '', 'total_aana': '', 'rapd': ''}),
+            'land_area_after_deduction':    data.get('land_area_after_deduction',    {'triangles': [], 'total_sqft': '', 'total_sqm': '', 'total_aana': '', 'rapd': ''}),
             # Boundaries
             'north_boundary': data.get('north_boundary'),
             'south_boundary': data.get('south_boundary'),

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import '../styles/AccountModal.css';
 import accountApi from '../services/accountApi';
 import { useToast } from '../context';
+import AreaCalculatorModal from './AreaCalculatorModal';
 
 const formatRequiredPlaceholder = (placeholder) => {
   if (!placeholder) return 'This field is required';
@@ -76,6 +77,8 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
   const [currentClient, setCurrentClient] = useState(EMPTY_CLIENT);
 
   const [properties, setProperties] = useState([]);
+  const [areaDrawerType, setAreaDrawerType] = useState(null); // 'measurement' | 'lalpurja' | 'deduction'
+  const EMPTY_AREA_OBJ = { triangles: [], total_sqft: '', total_sqm: '', total_aana: '', rapd: '' };
   const EMPTY_PROPERTY = {
     // Identity
     property_name: '', property_type: 'land', property_status: 'vacant',
@@ -90,6 +93,11 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     nearest_landmark: '', nearest_market: '', public_transport_distance: '',
     land_area_lorc: '', land_area_lorc_trad: '',
     land_area_measured: '', land_area_meas_trad: '',
+    land_area_deducted: '', land_area_ded_trad: '',
+    considered_area: '',
+    land_area_as_per_measurement: { ...EMPTY_AREA_OBJ },
+    land_area_as_per_lalpurja:    { ...EMPTY_AREA_OBJ },
+    land_area_after_deduction:    { ...EMPTY_AREA_OBJ },
     // Boundaries
     north_boundary: '', south_boundary: '', east_boundary: '', west_boundary: '',
     legal_reference_no: '',
@@ -109,6 +117,31 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     near_dumping_site: false,
   };
   const [currentProperty, setCurrentProperty] = useState(EMPTY_PROPERTY);
+
+  const handleAreaCalcSave = ({ land_area, triangles, total_sqft, total_sqm, total_aana, rapd, unit, area_unit }) => {
+    const structured = {
+      triangles: triangles || [],
+      total_sqft: total_sqft || '',
+      total_sqm: total_sqm || land_area || '',
+      total_aana: total_aana || '',
+      rapd: rapd || '',
+      unit: unit || 'Feet',
+    };
+    setCurrentProperty(p => {
+      const base = area_unit ? { ...p, area_unit } : { ...p };
+      if (areaDrawerType === 'measurement') {
+        return { ...base, land_area_as_per_measurement: structured, land_area_measured: land_area, land_area_meas_trad: rapd || '' };
+      }
+      if (areaDrawerType === 'lalpurja') {
+        return { ...base, land_area_as_per_lalpurja: structured, land_area_lorc: land_area, land_area_lorc_trad: rapd || '' };
+      }
+      if (areaDrawerType === 'deduction') {
+        return { ...base, land_area_after_deduction: structured, land_area_deducted: land_area, land_area_ded_trad: rapd || '', considered_area: land_area };
+      }
+      return base;
+    });
+    setAreaDrawerType(null);
+  };
 
   const [owners, setOwners] = useState([]);
   const EMPTY_OWNER = {
@@ -193,6 +226,25 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
   if (!isOpen) return null;
 
   return (
+    <>
+    <AreaCalculatorModal
+      key={areaDrawerType || 'closed'}
+      isOpen={!!areaDrawerType}
+      onClose={() => setAreaDrawerType(null)}
+      asDrawer
+      drawerTitle={
+        areaDrawerType === 'measurement' ? 'Measurement Area (नापी)' :
+        areaDrawerType === 'lalpurja'    ? 'Lalpurja Area (लालपुर्जा)' :
+        'Area After Deduction'
+      }
+      accountData={{ area_unit: 'sqft' }}
+      initialAreaData={
+        areaDrawerType === 'measurement' ? (currentProperty.land_area_as_per_measurement || null) :
+        areaDrawerType === 'lalpurja'    ? (currentProperty.land_area_as_per_lalpurja    || null) :
+        areaDrawerType === 'deduction'   ? (currentProperty.land_area_after_deduction    || null) : null
+      }
+      onSave={handleAreaCalcSave}
+    />
     <div className="account-modal-overlay">
       <div className="account-modal">
         <div className="account-modal-header">
@@ -359,10 +411,34 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 <ClearInput type="text" name="nearest_landmark" placeholder="Nearest Landmark (नजिकको ल्यान्डमार्क)" value={currentProperty.nearest_landmark} onChange={handlePropertyChange} className="form-col-2" />
                 <ClearInput type="text" name="nearest_market" placeholder="Nearest Market (नजिकको बजार)" value={currentProperty.nearest_market} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="public_transport_distance" placeholder="Public Transport Distance (सार्वजनिक यातायात दूरी)" value={currentProperty.public_transport_distance} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="land_area_lorc" placeholder="LORC Area – Sq.M (लालपुर्जा क्षेत्रफल – वर्गमिटर)" value={currentProperty.land_area_lorc} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="land_area_lorc_trad" placeholder="LORC Traditional R-A-P-D (लालपुर्जा परम्परागत रो-आ-प-दा)" value={currentProperty.land_area_lorc_trad} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="land_area_measured" placeholder="Measured Area – Sq.M (नापी क्षेत्रफल – वर्गमिटर)" value={currentProperty.land_area_measured} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="land_area_meas_trad" placeholder="Measured Traditional R-A-P-D (नापी परम्परागत रो-आ-प-दा)" value={currentProperty.land_area_meas_trad} onChange={handlePropertyChange} />
+                {/* ── Area Calculator Buttons ── */}
+              </div>
+              <div className="area-calc-group">
+                {[
+                  { type: 'lalpurja',    label: 'Lalpurja Area', hint: 'As per legal document (लालपुर्जा)', obj: currentProperty.land_area_as_per_lalpurja },
+                  { type: 'measurement', label: 'Measurement Area', hint: 'As per field survey (नापी)', obj: currentProperty.land_area_as_per_measurement },
+                  { type: 'deduction',   label: 'After Deduction', hint: 'Net area after road/other deductions', obj: currentProperty.land_area_after_deduction },
+                ].map(({ type, label, hint, obj }) => (
+                  <div key={type} className="area-calc-card">
+                    <div className="area-calc-card-info">
+                      <span className="area-calc-card-label">{label}</span>
+                      <span className="area-calc-card-hint">{hint}</span>
+                      {obj && obj.triangles && obj.triangles.length > 0 && (
+                        <span className="area-calc-card-result">
+                          {obj.triangles.length} triangle{obj.triangles.length > 1 ? 's' : ''} ·{' '}
+                          {obj.unit === 'Meter' || obj.unit === 'Centimeter'
+                            ? `${obj.total_sqm} m²`
+                            : `${obj.total_sqft} sqft`} · {obj.rapd}
+                        </span>
+                      )}
+                    </div>
+                    <button type="button" className="area-calc-card-btn" onClick={() => setAreaDrawerType(type)}>
+                      {obj && obj.triangles && obj.triangles.length > 0 ? '✏ Edit' : '⊞ Calculate'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="form-grid">
               </div>
 
               {/* — Boundaries — */}
@@ -592,6 +668,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

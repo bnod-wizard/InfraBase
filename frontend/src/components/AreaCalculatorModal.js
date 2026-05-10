@@ -85,38 +85,207 @@ function buildResults(sqm) {
 /* ── SVG Diagrams ───────────────────────────────────────────── */
 const svgBase = { viewBox: '0 0 280 200', style: { width: '100%', height: '100%', maxHeight: 200 } };
 
-function TriangleDiagram({ count }) {
+/* Find which side of t1 is the shared diagonal with t2 (closest relative value) */
+function findSharedSide(t1, t2) {
+  const sides = ['a', 'b', 'c'];
+  let best = { s1: 'c', s2: 'a', ratio: Infinity };
+  for (const s1 of sides) {
+    for (const s2 of sides) {
+      const v1 = parseFloat(t1[s1]) || 0;
+      const v2 = parseFloat(t2[s2]) || 0;
+      if (v1 > 0 && v2 > 0) {
+        const ratio = Math.abs(v1 - v2) / Math.max(v1, v2);
+        if (ratio < best.ratio) best = { s1, s2, ratio };
+      }
+    }
+  }
+  return { s1: best.s1, s2: best.s2 };
+}
+
+/* ── Geometry helpers for proportional SVG ──────────────────── */
+
+// V0=(0,0), V1=(c,0), V2=(cx,cy): side c=V0-V1, b=V0-V2, a=V1-V2
+function triVertices(a, b, c) {
+  if (a <= 0 || b <= 0 || c <= 0) return null;
+  if (a >= b + c || b >= a + c || c >= a + b) return null;
+  const cx = (b * b + c * c - a * a) / (2 * c);
+  const cy2 = b * b - cx * cx;
+  if (cy2 < 0) return null;
+  return [[0, 0], [c, 0], [cx, Math.sqrt(cy2)]];
+}
+
+// Place V3 opposite the PQ edge from vOpp, with |P-V3|=lenP, |Q-V3|=lenQ
+function attachVertex(P, Q, lenP, lenQ, vOpp) {
+  const dx = Q[0] - P[0], dy = Q[1] - P[1];
+  const d = Math.sqrt(dx * dx + dy * dy);
+  if (!d || lenP <= 0 || lenQ <= 0) return [(P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2];
+  const ux = dx / d, uy = dy / d;
+  const lx = (lenP * lenP + d * d - lenQ * lenQ) / (2 * d);
+  const ly = Math.sqrt(Math.max(0, lenP * lenP - lx * lx));
+  const cA = [P[0] + ux * lx - uy * ly, P[1] + uy * lx + ux * ly];
+  const cB = [P[0] + ux * lx + uy * ly, P[1] + uy * lx - ux * ly];
+  const crossOpp = dx * (vOpp[1] - P[1]) - dy * (vOpp[0] - P[0]);
+  const crossA   = dx * (cA[1] - P[1])   - dy * (cA[0] - P[0]);
+  return (crossOpp * crossA > 0) ? cB : cA;
+}
+
+// Scale world pts into SVG box [W×H] with padding, flipping Y axis
+function fitToBox(pts, W, H, pad) {
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const s = Math.min((W - 2 * pad) / (maxX - minX || 1), (H - 2 * pad) / (maxY - minY || 1));
+  const offX = W / 2 - (maxX + minX) * s / 2;
+  const offY = H / 2 + (maxY + minY) * s / 2;
+  return pts.map(([x, y]) => [x * s + offX, -y * s + offY]);
+}
+
+// Edge midpoint offset outward from centroid for label placement
+function edgeMidLabel(A, B, centroid, offset) {
+  const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2;
+  const dx = mx - centroid[0], dy = my - centroid[1];
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  return [mx + dx / len * offset, my + dy / len * offset];
+}
+
+function ptStr(pts) {
+  return pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+}
+
+// Maps side letter to [vertexIndex_1, vertexIndex_2] and outer vertex index
+// in the triVertices(a,b,c) output [V0,V1,V2]: c=V0-V1, b=V0-V2, a=V1-V2
+const EDGE_VERTS = { a: [1, 2], b: [0, 2], c: [0, 1] };
+const EDGE_OUTER = { a: 0, b: 1, c: 2 };
+
+function TriangleDiagram({ count, triangles, unit }) {
+  const u = unit === 'Meter' ? 'm' : unit === 'Feet' ? 'ft' : unit === 'Centimeter' ? 'cm' : '';
+  const lbl = (v, fallback) => (v && parseFloat(v) > 0) ? `${v}${u}` : fallback;
+  const W = 280, H = 200, pad = 24;
+
+  /* ── Single triangle ── */
   if (count <= 1) {
+    const t = (triangles && triangles[0]) || {};
+    const a = parseFloat(t.a) || 0, b = parseFloat(t.b) || 0, c = parseFloat(t.c) || 0;
+    const verts = triVertices(a, b, c);
+    if (!verts) {
+      return (
+        <svg {...svgBase}>
+          <polygon points="140,18 28,182 252,182" fill="#c8f25c33" stroke="#1f3a2e" strokeWidth="2.5" strokeLinejoin="round"/>
+          <text x="68"  y="112" fontSize="12" fill="#1f3a2e" fontWeight="700" textAnchor="middle">{lbl(t.a, 'a')}</text>
+          <text x="210" y="112" fontSize="12" fill="#1f3a2e" fontWeight="700" textAnchor="middle">{lbl(t.b, 'b')}</text>
+          <text x="140" y="196" fontSize="12" fill="#1f3a2e" fontWeight="700" textAnchor="middle">{lbl(t.c, 'c')}</text>
+        </svg>
+      );
+    }
+    const [S0, S1, S2] = fitToBox(verts, W, H, pad);
+    const cen = [(S0[0]+S1[0]+S2[0])/3, (S0[1]+S1[1]+S2[1])/3];
+    const [la, lb, lc] = [
+      edgeMidLabel(S1, S2, cen, 16), // side a = V1-V2
+      edgeMidLabel(S0, S2, cen, 16), // side b = V0-V2
+      edgeMidLabel(S0, S1, cen, 16), // side c = V0-V1
+    ];
     return (
       <svg {...svgBase}>
-        <polygon points="140,18 28,182 252,182" fill="#c8f25c33" stroke="#1f3a2e" strokeWidth="2.5" strokeLinejoin="round"/>
-        <text x="74"  y="116" fontSize="15" fill="#1f3a2e" fontWeight="700">a</text>
-        <text x="196" y="116" fontSize="15" fill="#1f3a2e" fontWeight="700">b</text>
-        <text x="136" y="197" fontSize="15" fill="#1f3a2e" fontWeight="700">c</text>
+        <polygon points={ptStr([S0, S1, S2])} fill="#c8f25c33" stroke="#1f3a2e" strokeWidth="2.5" strokeLinejoin="round"/>
+        <text x={la[0].toFixed(1)} y={la[1].toFixed(1)} fontSize="11" fill="#1f3a2e" fontWeight="700" textAnchor="middle">{lbl(t.a, 'a')}</text>
+        <text x={lb[0].toFixed(1)} y={lb[1].toFixed(1)} fontSize="11" fill="#1f3a2e" fontWeight="700" textAnchor="middle">{lbl(t.b, 'b')}</text>
+        <text x={lc[0].toFixed(1)} y={lc[1].toFixed(1)} fontSize="11" fill="#1f3a2e" fontWeight="700" textAnchor="middle">{lbl(t.c, 'c')}</text>
       </svg>
     );
   }
+
+  /* ── Two triangles — proportional quadrilateral ── */
+  if (count === 2) {
+    const t1 = (triangles && triangles[0]) || {};
+    const t2 = (triangles && triangles[1]) || {};
+    const { s1, s2 } = findSharedSide(t1, t2);
+    const a1 = parseFloat(t1.a)||0, b1 = parseFloat(t1.b)||0, c1 = parseFloat(t1.c)||0;
+    const verts1 = triVertices(a1, b1, c1);
+    if (!verts1) {
+      return (
+        <svg {...svgBase}>
+          <polygon points="110,22 18,148 148,188 258,148" fill="none" stroke="#1f3a2e" strokeWidth="2.5" strokeLinejoin="round"/>
+          <text x="140" y="108" fontSize="11" fill="#888" textAnchor="middle">Enter values</text>
+        </svg>
+      );
+    }
+    const [V0, V1, V2] = verts1;
+    const [pi, qi] = EDGE_VERTS[s1];
+    const oi = EDGE_OUTER[s1];
+    const P = verts1[pi], Q = verts1[qi], Vopp = verts1[oi];
+    const t2outers = ['a','b','c'].filter(s => s !== s2);
+    const lenP2 = parseFloat(t2[t2outers[0]]) || 0;
+    const lenQ2 = parseFloat(t2[t2outers[1]]) || 0;
+    const V3 = (lenP2 > 0 && lenQ2 > 0) ? attachVertex(P, Q, lenP2, lenQ2, Vopp) : null;
+    const worldPts = V3 ? [V0, V1, V2, V3] : [V0, V1, V2];
+    const svgPts = fitToBox(worldPts, W, H, pad);
+    const [S0, S1, S2] = svgPts;
+    const S3 = V3 ? svgPts[3] : null;
+    const SP = svgPts[pi], SQ = svgPts[qi];
+
+    const cen1 = [(S0[0]+S1[0]+S2[0])/3, (S0[1]+S1[1]+S2[1])/3];
+    const cen2 = S3 ? [(SP[0]+SQ[0]+S3[0])/3, (SP[1]+SQ[1]+S3[1])/3] : cen1;
+
+    const t1outers = ['a','b','c'].filter(s => s !== s1);
+
+    // Diagonal geometry for ticks and label
+    const dDx = SQ[0]-SP[0], dDy = SQ[1]-SP[1];
+    const dLen = Math.sqrt(dDx*dDx+dDy*dDy) || 1;
+    const perpX = -dDy/dLen, perpY = dDx/dLen;
+    const dMid = [(SP[0]+SQ[0])/2, (SP[1]+SQ[1])/2];
+    const mkTick = frac => {
+      const px = SP[0]+dDx*frac, py = SP[1]+dDy*frac;
+      return [px-perpX*5, py-perpY*5, px+perpX*5, py+perpY*5];
+    };
+    const [tk1, tk2, tk3, tk4] = [mkTick(0.42), mkTick(0.47), mkTick(0.53), mkTick(0.58)];
+
+    const dv1 = t1[s1], dv2 = t2[s2];
+    const diff = (dv1 && dv2) ? Math.abs(parseFloat(dv1) - parseFloat(dv2)) : 1;
+    const diagLabel = dv1 ? (diff < 0.5 ? `${parseFloat(dv1)}${u}` : `${parseFloat(dv1)}/${parseFloat(dv2)}${u}`) : 'shared';
+    const diagLabelX = (dMid[0] + perpX * 12).toFixed(1);
+    const diagLabelY = (dMid[1] + perpY * 12).toFixed(1);
+
+    // Quad outline: outer vertex of T1, then around
+    const SVopp = svgPts[oi];
+    const quadPts = S3 ? [SVopp, SP, S3, SQ] : [S0, S1, S2];
+
+    return (
+      <svg {...svgBase}>
+        {S3 && <polygon points={ptStr(quadPts)} fill="none" stroke="#1f3a2e" strokeWidth="2.5" strokeLinejoin="round"/>}
+        <polygon points={ptStr([S0, S1, S2])} fill="#c8f25c22" stroke="#1a6e3c" strokeWidth="1.5"/>
+        {S3 && <polygon points={ptStr([SP, SQ, S3])} fill="#3b6fb622" stroke="#3b6fb6" strokeWidth="1.5"/>}
+        <line x1={SP[0].toFixed(1)} y1={SP[1].toFixed(1)} x2={SQ[0].toFixed(1)} y2={SQ[1].toFixed(1)} stroke="#888" strokeWidth="1.8" strokeDasharray="6,4"/>
+        {[tk1,tk2,tk3,tk4].map((tk,i) => (
+          <line key={i} x1={tk[0].toFixed(1)} y1={tk[1].toFixed(1)} x2={tk[2].toFixed(1)} y2={tk[3].toFixed(1)} stroke="#888" strokeWidth="1.5"/>
+        ))}
+        <text x={diagLabelX} y={diagLabelY} fontSize="10" fill="#555" fontWeight="600" textAnchor="middle">{diagLabel}</text>
+        {t1outers.map(side => {
+          const [va, vb] = EDGE_VERTS[side].map(idx => svgPts[idx]);
+          const [lx, ly] = edgeMidLabel(va, vb, cen1, 16);
+          return <text key={side} x={lx.toFixed(1)} y={ly.toFixed(1)} fontSize="11" fill="#1a6e3c" fontWeight="700" textAnchor="middle">{lbl(t1[side], side)}</text>;
+        })}
+        {S3 && t2outers.map((side, i) => {
+          const [va, vb] = [[SP, S3], [SQ, S3]][i];
+          const [lx, ly] = edgeMidLabel(va, vb, cen2, 16);
+          return <text key={side} x={lx.toFixed(1)} y={ly.toFixed(1)} fontSize="11" fill="#3b6fb6" fontWeight="700" textAnchor="middle">{lbl(t2[side], side)}</text>;
+        })}
+        <text x={cen1[0].toFixed(1)} y={cen1[1].toFixed(1)} fontSize="10" fill="#1a6e3c" fontWeight="600" textAnchor="middle">Tri-1</text>
+        {S3 && <text x={cen2[0].toFixed(1)} y={cen2[1].toFixed(1)} fontSize="10" fill="#3b6fb6" fontWeight="600" textAnchor="middle">Tri-2</text>}
+      </svg>
+    );
+  }
+
+  /* ── Three or more triangles — generic polygon ── */
   return (
     <svg {...svgBase}>
-      {/* Outer polygon */}
       <polygon points="75,18 18,145 148,182 248,148 220,38" fill="#e8f5e944" stroke="#1f3a2e" strokeWidth="2.5" strokeLinejoin="round"/>
-      {/* Diagonals */}
       <line x1="75" y1="18" x2="148" y2="182" stroke="#1f3a2e" strokeWidth="1.5" strokeDasharray="5,4"/>
       <line x1="75" y1="18" x2="248" y2="148" stroke="#1f3a2e" strokeWidth="1.5" strokeDasharray="5,4"/>
-      {/* Triangle-1 fill */}
       <polygon points="75,18 18,145 148,182" fill="#c8f25c22" stroke="#1a6e3c" strokeWidth="1.5"/>
-      {/* Triangle-2 fill */}
       <polygon points="75,18 148,182 248,148" fill="#3b6fb622" stroke="#3b6fb6" strokeWidth="1.5"/>
-      {/* Side labels */}
-      <text x="30"  y="86"  fontSize="13" fill="#1f3a2e" fontWeight="700">a</text>
-      <text x="90"  y="175" fontSize="13" fill="#1f3a2e" fontWeight="700">b</text>
-      <text x="205" y="175" fontSize="13" fill="#1f3a2e" fontWeight="700">c</text>
-      <text x="244" y="96"  fontSize="13" fill="#1f3a2e" fontWeight="700">x</text>
-      <text x="148" y="36"  fontSize="13" fill="#1f3a2e" fontWeight="700">y</text>
-      {/* Labels */}
       <text x="50"  y="132" fontSize="10" fill="#1a6e3c">Tri-1</text>
       <text x="148" y="120" fontSize="10" fill="#3b6fb6">Tri-2</text>
-      {count > 2 && <text x="110" y="155" fontSize="10" fill="#888" fontStyle="italic">+{count - 2} more</text>}
+      <text x="110" y="160" fontSize="10" fill="#888" fontStyle="italic">+{count - 2} more triangles</text>
     </svg>
   );
 }
@@ -218,9 +387,9 @@ function SemiEllipseDiagram() {
   );
 }
 
-const ShapeDiagram = ({ shape, triCount }) => {
+const ShapeDiagram = ({ shape, triCount, triangles, unit }) => {
   switch (shape) {
-    case 'polygon':      return <TriangleDiagram count={triCount} />;
+    case 'polygon':      return <TriangleDiagram count={triCount} triangles={triangles} unit={unit} />;
     case 'cyclic_quad':  return <CyclicQuadDiagram />;
     case 'rectangle':    return <RectangleDiagram />;
     case 'circle':       return <CircleDiagram />;
@@ -252,12 +421,20 @@ const fmt = (n, dec = 4) => (isNaN(n) || n === null) ? '—' : n.toFixed(dec);
 const fmt2 = n => fmt(n, 2);
 
 /* ── Main component ─────────────────────────────────────────── */
-function AreaCalculatorModal({ isOpen, onClose, asPage = false, accountData = null, onSave }) {
+function AreaCalculatorModal({ isOpen, onClose, asPage = false, asDrawer = false, drawerTitle, accountData = null, initialAreaData = null, onSave }) {
   const [shape,   setShape]   = useState('polygon');
-  const [unit,    setUnit]    = useState(
-    (accountData?.area_unit === 'sqft' || accountData?.land_area_unit === 'sqft') ? 'Feet' : 'Meter'
-  );
-  const [inputs,  setInputs]  = useState(defaultInputs('polygon'));
+  const [unit,    setUnit]    = useState(() => {
+    if (initialAreaData?.unit) return initialAreaData.unit;
+    if (accountData?.area_unit === 'sqft' || accountData?.land_area_unit === 'sqft') return 'Feet';
+    return 'Feet';
+  });
+  const [inputs,  setInputs]  = useState(() => {
+    const tris = initialAreaData?.triangles;
+    if (tris && tris.length > 0) {
+      return { triangles: tris.map(t => ({ a: String(t.side_a ?? ''), b: String(t.side_b ?? ''), c: String(t.side_c ?? '') })) };
+    }
+    return defaultInputs('polygon');
+  });
   const [results, setResults] = useState(null);
   const [saving,  setSaving]  = useState(false);
 
@@ -271,9 +448,15 @@ function AreaCalculatorModal({ isOpen, onClose, asPage = false, accountData = nu
   }, []);
 
   const handleUnitChange = useCallback(e => {
-    setUnit(e.target.value);
-    setResults(null);
-  }, []);
+    const newUnit = e.target.value;
+    setUnit(newUnit);
+    // Auto-recalculate with the new unit so results stay live
+    setResults(prev => {
+      if (!prev) return null;
+      const sqm = computeAreaSqm(shape, inputs, newUnit);
+      return sqm > 0 ? buildResults(sqm) : null;
+    });
+  }, [shape, inputs]);
 
   /* Triangle inputs */
   const setTriField = (idx, field, val) => {
@@ -314,7 +497,40 @@ function AreaCalculatorModal({ isOpen, onClose, asPage = false, accountData = nu
     if (!onSave || !results) return;
     setSaving(true);
     try {
-      await onSave({ land_area: fmt2(results.sqm), land_area_unit: 'sqm' });
+      const saveData = {
+        land_area: fmt2(results.sqm),
+        land_area_unit: 'sqm',
+        area_unit: unit === 'Feet' ? 'sqft' : 'sqm',
+      };
+      if (shape === 'polygon') {
+        const k = LINEAR_TO_M[unit] || 1;
+        const trianglesData = inputs.triangles
+          .filter(t => t.a && t.b && t.c)
+          .map(t => {
+            const a = (parseFloat(t.a) || 0) * k;
+            const b = (parseFloat(t.b) || 0) * k;
+            const c = (parseFloat(t.c) || 0) * k;
+            const areaSqm = heronArea(a, b, c);
+            const s = (a + b + c) / 2;
+            return {
+              side_a: t.a,
+              side_b: t.b,
+              side_c: t.c,
+              semi_perimeter: fmt2(s / k),
+              area_sqft: fmt2(areaSqm * 10.7639),
+              aana: fmt2(areaSqm / AANA),
+            };
+          });
+        const nepal = toNepal(results.sqm);
+        const totalAana = nepal.ropani * 16 + nepal.aana + nepal.paisa / 4 + nepal.dam / 16;
+        saveData.triangles = trianglesData;
+        saveData.total_sqft = fmt2(results.sqft);
+        saveData.total_sqm = fmt2(results.sqm);
+        saveData.total_aana = fmt2(totalAana);
+        saveData.rapd = `${nepal.ropani}-${nepal.aana}-${nepal.paisa}-${nepal.dam}`;
+        saveData.unit = unit;
+      }
+      await onSave(saveData);
     } finally {
       setSaving(false);
     }
@@ -326,7 +542,7 @@ function AreaCalculatorModal({ isOpen, onClose, asPage = false, accountData = nu
     <div className="ac-body">
       {/* ── Diagram ── */}
       <div className="ac-diagram">
-        <ShapeDiagram shape={shape} triCount={triCount} />
+        <ShapeDiagram shape={shape} triCount={triCount} triangles={inputs.triangles} unit={unit} />
       </div>
 
       {/* ── Controls row ── */}
@@ -353,15 +569,17 @@ function AreaCalculatorModal({ isOpen, onClose, asPage = false, accountData = nu
               <div key={idx} className="ac-tri-group">
                 <div className="ac-tri-head">
                   <span>Triangle {idx + 1}</span>
-                  {results && (
-                    <span className="ac-tri-area">
-                      Area = {fmt2(heronArea(
-                        (parseFloat(tri.a) || 0) * LINEAR_TO_M[unit],
-                        (parseFloat(tri.b) || 0) * LINEAR_TO_M[unit],
-                        (parseFloat(tri.c) || 0) * LINEAR_TO_M[unit],
-                      ))} sq.m
-                    </span>
-                  )}
+                  {results && (() => {
+                    const k = LINEAR_TO_M[unit] || 1;
+                    const areaSqm = heronArea(
+                      (parseFloat(tri.a)||0)*k,
+                      (parseFloat(tri.b)||0)*k,
+                      (parseFloat(tri.c)||0)*k,
+                    );
+                    const dispArea = unit === 'Feet' ? areaSqm * 10.7639 : areaSqm;
+                    const dispUnit = unit === 'Feet' ? 'sq.ft' : 'sq.m';
+                    return <span className="ac-tri-area">Area = {fmt2(dispArea)} {dispUnit}</span>;
+                  })()}
                   {inputs.triangles.length > 1 && (
                     <button className="ac-tri-remove" onClick={() => removeTriangle(idx)}>✕</button>
                   )}
@@ -526,6 +744,24 @@ function AreaCalculatorModal({ isOpen, onClose, asPage = false, accountData = nu
 
   /* ── Page mode (no overlay) ─────────────────────────────── */
   if (asPage) return <div className="ac-page">{body}</div>;
+
+  /* ── Drawer mode ─────────────────────────────────────────── */
+  if (asDrawer) {
+    if (!isOpen) return null;
+    return (
+      <div className="ac-drawer-overlay" onClick={onClose}>
+        <div className="ac-drawer" onClick={e => e.stopPropagation()}>
+          <div className="ac-header">
+            <h2 className="ac-title">{drawerTitle || 'Area Calculator'}</h2>
+            <button className="ac-close" onClick={onClose}>✕</button>
+          </div>
+          <div className="ac-scroll">
+            {body}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   /* ── Modal mode ─────────────────────────────────────────── */
   if (!isOpen) return null;

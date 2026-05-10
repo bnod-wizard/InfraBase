@@ -49,7 +49,7 @@ function AccountDetail() {
   });
   const [activeObjectEdit, setActiveObjectEdit] = useState({ type: null, id: null, data: null });
   const [isDocModalOpen,    setIsDocModalOpen]    = useState(false);
-  const [areaCalcProperty,  setAreaCalcProperty]  = useState(null);
+  const [areaCalcCtx,       setAreaCalcCtx]       = useState(null); // { property, type: 'measurement'|'lalpurja'|'deduction' }
   const [mapProperty,       setMapProperty]       = useState(null);
   const [stageSaving,       setStageSaving]       = useState(false);
 
@@ -131,13 +131,13 @@ function AccountDetail() {
       { accessor: 'gps_coordinates',  label: 'GPS Coordinates' },
     ]},
     { title: 'Land Area', fields: [
-      { accessor: 'land_area_lorc',      label: 'As per Lalpurja (Sq.M)' },
+      { accessor: 'land_area_lorc',      label: 'As per Lalpurja',    type: 'area_sq', sqftSource: 'land_area_as_per_lalpurja' },
       { accessor: 'land_area_lorc_trad', label: 'Lalpurja (R-A-P-D)' },
-      { accessor: 'land_area_measured',  label: 'As per Measurement (Sq.M)' },
+      { accessor: 'land_area_measured',  label: 'As per Measurement', type: 'area_sq', sqftSource: 'land_area_as_per_measurement' },
       { accessor: 'land_area_meas_trad', label: 'Measurement (R-A-P-D)' },
-      { accessor: 'land_area_deducted',  label: 'After Deduction (Sq.M)' },
+      { accessor: 'land_area_deducted',  label: 'After Deduction',    type: 'area_sq', sqftSource: 'land_area_after_deduction' },
       { accessor: 'land_area_ded_trad',  label: 'After Deduction (R-A-P-D)' },
-      { accessor: 'considered_area',     label: 'Area Considered (Sq.M)' },
+      { accessor: 'considered_area',     label: 'Area Considered',    type: 'area_sq', sqftSource: 'land_area_after_deduction' },
       { accessor: 'land_shape',          label: 'Land Shape' },
       { accessor: 'land_topography',     label: 'Topography' },
       { accessor: 'land_level',          label: 'Level of Land' },
@@ -149,33 +149,10 @@ function AccountDetail() {
       { accessor: 'positive_features', label: 'Positive Features', fullWidth: true },
       { accessor: 'negative_features', label: 'Negative Features', fullWidth: true },
     ]},
-    { title: 'Field Survey — Land Area Triangles', fields: [
-      { accessor: 'lm_tri_a_a',    label: 'Triangle A — Side a (ft)' },
-      { accessor: 'lm_tri_a_b',    label: 'Triangle A — Side b (ft)' },
-      { accessor: 'lm_tri_a_c',    label: 'Triangle A — Side c (ft)' },
-      { accessor: 'lm_tri_a_s',    label: 'Triangle A — S=(a+b+c)/2' },
-      { accessor: 'lm_tri_a_sqft', label: 'Triangle A — Total (Sqft)' },
-      { accessor: 'lm_tri_a_aana', label: 'Triangle A — Land (Aana)' },
-      { accessor: 'lm_tri_b_a',    label: 'Triangle B — Side a (ft)' },
-      { accessor: 'lm_tri_b_b',    label: 'Triangle B — Side b (ft)' },
-      { accessor: 'lm_tri_b_c',    label: 'Triangle B — Side c (ft)' },
-      { accessor: 'lm_tri_b_s',    label: 'Triangle B — S=(a+b+c)/2' },
-      { accessor: 'lm_tri_b_sqft', label: 'Triangle B — Total (Sqft)' },
-      { accessor: 'lm_tri_b_aana', label: 'Triangle B — Land (Aana)' },
-    ]},
-    { title: 'Field Survey — Road Deduction Triangles', fields: [
-      { accessor: 'ded_tri_a_a',    label: 'Deduction A — Side a (ft)' },
-      { accessor: 'ded_tri_a_b',    label: 'Deduction A — Side b (ft)' },
-      { accessor: 'ded_tri_a_c',    label: 'Deduction A — Side c (ft)' },
-      { accessor: 'ded_tri_a_s',    label: 'Deduction A — S=(a+b+c)/2' },
-      { accessor: 'ded_tri_a_sqft', label: 'Deduction A — Total (Sqft)' },
-      { accessor: 'ded_tri_a_aana', label: 'Deduction A — Land (Aana)' },
-      { accessor: 'ded_tri_b_a',    label: 'Deduction B — Side a (ft)' },
-      { accessor: 'ded_tri_b_b',    label: 'Deduction B — Side b (ft)' },
-      { accessor: 'ded_tri_b_c',    label: 'Deduction B — Side c (ft)' },
-      { accessor: 'ded_tri_b_s',    label: 'Deduction B — S=(a+b+c)/2' },
-      { accessor: 'ded_tri_b_sqft', label: 'Deduction B — Total (Sqft)' },
-      { accessor: 'ded_tri_b_aana', label: 'Deduction B — Land (Aana)' },
+    { title: 'Field Survey — Triangles', fields: [
+      { accessor: 'land_area_as_per_measurement', label: 'Measurement Area (नापी)',       type: 'triangle_group', calcType: 'measurement' },
+      { accessor: 'land_area_as_per_lalpurja',    label: 'Lalpurja Area (लालपुर्जा)',     type: 'triangle_group', calcType: 'lalpurja' },
+      { accessor: 'land_area_after_deduction',    label: 'After Deduction (कटाई पछि)',    type: 'triangle_group', calcType: 'deduction' },
     ]},
     { title: 'Boundaries', fields: [
       { accessor: 'north_boundary', label: 'North' },
@@ -467,16 +444,127 @@ function AccountDetail() {
     return <input type={field.type || 'text'} name={field.accessor} value={value || ''} onChange={e => handleObjectEditChange(field.accessor, e.target.value)} />;
   };
 
-  const renderFieldGrid = (fieldDefs, itemId, isEditingItem, data) => {
-    const isGrouped = fieldDefs.length > 0 && 'fields' in fieldDefs[0];
-    const renderOneField = field => (
-      <div key={`${itemId}-${field.accessor}`} className={`ad-field${field.fullWidth ? ' full' : ''}`}>
-        <label>{field.label}</label>
-        {isEditingItem
-          ? renderObjectFieldInput(field, data[field.accessor])
-          : <span>{renderValue(data[field.accessor])}</span>}
+  const fmtAreaByUnit = (sqmVal, areaUnit, structuredObj) => {
+    const sqm = parseFloat(sqmVal) || 0;
+    const obj = structuredObj || {};
+    switch (areaUnit) {
+      case 'sqft': {
+        const v = parseFloat(obj.total_sqft) || (sqm * 10.7639);
+        return { value: v > 0 ? v.toFixed(2) : '—', unit: 'Sq.Ft' };
+      }
+      case 'aana': {
+        const v = parseFloat(obj.total_aana) || (sqm > 0 ? sqm / 31.8 : 0);
+        return { value: v > 0 ? v.toFixed(2) : '—', unit: 'Aana' };
+      }
+      case 'ropani': {
+        const v = sqm / 508.72;
+        return { value: v > 0 ? v.toFixed(4) : '—', unit: 'Ropani' };
+      }
+      default:
+        return { value: sqm > 0 ? sqm.toFixed(2) : '—', unit: 'Sq.M' };
+    }
+  };
+
+  const renderTriangleGroup = (field, areaObj, item) => {
+    const obj = areaObj || { triangles: [], total_sqft: '', total_sqm: '', total_aana: '', rapd: '' };
+    const tris = obj.triangles || [];
+    return (
+      <div key={`tg-${field.accessor}`} className="ad-tri-group full">
+        <div className="ad-tri-group-head">
+          <span className="ad-tri-group-label">{field.label}</span>
+          <button
+            className="btn btn-sm"
+            style={{ background: 'var(--brand,#1f3a2e)', color: '#fff', border: 'none', fontSize: 12 }}
+            onClick={() => setAreaCalcCtx({ property: item, type: field.calcType })}
+          >
+            {tris.length > 0 ? '✏ Recalculate' : '⊞ Calculate'}
+          </button>
+        </div>
+        {tris.length > 0 ? (
+          <>
+            {(() => {
+              const triUnitLabel = obj.unit === 'Meter' ? 'm' : obj.unit === 'Feet' ? 'ft' : obj.unit === 'Centimeter' ? 'cm' : 'ft';
+              const primaryTotal = obj.unit === 'Meter'
+                ? `${obj.total_sqm} m²`
+                : obj.unit === 'Centimeter'
+                ? `${obj.total_sqm} m²`
+                : `${obj.total_sqft} sqft`;
+              return (
+                <>
+                  <table className="ad-tri-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>a ({triUnitLabel})</th>
+                        <th>b ({triUnitLabel})</th>
+                        <th>c ({triUnitLabel})</th>
+                        <th>s ({triUnitLabel})</th>
+                        <th>Sqft</th>
+                        <th>Aana</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tris.map((t, i) => (
+                        <tr key={i}>
+                          <td>{i + 1}</td>
+                          <td>{t.side_a}</td><td>{t.side_b}</td><td>{t.side_c}</td>
+                          <td>{t.semi_perimeter}</td>
+                          <td>{t.area_sqft}</td><td>{t.aana}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={5}><strong>Total</strong></td>
+                        <td><strong>{obj.total_sqft}</strong></td>
+                        <td><strong>{obj.total_aana}</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                  <div className="ad-tri-summary">
+                    {primaryTotal} · {obj.total_sqm} m² · R-A-P-D: {obj.rapd}
+                  </div>
+                </>
+              );
+            })()}
+          </>
+        ) : (
+          <p className="ad-tri-empty">No triangles calculated yet.</p>
+        )}
       </div>
     );
+  };
+
+  const renderFieldGrid = (fieldDefs, itemId, isEditingItem, data, item) => {
+    const isGrouped = fieldDefs.length > 0 && 'fields' in fieldDefs[0];
+    const renderOneField = field => {
+      if (field.type === 'triangle_group') {
+        return renderTriangleGroup(field, data[field.accessor], item);
+      }
+      if (field.type === 'area_sq') {
+        const { value: displayValue, unit: unitSuffix } = fmtAreaByUnit(
+          data[field.accessor],
+          data.area_unit || 'sqm',
+          field.sqftSource ? data[field.sqftSource] : null
+        );
+        return (
+          <div key={`${itemId}-${field.accessor}`} className="ad-field">
+            <label>{field.label} ({unitSuffix})</label>
+            {isEditingItem
+              ? renderObjectFieldInput(field, data[field.accessor])
+              : <span>{displayValue}</span>}
+          </div>
+        );
+      }
+      return (
+        <div key={`${itemId}-${field.accessor}`} className={`ad-field${field.fullWidth ? ' full' : ''}`}>
+          <label>{field.label}</label>
+          {isEditingItem
+            ? renderObjectFieldInput(field, data[field.accessor])
+            : <span>{renderValue(data[field.accessor])}</span>}
+        </div>
+      );
+    };
     if (!isGrouped) return <div className="ad-grid-2">{fieldDefs.map(renderOneField)}</div>;
     return fieldDefs.map(group => (
       <div key={group.title} className="ad-field-group">
@@ -517,7 +605,7 @@ function AccountDetail() {
                       )}
                     </div>
                   </div>
-                  {renderFieldGrid(fields, itemId, isEditingItem, data)}
+                  {renderFieldGrid(fields, itemId, isEditingItem, data, item)}
                 </div>
               );
             })}
@@ -643,14 +731,6 @@ function AccountDetail() {
               item => (
                 <>
                   <button
-                    key="area-calc"
-                    className="btn btn-sm"
-                    style={{ background: 'rgba(31,58,46,0.08)', color: 'var(--brand,#1f3a2e)', border: 'none' }}
-                    onClick={() => setAreaCalcProperty(item)}
-                  >
-                    ⬡ Area Calc
-                  </button>
-                  <button
                     key="map"
                     className="btn btn-sm"
                     style={{ background: 'rgba(31,58,46,0.08)', color: 'var(--brand,#1f3a2e)', border: 'none' }}
@@ -766,15 +846,44 @@ function AccountDetail() {
       />
 
       <AreaCalculatorModal
-        isOpen={!!areaCalcProperty}
-        onClose={() => setAreaCalcProperty(null)}
-        accountData={areaCalcProperty}
-        onSave={async ({ land_area, land_area_unit }) => {
-          if (!areaCalcProperty) return;
-          const propId = areaCalcProperty._id || areaCalcProperty.id;
-          const updated = { ...areaCalcProperty, total_area: land_area, area_unit: land_area_unit };
+        key={areaCalcCtx ? `${areaCalcCtx.property?._id || 'p'}-${areaCalcCtx.type}` : 'closed'}
+        isOpen={!!areaCalcCtx}
+        onClose={() => setAreaCalcCtx(null)}
+        asDrawer
+        drawerTitle={
+          areaCalcCtx?.type === 'measurement' ? 'Measurement Area (नापी)' :
+          areaCalcCtx?.type === 'lalpurja'    ? 'Lalpurja Area (लालपुर्जा)' :
+          'Area After Deduction'
+        }
+        accountData={areaCalcCtx?.property || null}
+        initialAreaData={
+          areaCalcCtx?.type === 'measurement' ? (areaCalcCtx.property?.land_area_as_per_measurement || null) :
+          areaCalcCtx?.type === 'lalpurja'    ? (areaCalcCtx.property?.land_area_as_per_lalpurja    || null) :
+          areaCalcCtx?.type === 'deduction'   ? (areaCalcCtx.property?.land_area_after_deduction    || null) : null
+        }
+        onSave={async ({ land_area, triangles, total_sqft, total_sqm, total_aana, rapd, unit, area_unit }) => {
+          if (!areaCalcCtx) return;
+          const { property, type } = areaCalcCtx;
+          const propId = property._id || property.id;
+          const structured = { triangles: triangles || [], total_sqft: total_sqft || '', total_sqm: total_sqm || land_area || '', total_aana: total_aana || '', rapd: rapd || '', unit: unit || 'Feet' };
+          const patch = { ...property };
+          if (area_unit) patch.area_unit = area_unit;
+          if (type === 'measurement') {
+            patch.land_area_as_per_measurement = structured;
+            patch.land_area_measured = land_area;
+            patch.land_area_meas_trad = rapd || '';
+          } else if (type === 'lalpurja') {
+            patch.land_area_as_per_lalpurja = structured;
+            patch.land_area_lorc = land_area;
+            patch.land_area_lorc_trad = rapd || '';
+          } else if (type === 'deduction') {
+            patch.land_area_after_deduction = structured;
+            patch.land_area_deducted = land_area;
+            patch.land_area_ded_trad = rapd || '';
+            patch.considered_area = land_area;
+          }
           try {
-            const res = await accountApi.updateProperty(propId, updated);
+            const res = await accountApi.updateProperty(propId, patch);
             if (res.data?.success) {
               setHierarchy(prev => ({
                 ...prev,
@@ -783,7 +892,7 @@ function AccountDetail() {
                 ),
               }));
               toast('Area saved to property');
-              setAreaCalcProperty(null);
+              setAreaCalcCtx(null);
             }
           } catch {
             toast('Failed to save area');
