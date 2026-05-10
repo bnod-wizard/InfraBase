@@ -2,6 +2,14 @@
 Owner Model - Property owner (can be individual or entity)
 """
 from datetime import datetime
+from bson import ObjectId
+
+
+def _to_oid(val):
+    if val is None: return None
+    if isinstance(val, ObjectId): return val
+    try: return ObjectId(str(val))
+    except Exception: return None
 
 
 class OwnerModel:
@@ -15,8 +23,8 @@ class OwnerModel:
     def to_dict(owner_data):
         """Convert owner data to dictionary for database storage"""
         return {
-            'account_id': owner_data.get('account_id'),
-            'client_id': owner_data.get('client_id'),
+            'account_id': _to_oid(owner_data.get('account_id')),
+            'client_id':  _to_oid(owner_data.get('client_id')),
             'owner_name': owner_data.get('owner_name'),
             'owner_type': owner_data.get('owner_type', 'individual'),
             'title': owner_data.get('title'),

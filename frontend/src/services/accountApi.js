@@ -69,6 +69,11 @@ const accountApi = {
   saveValuation: (accountId, data) =>
     axiosInstance.post(`/accounts/${accountId}/valuation`, data),
 
+  // Update sub-objects
+  updateClient:   (clientId, data)   => axiosInstance.put(`/clients/${clientId}`, data),
+  updateOwner:    (ownerId, data)    => axiosInstance.put(`/owners/${ownerId}`, data),
+  updateProperty: (propertyId, data) => axiosInstance.put(`/properties/${propertyId}`, data),
+
   // Document generation – returns a blob
   generateDocument: (accountId, docType) =>
     axiosInstance.get(`/accounts/${accountId}/generate/${docType}`, { responseType: 'blob' })

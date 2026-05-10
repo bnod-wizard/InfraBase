@@ -69,7 +69,7 @@ class PropertyRepository:
                 {'_id': ObjectId(property_id)},
                 {'$set': property_data}
             )
-            return result.modified_count > 0
+            return result.matched_count > 0
         except Exception as e:
             raise Exception(f"Error updating property: {str(e)}")
 

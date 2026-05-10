@@ -62,7 +62,7 @@ class OwnerRepository:
                 {'_id': ObjectId(owner_id)},
                 {'$set': owner_data}
             )
-            return result.modified_count > 0
+            return result.matched_count > 0
         except Exception as e:
             raise Exception(f"Error updating owner: {str(e)}")
 

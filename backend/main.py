@@ -90,7 +90,10 @@ if db is not None:
         account_controller(
             app, account_service, bulk_account_service, auth_service,
             valuation_repository=valuation_repository,
-            document_service=document_service
+            document_service=document_service,
+            client_service=client_service,
+            owner_service=owner_service,
+            property_service=property_service,
         )
 
         # Register template controller

@@ -2,6 +2,14 @@
 Client Model - Contact person within Account
 """
 from datetime import datetime
+from bson import ObjectId
+
+
+def _to_oid(val):
+    if val is None: return None
+    if isinstance(val, ObjectId): return val
+    try: return ObjectId(str(val))
+    except Exception: return None
 
 
 class ClientModel:
@@ -15,7 +23,7 @@ class ClientModel:
     def to_dict(client_data):
         """Convert client data to dictionary for database storage"""
         return {
-            'account_id': client_data.get('account_id'),
+            'account_id': _to_oid(client_data.get('account_id')),
             'first_name': client_data.get('first_name'),
             'last_name': client_data.get('last_name'),
             'title': client_data.get('title'),

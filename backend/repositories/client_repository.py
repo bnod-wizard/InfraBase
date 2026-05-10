@@ -55,7 +55,7 @@ class ClientRepository:
                 {'_id': ObjectId(client_id)},
                 {'$set': client_data}
             )
-            return result.modified_count > 0
+            return result.matched_count > 0
         except Exception as e:
             raise Exception(f"Error updating client: {str(e)}")
 

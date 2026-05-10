@@ -8,7 +8,8 @@ import io
 
 
 def account_controller(app, account_service, bulk_account_service, auth_service,
-                       valuation_repository=None, document_service=None):
+                       valuation_repository=None, document_service=None,
+                       client_service=None, owner_service=None, property_service=None):
     """Register account-related routes"""
 
     def token_required(f):
@@ -253,6 +254,51 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
             )
         except ValueError as e:
             return jsonify({'success': False, 'message': str(e)}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # ── Client update ─────────────────────────────────────────────────────────
+    @app.route('/api/clients/<client_id>', methods=['PUT'])
+    @token_required
+    def update_client(client_id):
+        try:
+            if client_service is None:
+                return jsonify({'success': False, 'message': 'Client service not available'}), 503
+            data = request.get_json()
+            success, message, result = client_service.update_client(client_id, data)
+            if success:
+                return jsonify({'success': True, 'message': message, 'data': result}), 200
+            return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # ── Owner update ──────────────────────────────────────────────────────────
+    @app.route('/api/owners/<owner_id>', methods=['PUT'])
+    @token_required
+    def update_owner(owner_id):
+        try:
+            if owner_service is None:
+                return jsonify({'success': False, 'message': 'Owner service not available'}), 503
+            data = request.get_json()
+            success, message, result = owner_service.update_owner(owner_id, data)
+            if success:
+                return jsonify({'success': True, 'message': message, 'data': result}), 200
+            return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # ── Property update ───────────────────────────────────────────────────────
+    @app.route('/api/properties/<property_id>', methods=['PUT'])
+    @token_required
+    def update_property(property_id):
+        try:
+            if property_service is None:
+                return jsonify({'success': False, 'message': 'Property service not available'}), 503
+            data = request.get_json()
+            success, message, result = property_service.update_property(property_id, data)
+            if success:
+                return jsonify({'success': True, 'message': message, 'data': result}), 200
+            return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 

@@ -2,6 +2,14 @@
 Property Model - Physical asset/property
 """
 from datetime import datetime
+from bson import ObjectId
+
+
+def _to_oid(val):
+    if val is None: return None
+    if isinstance(val, ObjectId): return val
+    try: return ObjectId(str(val))
+    except Exception: return None
 
 
 class PropertyModel:
@@ -15,9 +23,9 @@ class PropertyModel:
     def to_dict(property_data):
         """Convert property data to dictionary for database storage"""
         return {
-            'account_id': property_data.get('account_id'),
-            'client_id': property_data.get('client_id'),
-            'owner_id': property_data.get('owner_id'),
+            'account_id': _to_oid(property_data.get('account_id')),
+            'client_id':  _to_oid(property_data.get('client_id')),
+            'owner_id':   _to_oid(property_data.get('owner_id')),
             'property_name': property_data.get('property_name'),
             'property_type': property_data.get('property_type'),
             'property_mortgaged': property_data.get('property_mortgaged', 'Both'),  # Land, Building, Both
@@ -94,6 +102,7 @@ class PropertyModel:
             'telephone': property_data.get('telephone'),
             'public_transport_distance': property_data.get('public_transport_distance'),
             'nearest_landmark': property_data.get('nearest_landmark'),
+            'landmark_coordinates': property_data.get('landmark_coordinates'),
             'nearest_market': property_data.get('nearest_market'),
 
             # Valuation
@@ -235,6 +244,7 @@ class PropertyModel:
             'telephone': data.get('telephone'),
             'public_transport_distance': data.get('public_transport_distance'),
             'nearest_landmark': data.get('nearest_landmark'),
+            'landmark_coordinates': data.get('landmark_coordinates'),
             'nearest_market': data.get('nearest_market'),
             # Valuation
             'commercial_rate_per_aana': data.get('commercial_rate_per_aana'),

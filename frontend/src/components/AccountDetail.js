@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import accountApi from '../services/accountApi';
 import GenerateDocModal from './GenerateDocModal';
+import PropertyMapModal from './PropertyMapModal';
 import { useToast } from '../context';
 import '../styles/AccountDetail.css';
 
@@ -30,6 +31,7 @@ function AccountDetail() {
   });
   const [activeObjectEdit, setActiveObjectEdit] = useState({ type: null, id: null, data: null });
   const [isDocModalOpen,   setIsDocModalOpen]   = useState(false);
+  const [mapProperty,      setMapProperty]      = useState(null);
 
   const accountFields = [
     { accessor: 'account_name',         label: 'Account Name' },
@@ -135,8 +137,9 @@ function AccountDetail() {
       { accessor: 'road_width',                 label: 'Road Width (ft)' },
       { accessor: 'road_type',                  label: 'Road Type' },
       { accessor: 'road_side',                  label: 'Road Side' },
-      { accessor: 'nearest_landmark',           label: 'Nearest Landmark' },
-      { accessor: 'nearest_market',             label: 'Nearest Market' },
+      { accessor: 'nearest_landmark',    label: 'Nearest Landmark' },
+      { accessor: 'landmark_coordinates', label: 'Landmark GPS' },
+      { accessor: 'nearest_market',       label: 'Nearest Market' },
       { accessor: 'public_transport_distance',  label: 'Public Transport Distance' },
     ]},
     { title: 'Services', fields: [
@@ -242,16 +245,37 @@ function AccountDetail() {
   const cancelObjectEdit = () => setActiveObjectEdit({ type: null, id: null, data: null });
   const handleObjectEditChange = (name, value) => setActiveObjectEdit(prev => ({ ...prev, data: { ...prev.data, [name]: value } }));
 
-  const saveObjectEdit = () => {
+  const saveObjectEdit = async () => {
     if (!activeObjectEdit.type || !activeObjectEdit.id) { cancelObjectEdit(); return; }
-    const typeLabel = activeObjectEdit.type.replace(/s$/, ''); // clients→client, etc.
-    setHierarchy(prev => {
-      if (!prev) return prev;
-      const list = Array.isArray(prev[activeObjectEdit.type]) ? prev[activeObjectEdit.type] : [];
-      return { ...prev, [activeObjectEdit.type]: list.map(item => (item._id || item.id) === activeObjectEdit.id ? activeObjectEdit.data : item) };
-    });
-    cancelObjectEdit();
-    toast(`${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} updated`);
+    const { type, id, data } = activeObjectEdit;
+    const typeLabel = type.replace(/s$/, ''); // clients→client, owners→owner, properties→propert…
+
+    // Map collection name → API method
+    const apiCall = {
+      clients:    () => accountApi.updateClient(id, data),
+      owners:     () => accountApi.updateOwner(id, data),
+      properties: () => accountApi.updateProperty(id, data),
+    }[type];
+
+    if (!apiCall) { cancelObjectEdit(); return; }
+
+    try {
+      const res = await apiCall();
+      if (res.data?.success) {
+        const updated = res.data.data;
+        setHierarchy(prev => {
+          if (!prev) return prev;
+          const list = Array.isArray(prev[type]) ? prev[type] : [];
+          return { ...prev, [type]: list.map(item => (item._id || item.id) === id ? updated : item) };
+        });
+        cancelObjectEdit();
+        toast(`${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} saved`);
+      } else {
+        toast(res.data?.message || 'Save failed — please try again.');
+      }
+    } catch (err) {
+      toast('Network error — changes not saved.');
+    }
   };
 
   const renderValue = value => {
@@ -339,7 +363,7 @@ function AccountDetail() {
     ));
   };
 
-  const renderSection = (title, items, fields, headerLabel) => {
+  const renderSection = (title, items, fields, headerLabel, getExtraActions) => {
     const type = title.toLowerCase();
     return (
       <div>
@@ -363,7 +387,10 @@ function AccountDetail() {
                           <button className="btn btn-sm btn-secondary" onClick={cancelObjectEdit}>Cancel</button>
                         </>
                       ) : (
-                        <button className="btn btn-sm btn-secondary" onClick={() => startObjectEdit(type, item)}>Edit</button>
+                        <>
+                          {getExtraActions && getExtraActions(item)}
+                          <button className="btn btn-sm btn-secondary" onClick={() => startObjectEdit(type, item)}>Edit</button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -479,7 +506,18 @@ function AccountDetail() {
 
           {/* Properties */}
           <div className="panel ad-panel">
-            {renderSection('Properties', hierarchy.properties, propertyFields, 'property_name')}
+            {renderSection('Properties', hierarchy.properties, propertyFields, 'property_name',
+              item => (
+                <button
+                  key="map"
+                  className="btn btn-sm"
+                  style={{ background: 'rgba(31,58,46,0.08)', color: 'var(--brand,#1f3a2e)', border: 'none' }}
+                  onClick={() => setMapProperty(item)}
+                >
+                  📍 Map
+                </button>
+              )
+            )}
           </div>
 
           {/* Owners */}
@@ -535,6 +573,25 @@ function AccountDetail() {
         isOpen={isDocModalOpen}
         onClose={() => setIsDocModalOpen(false)}
       />
+
+      {mapProperty && (
+        <PropertyMapModal
+          property={mapProperty}
+          onClose={() => setMapProperty(null)}
+          onPropertyUpdate={(updated) => {
+            setMapProperty(updated);
+            setHierarchy(prev => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                properties: prev.properties.map(p =>
+                  (p._id || p.id) === (updated._id || updated.id) ? updated : p
+                ),
+              };
+            });
+          }}
+        />
+      )}
     </div>
   );
 }
