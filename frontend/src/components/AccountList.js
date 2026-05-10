@@ -59,7 +59,7 @@ function buildPageNumbers(current, total) {
   return pages;
 }
 
-function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = '' }) {
+function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = '', selectedAccountId, onAccountSelect }) {
   const navigate     = useNavigate();
   const [accounts,      setAccounts]      = useState([]);
   const [loading,       setLoading]       = useState(true);
@@ -130,6 +130,7 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
             <table className="accounts" style={{ width: 'calc(100% - 48px)' }}>
               <thead>
                 <tr>
+                  <th style={{ width: 40 }}>Select</th>
                   <th>Account Name</th>
                   <th className="acct-phone">Phone</th>
                   <th className="acct-date">Date Added</th>
@@ -139,7 +140,15 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
               </thead>
               <tbody>
                 {displayed.map(account => (
-                  <tr key={account._id} className={rowStatusClass(account.status)}>
+                  <tr key={account._id} className={`${rowStatusClass(account.status)}${selectedAccountId === account._id ? ' selected' : ''}`}>
+                    <td className="acct-select">
+                      <input
+                        type="radio"
+                        name="accountSelect"
+                        checked={selectedAccountId === account._id}
+                        onChange={() => onAccountSelect && onAccountSelect(account._id, account.account_name)}
+                      />
+                    </td>
                     <td>
                       <div className="cust">
                         <div

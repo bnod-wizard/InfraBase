@@ -24,6 +24,49 @@
   flex-direction: column;
 }
 
+.doc-gen .templates {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 20px;
+}
+
+.doc-gen .tpl {
+  display: grid;
+  gap: 4px;
+  padding: 16px 16px 18px;
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 18px;
+  background: var(--surface, #fff);
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.doc-gen .tpl:hover {
+  border-color: var(--brand, #1f3a2e);
+}
+
+.doc-gen .tpl.selected {
+  border-color: var(--brand, #1f3a2e);
+  background: rgba(31, 58, 46, 0.06);
+}
+
+.doc-gen .tpl input {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.doc-gen .pages {
+  font-size: 12px;
+  color: var(--ink-mute, #6b7280);
+}
+
+.doc-gen .gen-btn {
+  margin-top: 8px;
+  width: 100%;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .layout { grid-template-columns: 1fr; }

@@ -2,6 +2,19 @@
    .cust, .av, .pill, .icon-btn.small, .table-actions, .panel-foot, .pager
    This file is kept as a placeholder. */
 
+.acct-select {
+  text-align: center;
+}
+
+.acct-select input {
+  width: 16px;
+  height: 16px;
+}
+
+.accounts tr.selected {
+  background: rgba(31, 58, 46, 0.06);
+}
+
 .acct-date { font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
 
 @media (max-width: 768px) {

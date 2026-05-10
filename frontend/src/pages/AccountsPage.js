@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AccountList from '../components/AccountList';
 import AccountModal from '../components/AccountModal';
+import GenerateDocModal from '../components/GenerateDocModal';
 import accountApi from '../services/accountApi';
 import '../styles/AccountsPage.css';
 
@@ -22,6 +23,11 @@ function AccountsPage() {
     try { return JSON.parse(localStorage.getItem(FILTER_KEY)) || []; } catch { return []; }
   });
   const [searchTerm,    setSearchTerm]    = useState('');
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
+  const [selectedAccountName, setSelectedAccountName] = useState('');
+  const [selectedAccountHierarchy, setSelectedAccountHierarchy] = useState(null);
+  const [selectedDocType, setSelectedDocType] = useState('');
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
 
   const handleFilterToggle = f => {
     setActiveFilters(prev => {
@@ -34,6 +40,22 @@ function AccountsPage() {
   const handleAddClick      = () => setIsModalOpen(true);
   const handleCloseModal    = () => setIsModalOpen(false);
   const handleAccountSubmit = () => { setRefreshKey(k => k + 1); setIsModalOpen(false); };
+
+  const handleAccountSelect = (accountId, accountName) => {
+    setSelectedAccountId(accountId);
+    setSelectedAccountName(accountName);
+  };
+
+  const handleOpenDocModal = async () => {
+    if (!selectedAccountId || !selectedDocType) return;
+    setIsDocModalOpen(true);
+    try {
+      const res = await accountApi.getAccountHierarchy(selectedAccountId);
+      if (res.data.success) setSelectedAccountHierarchy(res.data.data);
+    } catch {
+      setSelectedAccountHierarchy(null);
+    }
+  };
 
   useEffect(() => {
     accountApi.getAccountStats()
@@ -124,6 +146,8 @@ function AccountsPage() {
             refreshKey={refreshKey}
             statusFilters={activeFilters}
             searchTerm={searchTerm}
+            selectedAccountId={selectedAccountId}
+            onAccountSelect={handleAccountSelect}
           />
         </div>
 
@@ -132,18 +156,28 @@ function AccountsPage() {
           <div className="panel">
             <div className="doc-gen">
               <h3>Generate Document</h3>
-              <p className="hint">Open any account to auto-fill and download valuation documents.</p>
+              <p className="hint">Select one account and one document type, then open the generator.</p>
               <div className="templates">
                 {DOC_TEMPLATES.map(t => (
-                  <div key={t.name} className="tpl">
-                    <span className="tag">{t.tag}</span>
+                  <label key={t.name} className={`tpl${selectedDocType === t.tag.toLowerCase() ? ' selected' : ''}`}>
+                    <input
+                      type="radio"
+                      name="documentType"
+                      value={t.tag.toLowerCase()}
+                      checked={selectedDocType === t.tag.toLowerCase()}
+                      onChange={() => setSelectedDocType(t.tag.toLowerCase())}
+                    />
                     <b>{t.name}</b>
                     <span className="pages">{t.pages}</span>
-                  </div>
+                  </label>
                 ))}
               </div>
-              <button className="gen-btn" disabled>
-                ⎙ Open an account to generate
+              <button
+                className="gen-btn"
+                disabled={!selectedAccountId || !selectedDocType}
+                onClick={handleOpenDocModal}
+              >
+                ⎙ {selectedAccountId ? 'Open generator' : 'Select an account first'}
               </button>
             </div>
           </div>
@@ -170,6 +204,13 @@ function AccountsPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSubmit={handleAccountSubmit}
+      />
+      <GenerateDocModal
+        accountId={selectedAccountId}
+        accountName={selectedAccountName || 'Account'}
+        hierarchy={selectedAccountHierarchy}
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
       />
     </>
   );
