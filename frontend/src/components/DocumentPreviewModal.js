@@ -3,8 +3,26 @@ import '../styles/DocumentPreviewModal.css';
 
 const DOC_LABELS = { cover: 'Cover Page', letterhead: 'Letterhead', proposal: 'Full Proposal' };
 
+/* Split HTML at "Valuation Certificate" heading — everything before is the
+   cover section (centered), everything from that point on is body (left). */
+function splitAtCert(raw) {
+  const MARKER = 'Valuation Certificate';
+  const idx = raw.indexOf(MARKER);
+  if (idx === -1) return { cover: raw, body: '' };
+  const tagStart = raw.lastIndexOf('<', idx);
+  return {
+    cover: raw.slice(0, tagStart),
+    body:  raw.slice(tagStart),
+  };
+}
+
 /* Full HTML page injected into the iframe */
 function buildPage(html) {
+  const { cover, body } = splitAtCert(html);
+  const content = body
+    ? `<div class="doc-cover">${cover}</div><div class="doc-body">${body}</div>`
+    : html;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,16 +49,23 @@ function buildPage(html) {
     border-radius: 2px;
   }
 
-  /* ── typography ─── */
-  p  { margin: 3px 0; text-align: center; }
-  h1 { font-size: 16pt; font-weight: bold; text-align: center; margin: 6px 0 2px; }
-  h2 { font-size: 14pt; font-weight: bold; text-align: center; margin: 6px 0 2px; }
-  h3 { font-size: 12pt; font-weight: bold; text-align: center; margin: 4px 0 2px; }
+  /* ── cover section: everything centered ─── */
+  .doc-cover p,
+  .doc-cover h1, .doc-cover h2, .doc-cover h3 { text-align: center; margin: 3px 0; }
+
+  /* ── body section: paragraphs/headings left ─── */
+  .doc-body p  { margin: 3px 0; text-align: left; }
+  .doc-body h1 { font-size: 16pt; font-weight: bold; text-align: left; margin: 6px 0 2px; }
+  .doc-body h2 { font-size: 14pt; font-weight: bold; text-align: left; margin: 6px 0 2px; }
+  .doc-body h3 { font-size: 12pt; font-weight: bold; text-align: left; margin: 4px 0 2px; }
+
+  /* ── fallback for unsplit content ─── */
+  p  { margin: 3px 0; }
   strong { font-weight: bold; }
   em     { font-style: italic; }
   u      { text-decoration: underline; }
 
-  /* ── tables (grid from cover template) ─── */
+  /* ── tables: always centered regardless of section ─── */
   table {
     border-collapse: collapse;
     width: 100%;
@@ -51,7 +76,9 @@ function buildPage(html) {
     padding: 3px 6px;
     vertical-align: top;
   }
-  td p { text-align: center; }
+  td p, th p,
+  .doc-cover td p, .doc-body td p,
+  .doc-cover th p, .doc-body th p { text-align: center !important; }
 
   /* ── images (logo) ─── */
   img {
@@ -63,7 +90,7 @@ function buildPage(html) {
 </head>
 <body>
   <div class="page-wrap">
-    <div class="a4">${html}</div>
+    <div class="a4">${content}</div>
   </div>
 </body>
 </html>`;

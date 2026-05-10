@@ -215,22 +215,6 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
           </div>
           <div className="gdm-footer-right">
             <div className="gdm-btn-group">
-              <button className="gdm-btn-doc" onClick={() => handlePreview('cover')} disabled={generating !== null} title="Preview Cover">
-                👁
-              </button>
-              <button className="gdm-btn-doc" onClick={() => handleGenerate('cover')} disabled={generating !== null} title="Download Cover">
-                {generating === 'cover' ? '⟳' : '⎙'} Cover
-              </button>
-            </div>
-            <div className="gdm-btn-group">
-              <button className="gdm-btn-doc" onClick={() => handlePreview('letterhead')} disabled={generating !== null} title="Preview Letterhead">
-                👁
-              </button>
-              <button className="gdm-btn-doc" onClick={() => handleGenerate('letterhead')} disabled={generating !== null} title="Download Letterhead">
-                {generating === 'letterhead' ? '⟳' : '⎙'} Letterhead
-              </button>
-            </div>
-            <div className="gdm-btn-group">
               <button className="gdm-btn-doc" onClick={() => handlePreview('proposal')} disabled={generating !== null} title="Preview Full Proposal">
                 👁
               </button>
