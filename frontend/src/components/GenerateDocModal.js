@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import accountApi from '../services/accountApi';
 import { useToast } from '../context';
+import DocumentPreviewModal from './DocumentPreviewModal';
 import '../styles/GenerateDocModal.css';
 
 const EMPTY_VALUATION = {
@@ -12,8 +13,10 @@ const EMPTY_VALUATION = {
   bank_branch: '',
   bank_address: '',
   certifier_name: '',
+  certifier_phone: '',
   nec_no: '',
   nec_class: 'A',
+  nec_type: 'Civil',
   firm_name: '',
   firm_address: '',
   firm_phone: '',
@@ -26,8 +29,9 @@ const EMPTY_VALUATION = {
 function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }) {
   const toast = useToast();
   const [valuation, setValuation]   = useState(EMPTY_VALUATION);
-  const [saving, setSaving]         = useState(false);
-  const [generating, setGenerating] = useState(null);
+  const [saving,      setSaving]      = useState(false);
+  const [generating,  setGenerating]  = useState(null);
+  const [preview,     setPreview]     = useState({ open: false, html: null, docType: null, loading: false, error: null });
 
   // Pre-fill from account hierarchy and saved valuation on open
   useEffect(() => {
@@ -69,6 +73,21 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
       // handle error silently or show inline error
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePreview = async (docType) => {
+    setPreview({ open: true, html: null, docType, loading: true, error: null });
+    try {
+      await accountApi.saveValuation(accountId, valuation);
+      const res = await accountApi.previewDocument(accountId, docType);
+      if (res.data.success) {
+        setPreview(p => ({ ...p, html: res.data.html, loading: false }));
+      } else {
+        setPreview(p => ({ ...p, loading: false, error: res.data.message || 'Preview failed' }));
+      }
+    } catch (err) {
+      setPreview(p => ({ ...p, loading: false, error: 'Preview generation failed' }));
     }
   };
 
@@ -151,9 +170,11 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
           <section className="gdm-section">
             <p className="gdm-section-label">Certifier & Firm</p>
             <div className="gdm-grid-2">
-              <Field label="Certifier Name" name="certifier_name" value={valuation.certifier_name} onChange={handleChange} />
-              <Field label="NEC No."        name="nec_no"         value={valuation.nec_no}         onChange={handleChange} />
+              <Field label="Certifier Name"  name="certifier_name"  value={valuation.certifier_name}  onChange={handleChange} />
+              <Field label="Certifier Phone" name="certifier_phone" value={valuation.certifier_phone} onChange={handleChange} />
+              <Field label="NEC No."         name="nec_no"          value={valuation.nec_no}          onChange={handleChange} />
               <Field label="NEC Class"      name="nec_class"      value={valuation.nec_class}      onChange={handleChange} placeholder="A" />
+              <Field label="NEC Type"       name="nec_type"       value={valuation.nec_type}       onChange={handleChange} placeholder="Civil" />
               <Field label="Firm Name"      name="firm_name"      value={valuation.firm_name}      onChange={handleChange} />
             </div>
             <div className="gdm-grid-2">
@@ -193,18 +214,44 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
             </button>
           </div>
           <div className="gdm-footer-right">
-            <button className="gdm-btn-doc" onClick={() => handleGenerate('cover')} disabled={generating !== null}>
-              {generating === 'cover' ? '⟳' : '⎙'} Cover
-            </button>
-            <button className="gdm-btn-doc" onClick={() => handleGenerate('letterhead')} disabled={generating !== null}>
-              {generating === 'letterhead' ? '⟳' : '⎙'} Letterhead
-            </button>
-            <button className="gdm-btn-doc gdm-btn-primary" onClick={() => handleGenerate('proposal')} disabled={generating !== null}>
-              {generating === 'proposal' ? '⟳ Generating…' : '⎙ Full Proposal'}
-            </button>
+            <div className="gdm-btn-group">
+              <button className="gdm-btn-doc" onClick={() => handlePreview('cover')} disabled={generating !== null} title="Preview Cover">
+                👁
+              </button>
+              <button className="gdm-btn-doc" onClick={() => handleGenerate('cover')} disabled={generating !== null} title="Download Cover">
+                {generating === 'cover' ? '⟳' : '⎙'} Cover
+              </button>
+            </div>
+            <div className="gdm-btn-group">
+              <button className="gdm-btn-doc" onClick={() => handlePreview('letterhead')} disabled={generating !== null} title="Preview Letterhead">
+                👁
+              </button>
+              <button className="gdm-btn-doc" onClick={() => handleGenerate('letterhead')} disabled={generating !== null} title="Download Letterhead">
+                {generating === 'letterhead' ? '⟳' : '⎙'} Letterhead
+              </button>
+            </div>
+            <div className="gdm-btn-group">
+              <button className="gdm-btn-doc" onClick={() => handlePreview('proposal')} disabled={generating !== null} title="Preview Full Proposal">
+                👁
+              </button>
+              <button className="gdm-btn-doc gdm-btn-primary" onClick={() => handleGenerate('proposal')} disabled={generating !== null} title="Download Full Proposal">
+                {generating === 'proposal' ? '⟳ Generating…' : '⎙ Full Proposal'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      <DocumentPreviewModal
+        isOpen={preview.open}
+        onClose={() => setPreview(p => ({ ...p, open: false }))}
+        onDownload={preview.docType ? () => handleGenerate(preview.docType) : null}
+        html={preview.html}
+        docType={preview.docType}
+        accountName={accountName}
+        loading={preview.loading}
+        error={preview.error}
+      />
     </div>
   );
 }

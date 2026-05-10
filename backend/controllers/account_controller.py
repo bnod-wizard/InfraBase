@@ -99,6 +99,18 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
+    # Monthly account counts (must precede /<account_id> route)
+    @app.route('/api/accounts/stats/monthly', methods=['GET'])
+    @token_required
+    def get_monthly_stats():
+        try:
+            success, message, result = account_service.get_monthly_counts()
+            if success:
+                return jsonify({'success': True, 'message': message, 'data': result}), 200
+            return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
     # Account stats overview (must precede /<account_id> route)
     @app.route('/api/accounts/stats/overview', methods=['GET'])
     @token_required
@@ -108,6 +120,37 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
             if success:
                 return jsonify({'success': True, 'message': message, 'data': result}), 200
             return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # Document HTML preview (must precede /<account_id> route)
+    @app.route('/api/accounts/<account_id>/preview/<doc_type>', methods=['GET'])
+    @token_required
+    def preview_document(account_id, doc_type):
+        try:
+            if document_service is None:
+                return jsonify({'success': False, 'message': 'Document service not available'}), 503
+
+            ok, msg, hierarchy = bulk_account_service.get_account_hierarchy(account_id)
+            if not ok:
+                return jsonify({'success': False, 'message': msg}), 404
+
+            valuation = {}
+            if valuation_repository:
+                records = valuation_repository.find_by_account(account_id)
+                if records:
+                    from models.valuation_model import ValuationModel
+                    valuation = ValuationModel.to_json(records[0])
+
+            import io as _io, mammoth
+            doc_bytes = document_service.generate(doc_type, hierarchy, valuation)
+            result    = mammoth.convert_to_html(_io.BytesIO(doc_bytes))
+            return jsonify({'success': True, 'html': result.value, 'doc_type': doc_type}), 200
+
+        except ImportError:
+            return jsonify({'success': False, 'message': 'Preview requires mammoth: pip install mammoth'}), 503
+        except ValueError as e:
+            return jsonify({'success': False, 'message': str(e)}), 400
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 

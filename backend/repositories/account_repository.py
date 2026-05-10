@@ -184,6 +184,26 @@ class AccountRepository:
         except Exception as e:
             raise Exception(f"Error fetching changelog: {str(e)}")
 
+    def get_monthly_counts(self, start_date):
+        """Count accounts created per month from start_date"""
+        try:
+            pipeline = [
+                {'$match': {'created_at': {'$gte': start_date}}},
+                {
+                    '$group': {
+                        '_id': {
+                            'year':  {'$year':  '$created_at'},
+                            'month': {'$month': '$created_at'}
+                        },
+                        'count': {'$sum': 1}
+                    }
+                },
+                {'$sort': {'_id.year': 1, '_id.month': 1}}
+            ]
+            return list(self.collection.aggregate(pipeline))
+        except Exception as e:
+            raise Exception(f"Error aggregating monthly counts: {str(e)}")
+
     def get_recent_changelogs(self, limit=20):
         """Get most recent changelog entries across all accounts"""
         try:

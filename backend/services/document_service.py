@@ -1,5 +1,11 @@
 """
 Document Service - Merges DB data into .docx templates using docxtpl.
+
+Logo injection:
+  Place the firm logo at  backend/templates/firm_logo.png
+  (PNG or JPG, ideally ~400 px wide, transparent background).
+  It will be inserted automatically after the "Prepared by" line in
+  any generated cover or proposal document.
 """
 import os, io
 from docxtpl import DocxTemplate
@@ -239,8 +245,11 @@ def build_context(hierarchy, valuation):
     # Land area traditional
     lorc_parts   = _traditional(prop.get('land_area_lorc_trad'))
     meas_parts   = _traditional(prop.get('land_area_meas_trad'))
-    deduct_parts = ['0','0','0','0']  # deduction not always tracked separately
-    consid_parts = meas_parts  # considered = measured (after deduction)
+    ded_trad     = prop.get('land_area_ded_trad') or prop.get('land_area_meas_trad')
+    deduct_parts = _traditional(ded_trad)
+    # Area considered = after deduction; fall back to deduction then measurement
+    consid_trad  = prop.get('land_area_ded_trad') or prop.get('land_area_meas_trad')
+    consid_parts = _traditional(consid_trad)
 
     # Influencing factors
     bool_fields = {
@@ -276,14 +285,46 @@ def build_context(hierarchy, valuation):
     # Land area in sq.ft (1 sqm = 10.7639 sqft)
     lorc_sqft = round(_to_float(prop.get('land_area_lorc') or 0) * 10.7639, 2)
     meas_sqft = round(_to_float(prop.get('land_area_measured') or 0) * 10.7639, 2)
+    ded_sqm   = _to_float(prop.get('land_area_deducted') or prop.get('land_area_measured') or 0)
+    ded_sqft  = round(ded_sqm * 10.7639, 2)
+    consid_sqm = _to_float(prop.get('considered_area') or prop.get('land_area_deducted') or prop.get('land_area_measured') or 0)
+    consid_sqft = round(consid_sqm * 10.7639, 2)
+
+    # Triangle measurement totals — prefer stored sqft sums over sqm-converted values
+    lm_a_sqft   = _to_float(prop.get('lm_tri_a_sqft') or 0)
+    lm_b_sqft   = _to_float(prop.get('lm_tri_b_sqft') or 0)
+    lm_total_sqft_raw = (lm_a_sqft + lm_b_sqft) if (lm_a_sqft or lm_b_sqft) else meas_sqft
+    lm_total_sqft = str(round(lm_total_sqft_raw, 2)) if lm_total_sqft_raw else '—'
+    lm_total_sqm  = str(round(lm_total_sqft_raw / 10.7639, 2)) if lm_total_sqft_raw else '—'
+
+    ded_a_sqft   = _to_float(prop.get('ded_tri_a_sqft') or 0)
+    ded_b_sqft   = _to_float(prop.get('ded_tri_b_sqft') or 0)
+    ded_total_sqft_raw = (ded_a_sqft + ded_b_sqft) if (ded_a_sqft or ded_b_sqft) else ded_sqft
+    ded_total_sqft = str(round(ded_total_sqft_raw, 2)) if ded_total_sqft_raw else '—'
+    ded_total_sqm  = str(round(ded_total_sqft_raw / 10.7639, 2)) if ded_total_sqft_raw else '—'
+
+    # Lalpurja area in Sq.m. and decimal Aana (from R-A-P-D)
+    lorc_sqm  = str(round(lorc_sqft / 10.7639, 2)) if lorc_sqft else '—'
+    lorc_parts_raw = _traditional(prop.get('land_area_lorc_trad'))
+    try:
+        lr, la, lp, ld = (float(x) for x in lorc_parts_raw)
+        lorc_aana_dec = round(lr * 16 + la + lp / 4 + ld / 16, 2)
+        lorc_aana = str(lorc_aana_dec) if lorc_aana_dec else '—'
+    except Exception:
+        lorc_aana = '—'
 
     # Did area decrease from LORC to measurement?
     lorc_num = _to_float(prop.get('land_area_measured') or 0)
     meas_num = _to_float(prop.get('land_area_lorc') or 0)
     area_change = 'Decreased' if lorc_num < meas_num else 'Increased'
 
-    summary_remarks_lines = [merits[i] for i in range(min(5, len(merits))) if merits[i] != '—']
-    summary_remarks = '\n'.join(summary_remarks_lines) if summary_remarks_lines else '—'
+    # Summary remarks: prefer stored field, fall back to computed merit lines
+    stored_remarks = _v(prop.get('summary_remarks'), '')
+    if stored_remarks and stored_remarks != '—':
+        summary_remarks = stored_remarks
+    else:
+        summary_remarks_lines = [merits[i] for i in range(min(5, len(merits))) if merits[i] != '—']
+        summary_remarks = '\n'.join(summary_remarks_lines) if summary_remarks_lines else '—'
 
     # FMV/Distress
     fmv_land     = _money(prop.get('fair_market_value_land'))
@@ -296,21 +337,92 @@ def build_context(hierarchy, valuation):
     comm_rate = _to_float(prop.get('commercial_rate_per_aana') or 0)
     avg_rate  = (govt_rate + comm_rate) / 2
     avg_fmv_rate = _money(avg_rate) if avg_rate else '—'
-    try:
-        land_aana = _v(prop.get('land_area_lorc_trad', '').split('-')[1] if prop.get('land_area_lorc_trad') else '', '—')
-    except Exception:
-        land_aana = '—'
+    # Decimal Aana from stored field, or computed from traditional R-A-P-D
+    # Nepali: 1 Ropani = 16 Aana, 1 Aana = 4 Paisa, 1 Paisa = 4 Daam
+    def _trad_to_decimal_aana(trad_str):
+        try:
+            parts = trad_str.split('-')
+            if len(parts) == 4:
+                r, a, p, d = float(parts[0]), float(parts[1]), float(parts[2]), float(parts[3])
+                return round(r * 16 + a + p / 4 + d / 16, 4)
+        except Exception:
+            pass
+        return None
 
+    if prop.get('land_area_aana_decimal'):
+        land_aana_dec = _to_float(prop['land_area_aana_decimal'])
+    else:
+        land_aana_dec = _trad_to_decimal_aana(prop.get('land_area_lorc_trad') or '') or 0.0
+    land_aana = str(round(land_aana_dec, 2)) if land_aana_dec else '—'
+
+    # Compute land values: rate per Aana × decimal Aana area
     lorc_area_num = _to_float(prop.get('land_area_lorc') or 0)
-    govt_land_value   = _money(govt_rate * lorc_area_num / 508.72) if lorc_area_num else '—'
-    market_land_value = _money(comm_rate * lorc_area_num / 508.72) if lorc_area_num else '—'
+    aana_for_calc = land_aana_dec if land_aana_dec else (lorc_area_num / 31.8 if lorc_area_num else 0)
+    avg_fmv_rate_val = (govt_rate + comm_rate) / 2
+
+    # Raw computed values (used for 50% breakdown and average)
+    govt_land_raw   = govt_rate * aana_for_calc if (aana_for_calc and govt_rate) else 0
+    market_land_raw = comm_rate * aana_for_calc if (aana_for_calc and comm_rate) else 0
+    govt_land_value   = _money(govt_land_raw) if govt_land_raw else '—'
+    market_land_value = _money(market_land_raw) if market_land_raw else '—'
+
+    # 50% Government and 50% Market (for FMV breakdown paragraphs)
+    govt_50_raw  = govt_land_raw * 0.5
+    market_50_raw = market_land_raw * 0.5
+    govt_50   = _money(govt_50_raw) if govt_50_raw else '—'
+    market_50 = _money(market_50_raw) if market_50_raw else '—'
+    # Average rate per Aana × area = total average land value
+    avg_fmv_amount = _money(avg_fmv_rate_val * aana_for_calc) if aana_for_calc and avg_fmv_rate_val else '—'
+
+    # Market values for summary tables; prefer stored, fall back to computed
+    mv_land_raw = _to_float(prop.get('market_value_land') or 0)
+    mv_bldg_raw = _to_float(prop.get('market_value_building') or 0)
+    mv_land     = _money(prop.get('market_value_land')) if prop.get('market_value_land') else market_land_value
+    mv_building = _money(prop.get('market_value_building')) if prop.get('market_value_building') else '—'
+    mv_total    = _money(mv_land_raw + mv_bldg_raw) if (mv_land_raw or mv_bldg_raw) else (market_land_value if market_land_value != '—' else '—')
+
+    # ── Extra cover-page variables ─────────────────────────────────────────
+    def _vdc_ward(vdc, ward):
+        if vdc and ward:
+            return f'{vdc}-{ward}'
+        return vdc or ward or '—'
+
+    def _dist_country(district):
+        return f'{district} District, Nepal' if district else '—'
+
+    # Client
+    client_vdc_ward = _vdc_ward(c_vdc, c_ward)
+
+    # Owners (individual fields for cover page)
+    o1 = owners[0] if owners else {}
+    o2 = owners[1] if len(owners) > 1 else {}
+    owner1_vdc_ward        = _vdc_ward(_v(o1.get('vdc_municipality'), ''), _v(o1.get('ward_no'), ''))
+    owner1_district_country= _dist_country(_v(o1.get('district'), ''))
+    owner1_phone           = _v(o1.get('phone') or o1.get('mobile'), '—') if o1 else '—'
+    owner2_vdc_ward        = _vdc_ward(_v(o2.get('vdc_municipality'), ''), _v(o2.get('ward_no'), ''))
+    owner2_district_country= _dist_country(_v(o2.get('district'), ''))
+    owner2_phone           = _v(o2.get('phone') or o2.get('mobile'), '—') if o2 else '—'
+
+    # Sabik display: "Jorpati VDC Sabik"
+    sabik_display = f'{sabik_vdc} Sabik' if sabik_vdc else (sabik_str or '—')
+
+    # Firm address split for cover (street / city+country)
+    _fparts = [p.strip() for p in firm_address.split(',') if p.strip()]
+    if len(_fparts) >= 3:
+        firm_street       = ', '.join(_fparts[:-2])
+        firm_city_country = ', '.join(_fparts[-2:])
+    else:
+        firm_street       = firm_address
+        firm_city_country = 'Kathmandu, Nepal'
 
     ctx = {
         # Firm
-        'firm_name':    firm_name,
-        'firm_address': firm_address,
-        'firm_phone':   firm_phone,
-        'firm_email':   firm_email,
+        'firm_name':         firm_name,
+        'firm_address':      firm_address,
+        'firm_street':       firm_street,
+        'firm_city_country': firm_city_country,
+        'firm_phone':        firm_phone,
+        'firm_email':        firm_email,
 
         # Report metadata
         'ref_no':       _v(val.get('ref_no'), '—'),
@@ -367,15 +479,20 @@ def build_context(hierarchy, valuation):
         'sheet_no':              _v(prop.get('sheet_no'), '—'),
         'location_type':         _v(prop.get('property_type'), 'Residential'),
         'land_shape':            _v(prop.get('land_shape'), '—'),
+        'land_level':            _v(prop.get('land_level'), '—'),
+        'nature_of_soil':        _v(prop.get('nature_of_soil'), '—'),
+        'construction_on_land':  _v(prop.get('construction_on_land'), '—'),
+        'positive_features':     _v(prop.get('positive_features'), '—'),
+        'negative_features':     _v(prop.get('negative_features'), '—'),
         'nearest_market':        _v(prop.get('nearest_market'), '—'),
         'distance_from_road':    _v(prop.get('nearest_landmark') or prop.get('public_transport_distance'), '—'),
         'frontage':              _v(prop.get('frontage'), '—'),
 
         # Land area
-        'land_area_lorc':      _v(prop.get('land_area_lorc'), '—'),
-        'land_area_measured':  _v(prop.get('land_area_measured'), '—'),
-        'land_area_deducted':  _v(prop.get('land_area_measured'), '—'),
-        'land_area_considered': _v(prop.get('land_area_measured'), '—'),
+        'land_area_lorc':       _v(prop.get('land_area_lorc'), '—'),
+        'land_area_measured':   _v(prop.get('land_area_measured'), '—'),
+        'land_area_deducted':   _v(prop.get('land_area_deducted') or prop.get('land_area_measured'), '—'),
+        'land_area_considered': _v(prop.get('considered_area') or prop.get('land_area_deducted') or prop.get('land_area_measured'), '—'),
         'land_area_aana':      land_aana,
 
         # Traditional R-A-P-D
@@ -410,6 +527,9 @@ def build_context(hierarchy, valuation):
         # Road & access detail
         'road_access':           _road_access(prop),
         'road_access_blueprint': _v(prop.get('road_access_blueprint'), '—'),
+        'road_type':             _v(prop.get('road_type'), '—'),
+        'road_width':            _v(prop.get('road_width'), '—'),
+        'road_side':             _v(prop.get('road_side'), '—'),
         'land_topography':       _v(prop.get('land_topography'), '—'),
         'facing':                _v(prop.get('facing'), '—'),
         'public_transport_distance': _v(prop.get('public_transport_distance'), '—'),
@@ -417,30 +537,70 @@ def build_context(hierarchy, valuation):
         'accessibility_text':    accessibility_text,
         'area_change':           area_change,
         'land_area_lorc_sqft':   str(lorc_sqft) if lorc_sqft else '—',
-        'land_area_meas_sqft':   str(meas_sqft) if meas_sqft else '—',
+        'land_area_meas_sqft':   lm_total_sqft if lm_total_sqft != '—' else (str(meas_sqft) if meas_sqft else '—'),
+        'land_area_ded_sqft':    ded_total_sqft if ded_total_sqft != '—' else (str(ded_sqft) if ded_sqft else '—'),
+        'land_area_consid_sqft': str(consid_sqft) if consid_sqft else '—',
+
+        # Road type checkboxes (☑ = selected, ☐ = not selected)
+        **{f'road_cb_{k}': ('☑' if _v(prop.get('road_type'), '').lower() == label.lower() else '☐')
+           for k, label in [
+               ('pitched',       'Pitched Road'),
+               ('concrete_slab', 'Concrete Slab Road'),
+               ('gravelled',     'Gravelled Road'),
+               ('earthen',       'Earthen Road'),
+               ('block_paved',   'Block Paved Road'),
+               ('stone_paved',   'Stone Paved Road'),
+               ('foot_trail',    'Foot Trail'),
+           ]},
 
         # Rates
         'commercial_rate': _money(prop.get('commercial_rate_per_aana')),
         'government_rate': _money(prop.get('government_rate_per_aana')),
         'avg_fmv_rate':    avg_fmv_rate,
+        'avg_fmv_amount':  avg_fmv_amount,
         'govt_land_value': govt_land_value,
-        'market_land_value': market_land_value,
+        'govt_50':         govt_50,
+        'market_50':       market_50,
+        'market_land_value':     mv_land,
+        'market_building_value': mv_building,
+        'market_value_total':    mv_total,
+        'govt_value_remarks':    _v(prop.get('govt_value_remarks'), ''),
+        'market_value_remarks':  _v(prop.get('market_value_remarks'), 'As from Local People and the judgement of the valuator'),
 
         # Valuation
         'fair_market_value':          fmv_total,
         'fair_market_value_land':     fmv_land,
-        'fair_market_value_building': fmv_building,
+        'fair_market_value_building': fmv_building if fmv_building != '—' else '-',
         'distress_value':             dv_total,
         'dv_land':    _money(prop.get('distress_value_land')),
         'dv_building': _money(prop.get('distress_value_building')),
         'valuation_in_words': _v(prop.get('valuation_in_words'), '—'),
 
-        # Legal
+        # Legal — basic
         'ownership_type':          _v(prop.get('ownership_type'), '—'),
         'hold_type':               _v(prop.get('hold_type'), '—'),
         'mode_of_acquisition':     _v(prop.get('mode_of_acquisition'), '—'),
         'lorc_registration_date':  _v(prop.get('lorc_registration_date'), '—'),
         'land_revenue_payment_date': _v(prop.get('land_revenue_payment_date'), '—'),
+        # Legal checklist booleans
+        'land_revenue_paid':       _yn(prop.get('land_revenue_paid', True)),
+        'sale_gift_elapsed':       _yn(prop.get('sale_gift_elapsed', True)),
+        'maps_plots_indicated':    _yn(prop.get('maps_plots_indicated', True)),
+        'maps_access_marked':      _yn(prop.get('maps_access_marked', True)),
+        'maps_shape_tallies':      _yn(prop.get('maps_shape_tallies', True)),
+        'boundary_cert_available': _yn(prop.get('boundary_cert_available', True)),
+        'boundary_cert_date':      _v(prop.get('boundary_cert_date'), '—'),
+        'free_access_available':   _yn(prop.get('free_access_available', True)),
+        'acquisition_notice':      _yn(prop.get('acquisition_notice', False)),
+        'boundary_clearly_defined': _yn(prop.get('boundary_clearly_defined', True)),
+        # Legal comments
+        'ownership_comments':          _v(prop.get('ownership_comments'), 'None'),
+        'land_revenue_comments':       _v(prop.get('land_revenue_comments'), 'None'),
+        'land_registration_comments':  _v(prop.get('land_registration_comments'), 'None'),
+        'maps_comments':               _v(prop.get('maps_comments'), 'None'),
+        'area_change_comments':        _v(prop.get('area_change_comments'), 'None'),
+        'boundary_cert_comments':      _v(prop.get('boundary_cert_comments'), 'None'),
+        'general_legal_comments':      _v(prop.get('general_legal_comments'), 'None'),
 
         # Importance
         'location_importance_text': importance_text,
@@ -449,28 +609,157 @@ def build_context(hierarchy, valuation):
         'property_description': _v(prop.get('notes'), '—'),
         'summary_remarks':      summary_remarks,
 
-        # Commercial importance
+        # Commercial importance — prefer explicit user input, fall back to computed
         'proximity_civic_amenities': _v(prop.get('nearest_market'), 'The property is near civic amenities.'),
         'surface_transportation':    'All types of surface transportation can access the property.',
         'land_use':                  f'The land is used for {_v(prop.get("property_type","residential"))} purpose.',
-        'value_increase_features':   _v(prop.get('notes'), 'The property lies in a good location.'),
-        'value_decrease_features':   'The Property has no such features.' if not any([
-            prop.get('near_army_barracks'), prop.get('near_dumping_site'),
-            prop.get('near_hazardous_factory'), prop.get('water_logging')]) else '—',
+        'value_increase_features':   _v(prop.get('positive_features') or prop.get('notes'), '—'),
+        'value_decrease_features':   _v(prop.get('negative_features'), (
+            'The Property has no such features.' if not any([
+                prop.get('near_army_barracks'), prop.get('near_dumping_site'),
+                prop.get('near_hazardous_factory'), prop.get('water_logging')]) else '—')),
         'other_facilities':          'Most kinds of civic amenities are available.',
         'commercial_remarks':        _v(prop.get('notes'), 'N/A.'),
+        # Triangle measurement — Land Area (Table 23)
+        'lm_tri_a_a': _v(prop.get('lm_tri_a_a'), '—'), 'lm_tri_a_b': _v(prop.get('lm_tri_a_b'), '—'),
+        'lm_tri_a_c': _v(prop.get('lm_tri_a_c'), '—'), 'lm_tri_a_s': _v(prop.get('lm_tri_a_s'), '—'),
+        'lm_tri_a_sqft': _v(prop.get('lm_tri_a_sqft'), '—'), 'lm_tri_a_aana': _v(prop.get('lm_tri_a_aana'), '—'),
+        'lm_tri_b_a': _v(prop.get('lm_tri_b_a'), '—'), 'lm_tri_b_b': _v(prop.get('lm_tri_b_b'), '—'),
+        'lm_tri_b_c': _v(prop.get('lm_tri_b_c'), '—'), 'lm_tri_b_s': _v(prop.get('lm_tri_b_s'), '—'),
+        'lm_tri_b_sqft': _v(prop.get('lm_tri_b_sqft'), '—'), 'lm_tri_b_aana': _v(prop.get('lm_tri_b_aana'), '—'),
+        # Triangle measurement — Road Deduction (Table 24)
+        'ded_tri_a_a': _v(prop.get('ded_tri_a_a'), '—'), 'ded_tri_a_b': _v(prop.get('ded_tri_a_b'), '—'),
+        'ded_tri_a_c': _v(prop.get('ded_tri_a_c'), '—'), 'ded_tri_a_s': _v(prop.get('ded_tri_a_s'), '—'),
+        'ded_tri_a_sqft': _v(prop.get('ded_tri_a_sqft'), '—'), 'ded_tri_a_aana': _v(prop.get('ded_tri_a_aana'), '—'),
+        'ded_tri_b_a': _v(prop.get('ded_tri_b_a'), '—'), 'ded_tri_b_b': _v(prop.get('ded_tri_b_b'), '—'),
+        'ded_tri_b_c': _v(prop.get('ded_tri_b_c'), '—'), 'ded_tri_b_s': _v(prop.get('ded_tri_b_s'), '—'),
+        'ded_tri_b_sqft': _v(prop.get('ded_tri_b_sqft'), '—'), 'ded_tri_b_aana': _v(prop.get('ded_tri_b_aana'), '—'),
+
+        # Triangle totals (Section 13 summary rows)
+        'lm_total_sqft':  lm_total_sqft,
+        'lm_total_sqm':   lm_total_sqm,
+        'ded_total_sqft': ded_total_sqft,
+        'ded_total_sqm':  ded_total_sqm,
+
+        # Lalpurja area totals (Section 13C)
+        'land_area_lorc_sqm':  lorc_sqm,
+        'land_area_lorc_aana': lorc_aana,
 
         # Certifier
         'certifier_name':   _v(val.get('certifier_name'), '—'),
+        'certifier_phone':  _v(val.get('certifier_phone') or val.get('firm_phone'), firm_phone),
         'nec_no':           _v(val.get('nec_no'), '—'),
         'nec_class':        _v(val.get('nec_class'), 'A'),
+        'nec_type':         _v(val.get('nec_type'), 'Civil'),
         'site_visited_by':  _v(val.get('site_visited_by'), _v(val.get('certifier_name'), '—')),
         'site_visitor_phone': _v(val.get('site_visitor_phone'), firm_phone),
 
         # Remarks
         'remarks': _v(val.get('remarks') or prop.get('notes'), '—'),
+
+        # ── Letterhead / property schedule extras ─────────────────────────
+        # FMV formatted without trailing .00 for inline table cells
+        'fair_market_value_raw': (lambda v: (
+            f'{int(float(v)):,}' if v and str(v).replace('.','',1).isdigit() else _money(v)
+        ))(prop.get('fair_market_value_total')),
+        # Building section of the property table
+        'building_status':     (
+            prop.get('property_status')
+            if prop.get('property_status') and prop.get('property_status') not in ('active', 'Active', '')
+            else 'At Present'
+        ),
+        'building_area_sqft':  _v(prop.get('built_area') or prop.get('total_area'), '-'),
+        'building_fmv':        _money(prop.get('fair_market_value_building')) if prop.get('fair_market_value_building') else '-',
+        'building_length':     '-',
+        'building_breadth':    '-',
+        'building_height':     '-',
+
+        # ── Cover-page extras ──────────────────────────────────────────────
+        'client_vdc_ward':         client_vdc_ward,
+        'owner1_vdc_ward':         owner1_vdc_ward,
+        'owner1_district_country': owner1_district_country,
+        'owner1_phone':            owner1_phone,
+        'owner2_vdc_ward':         owner2_vdc_ward,
+        'owner2_district_country': owner2_district_country,
+        'owner2_phone':            owner2_phone,
+        'sabik_display':           sabik_display,
     }
     return ctx
+
+
+_LOGO_NAMES = ('firm_logo.png', 'firm_logo.jpg', 'firm_logo.jpeg')
+
+def _find_logo():
+    for name in _LOGO_NAMES:
+        path = os.path.join(TEMPLATES_DIR, name)
+        if os.path.exists(path):
+            return path
+    return None
+
+def _all_paragraphs(doc):
+    """Yield every paragraph in the document, including those in table cells."""
+    for para in doc.paragraphs:
+        yield para
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for para in cell.paragraphs:
+                    yield para
+
+
+def _inject_logo_post(docx_bytes):
+    """
+    Post-render step: find the first EMPTY paragraph that follows the
+    'Prepared by' heading and place the firm logo there (centred, 2 in wide).
+    Searches both top-level paragraphs and table cells.
+    """
+    logo_path = _find_logo()
+    if not logo_path:
+        return docx_bytes
+    try:
+        from docx import Document
+        from docx.shared import Inches
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        import copy
+
+        doc = Document(io.BytesIO(docx_bytes))
+
+        # Find the 'Prepared by' paragraph, then take the next empty one
+        all_paras = list(_all_paragraphs(doc))
+        target = None
+        found_prep = False
+        for para in all_paras:
+            txt = para.text.strip().lower()
+            if not found_prep:
+                if 'prepared by' in txt:
+                    found_prep = True
+            else:
+                # First empty (or near-empty) paragraph after "Prepared by"
+                if txt == '':
+                    target = para
+                    break
+
+        if target is None and found_prep:
+            # Fall back: use the paragraph right after "Prepared by"
+            for i, para in enumerate(all_paras):
+                if 'prepared by' in para.text.strip().lower():
+                    if i + 1 < len(all_paras):
+                        target = all_paras[i + 1]
+                    break
+
+        if target is not None:
+            target.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            # Clear existing runs
+            for run in list(target.runs):
+                run._element.getparent().remove(run._element)
+            run = target.add_run()
+            run.add_picture(logo_path, width=Inches(2.0))
+
+        out = io.BytesIO()
+        doc.save(out)
+        return out.getvalue()
+    except Exception:
+        return docx_bytes
 
 
 class DocumentService:
@@ -487,5 +776,10 @@ class DocumentService:
         tpl.render(context)
         buf = io.BytesIO()
         tpl.save(buf)
-        buf.seek(0)
-        return buf.read()
+        raw = buf.getvalue()
+
+        # Inject logo into cover / proposal
+        if doc_type in ('cover', 'proposal'):
+            raw = _inject_logo_post(raw)
+
+        return raw

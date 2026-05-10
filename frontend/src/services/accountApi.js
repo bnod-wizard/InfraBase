@@ -63,6 +63,10 @@ const accountApi = {
   getAccountStats: () =>
     axiosInstance.get('/accounts/stats/overview'),
 
+  // Get monthly account creation counts (last 6 months)
+  getMonthlyStats: () =>
+    axiosInstance.get('/accounts/stats/monthly'),
+
   // Valuation metadata
   getValuation: (accountId) =>
     axiosInstance.get(`/accounts/${accountId}/valuation`),
@@ -77,7 +81,11 @@ const accountApi = {
 
   // Document generation – returns a blob
   generateDocument: (accountId, docType) =>
-    axiosInstance.get(`/accounts/${accountId}/generate/${docType}`, { responseType: 'blob' })
+    axiosInstance.get(`/accounts/${accountId}/generate/${docType}`, { responseType: 'blob' }),
+
+  // Document HTML preview (no download)
+  previewDocument: (accountId, docType) =>
+    axiosInstance.get(`/accounts/${accountId}/preview/${docType}`)
 };
 
 export default accountApi;

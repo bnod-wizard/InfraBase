@@ -169,6 +169,41 @@ class AccountService:
         except Exception as e:
             return False, str(e), None
 
+    def get_monthly_counts(self):
+        """Get account creation counts for the last 6 months"""
+        try:
+            from datetime import timezone
+            now = datetime.now(timezone.utc)
+
+            months_list = []
+            for i in range(5, -1, -1):
+                year  = now.year
+                month = now.month - i
+                while month <= 0:
+                    month += 12
+                    year  -= 1
+                months_list.append({'year': year, 'month': month})
+
+            start = datetime(months_list[0]['year'], months_list[0]['month'], 1,
+                             tzinfo=timezone.utc)
+            raw       = self.account_repository.get_monthly_counts(start)
+            count_map = {(r['_id']['year'], r['_id']['month']): r['count'] for r in raw}
+
+            names  = ['Jan','Feb','Mar','Apr','May','Jun',
+                      'Jul','Aug','Sep','Oct','Nov','Dec']
+            result = [
+                {
+                    'label': names[m['month'] - 1],
+                    'year':  m['year'],
+                    'month': m['month'],
+                    'count': count_map.get((m['year'], m['month']), 0),
+                }
+                for m in months_list
+            ]
+            return True, "Monthly counts retrieved", result
+        except Exception as e:
+            return False, str(e), None
+
     def get_account_changelog(self, account_id, limit=50):
         """Get account changelog"""
         try:

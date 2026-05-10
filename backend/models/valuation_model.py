@@ -25,12 +25,17 @@ class ValuationModel:
             'bank_address': data.get('bank_address'),
             # Certifier
             'certifier_name': data.get('certifier_name'),
+            'certifier_phone': data.get('certifier_phone'),
             'nec_no': data.get('nec_no'),
             'nec_class': data.get('nec_class', 'A'),
+            'nec_type': data.get('nec_type', 'Civil'),
             'firm_name': data.get('firm_name'),
             'firm_address': data.get('firm_address'),
             'firm_phone': data.get('firm_phone'),
             'firm_email': data.get('firm_email'),
+            # Site visit
+            'site_visited_by': data.get('site_visited_by'),
+            'site_visitor_phone': data.get('site_visitor_phone'),
             'remarks': data.get('remarks'),
             'status': data.get('status', 'draft'),
             'created_by': data.get('created_by'),

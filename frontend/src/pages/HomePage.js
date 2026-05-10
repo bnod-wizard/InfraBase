@@ -92,6 +92,7 @@ const DashboardContent = () => {
   const [activity,     setActivity]     = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [statusCounts, setStatusCounts] = useState({});
+  const [monthlyData,  setMonthlyData]  = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -105,6 +106,12 @@ const DashboardContent = () => {
     accountApi.getAccountStats()
       .then(res => {
         if (res.data?.success) setStatusCounts(res.data.data?.status_counts || {});
+      })
+      .catch(() => {});
+
+    accountApi.getMonthlyStats()
+      .then(res => {
+        if (res.data?.success) setMonthlyData(res.data.data || []);
       })
       .catch(() => {});
   }, []);
@@ -208,44 +215,145 @@ const DashboardContent = () => {
       </section>
 
       <section className="bottom" style={{gridTemplateColumns:'1fr'}}>
-        <div className="panel chart-wrap">
-          <div style={{display:'flex',alignItems:'center',marginBottom:'12px'}}>
-            <h3 style={{margin:'0',fontSize:'14px',fontWeight:'600'}}>Disbursements vs Repayments</h3>
-            <div className="more" style={{marginLeft:'auto'}}><span className="chip">Last 6 months</span></div>
-          </div>
-          <svg className="chart" viewBox="0 0 600 220" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="lg1" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#1f3a2e" stopOpacity=".25"/>
-                <stop offset="100%" stopColor="#1f3a2e" stopOpacity="0"/>
-              </linearGradient>
-            </defs>
-            <g stroke="#efede6" strokeWidth="1">
-              <line x1="0" y1="44" x2="600" y2="44"/>
-              <line x1="0" y1="88" x2="600" y2="88"/>
-              <line x1="0" y1="132" x2="600" y2="132"/>
-              <line x1="0" y1="176" x2="600" y2="176"/>
-            </g>
-            <g fill="#c8f25c">
-              <rect x="40" y="120" width="22" height="80" rx="3"/>
-              <rect x="140" y="100" width="22" height="100" rx="3"/>
-              <rect x="240" y="115" width="22" height="85" rx="3"/>
-              <rect x="340" y="85" width="22" height="115" rx="3"/>
-              <rect x="440" y="95" width="22" height="105" rx="3"/>
-              <rect x="540" y="70" width="22" height="130" rx="3"/>
-            </g>
-            <path d="M51,90 L151,70 L251,95 L351,55 L451,65 L551,40 L551,200 L51,200 Z" fill="url(#lg1)"/>
-            <path d="M51,90 L151,70 L251,95 L351,55 L451,65 L551,40" fill="none" stroke="#1f3a2e" strokeWidth="2.5"/>
-            <g fill="#1f3a2e"><circle cx="51" cy="90" r="4"/><circle cx="151" cy="70" r="4"/><circle cx="251" cy="95" r="4"/><circle cx="351" cy="55" r="4"/><circle cx="451" cy="65" r="4"/><circle cx="551" cy="40" r="4"/></g>
-            <g fill="#a8a8b2" fontFamily="JetBrains Mono" fontSize="10">
-              <text x="40" y="215">Nov</text><text x="140" y="215">Dec</text><text x="240" y="215">Jan</text><text x="340" y="215">Feb</text><text x="440" y="215">Mar</text><text x="540" y="215">Apr</text>
-            </g>
-          </svg>
-          <div className="chart-legend">
-            <span><i style={{background:'#1f3a2e'}}></i>Disbursed (₹ Cr)</span>
-            <span><i style={{background:'#c8f25c'}}></i>Repaid (₹ Cr)</span>
-            <span style={{marginLeft:'auto',color:'var(--ink-mute)'}}>Apr peak — ₹ 1.84 Cr disbursed</span>
-          </div>
+        <div className="panel" style={{padding:'18px 20px'}}>
+          {(() => {
+            const src    = monthlyData.length > 0 ? monthlyData
+                         : Array.from({length:6},(_,i)=>({label:['Jan','Feb','Mar','Apr','May','Jun'][i],count:0}));
+            const counts = src.map(m => m.count || 0);
+            const total  = counts.reduce((a,b) => a+b, 0);
+            const cur    = counts[counts.length-1] || 0;
+            const prev   = counts[counts.length-2] || 0;
+            const growth = prev > 0 ? Math.round((cur-prev)/prev*100) : null;
+
+            /* geometry — mirrors the HTML template (viewBox 800×340) */
+            const VW=800, VH=340, PL=60, PR=20, PT=20, PB=60;
+            const plotH = VH-PT-PB;   // 260
+            const yBot  = VH-PB;      // 280
+            const slotW = (VW-PL-PR)/src.length;
+            const barW  = Math.min(slotW*0.42, 52);
+            const cxArr = src.map((_,i) => PL + slotW*i + slotW/2);
+
+            const rawMax = Math.max(...counts, 1);
+            const maxVal = rawMax<=5?5 : rawMax<=10?10 : rawMax<=20?20
+                         : rawMax<=50?Math.ceil(rawMax/10)*10 : Math.ceil(rawMax/25)*25;
+            const toY   = v => yBot - (v/maxVal)*plotH;
+            const bTops = counts.map(c => toY(c));
+            const bHs   = counts.map(c => yBot - toY(c));
+            const pts   = cxArr.map((x,i) => `${x},${bTops[i]}`);
+            const lPath = `M${pts.join(' L')}`;
+            const aPath = `${lPath} L${cxArr[cxArr.length-1]},${yBot} L${cxArr[0]},${yBot} Z`;
+            const gridVs= [0,.25,.5,.75,1].map(f=>({y:toY(f*maxVal), lbl:Math.round(f*maxVal)}));
+            const peakI = counts.indexOf(Math.max(...counts));
+
+            return (
+              <>
+                {/* ── Header ── */}
+                <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:12,marginBottom:14}}>
+                  <div>
+                    <h3 style={{fontSize:14,fontWeight:600,letterSpacing:'-.01em',margin:0}}>Account Growth</h3>
+                    <div style={{color:'var(--ink-mute)',fontSize:12,marginTop:2}}>Last 6 months · Accounts added</div>
+                  </div>
+                  <div style={{display:'flex',gap:20}}>
+                    <div>
+                      <div style={{color:'var(--ink-mute)',fontSize:10,textTransform:'uppercase',letterSpacing:'.08em'}}>Period Total</div>
+                      <div style={{fontSize:15,fontWeight:650,marginTop:1}}>{total}</div>
+                    </div>
+                    <div>
+                      <div style={{color:'var(--ink-mute)',fontSize:10,textTransform:'uppercase',letterSpacing:'.08em'}}>This Month</div>
+                      <div style={{fontSize:15,fontWeight:650,marginTop:1}}>{cur}</div>
+                      {growth !== null && (
+                        <div style={{fontSize:11,fontWeight:600,color:growth>=0?'var(--ok)':'var(--danger)'}}>
+                          {growth>=0?'▲':'▼'} {Math.abs(growth)}%
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Legend ── */}
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <div style={{display:'flex',gap:14,alignItems:'center',fontSize:11,color:'var(--ink-mute)'}}>
+                    <span>
+                      <i style={{display:'inline-block',width:10,height:10,borderRadius:3,marginRight:6,background:'#dfeede',border:'1px solid #b8d4c4',verticalAlign:-1}}></i>
+                      Accounts Added
+                    </span>
+                    <span>
+                      <i style={{display:'inline-block',width:10,height:10,borderRadius:3,marginRight:6,background:'#c8f25c',border:'1px solid #a9d63a',verticalAlign:-1}}></i>
+                      Trend
+                    </span>
+                  </div>
+                  {peakI >= 0 && counts[peakI] > 0 && (
+                    <span style={{fontSize:12,color:'var(--ink-mute)'}}>
+                      Peak · <b style={{color:'var(--ink)'}}>{counts[peakI]}</b> accounts in {src[peakI]?.label}
+                    </span>
+                  )}
+                </div>
+
+                {/* ── SVG chart ── */}
+                <div style={{position:'relative',height:180,marginTop:4}}>
+                  <svg viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="none"
+                    style={{width:'100%',height:'100%',display:'block',overflow:'visible'}}>
+                    <defs>
+                      <linearGradient id="chartLg" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%"   stopColor="#c8f25c" stopOpacity=".18"/>
+                        <stop offset="100%" stopColor="#c8f25c" stopOpacity="0"/>
+                      </linearGradient>
+                    </defs>
+
+                    {/* grid */}
+                    <g stroke="#eef0ec" strokeWidth="1">
+                      {gridVs.map((g,i) => <line key={i} x1={PL} x2={VW-PR} y1={g.y} y2={g.y}/>)}
+                    </g>
+
+                    {/* Y labels */}
+                    <g fill="#a8a8b2" fontSize="11" fontFamily="inherit">
+                      {gridVs.map((g,i) => (
+                        <text key={i} x={PL-8} y={g.y+4} textAnchor="end">{g.lbl}</text>
+                      ))}
+                    </g>
+
+                    {/* bars */}
+                    {cxArr.map((x,i) => bHs[i] > 0 && (
+                      <rect key={i}
+                        x={x-barW/2} y={bTops[i]} width={barW} height={bHs[i]} rx="6"
+                        fill="#dfeede"
+                        onMouseEnter={e => e.currentTarget.setAttribute('fill','#1f3a2e')}
+                        onMouseLeave={e => e.currentTarget.setAttribute('fill','#dfeede')}
+                        style={{cursor:'default'}}
+                      />
+                    ))}
+
+                    {/* area + line */}
+                    <path d={aPath} fill="url(#chartLg)"/>
+                    <path d={lPath} fill="none" stroke="#c8f25c" strokeWidth="2.5"
+                      strokeLinecap="round" strokeLinejoin="round"
+                      style={{filter:'drop-shadow(0 2px 4px rgba(168,210,60,.35))'}}/>
+
+                    {/* points */}
+                    {cxArr.map((x,i) => (
+                      <g key={i}>
+                        <circle cx={x} cy={bTops[i]} r="4.5" fill="#fff" stroke="#1f3a2e" strokeWidth="2"/>
+                        {i===src.length-1 && <circle cx={x} cy={bTops[i]} r="3" fill="#c8f25c"/>}
+                      </g>
+                    ))}
+
+                    {/* X labels */}
+                    <g fill="#a8a8b2" fontSize="11" fontFamily="inherit">
+                      {cxArr.map((x,i) => (
+                        <text key={i} x={x} y={yBot+22} textAnchor="middle">{src[i].label}</text>
+                      ))}
+                    </g>
+                  </svg>
+                </div>
+
+                {/* ── Footer ── */}
+                <div style={{display:'flex',justifyContent:'space-between',color:'var(--ink-mute)',fontSize:11,marginTop:8}}>
+                  <span>Source · Account ledger</span>
+                  <span>Live data</span>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </section>
 
