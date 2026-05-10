@@ -26,6 +26,8 @@ class AccountService:
 
             account_dict = AccountModel.to_dict(account_data)
             account_dict['created_by'] = created_by
+            if created_by_name:
+                account_dict['created_by_name'] = created_by_name
 
             account_id = self.account_repository.create_account(account_dict, changed_by_name=created_by_name)
             account_dict['_id'] = account_id

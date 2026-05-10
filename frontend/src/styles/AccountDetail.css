@@ -112,18 +112,22 @@
 /* ── Grouped field sections ── */
 .ad-field-group {
   margin-top: 20px;
+  padding-top: 18px;
+  border-top: 3px solid var(--line);
 }
 
 .ad-field-group:first-child {
   margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .ad-group-label {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 1000;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-mute);
+  color: #7c7c85;
   font-family: var(--mono);
   margin-bottom: 10px;
   padding-bottom: 6px;

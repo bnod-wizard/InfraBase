@@ -4,6 +4,7 @@ import accountApi from '../services/accountApi';
 import GenerateDocModal from './GenerateDocModal';
 import PropertyMapModal from './PropertyMapModal';
 import AccountStagePath from './AccountStagePath';
+import AreaCalculatorModal from './AreaCalculatorModal';
 import { useToast } from '../context';
 import '../styles/AccountDetail.css';
 
@@ -44,12 +45,13 @@ function AccountDetail() {
     account_name: '', company_registration: '', registration_number: '',
     tax_id: '', business_type: '', phone: '', email: '', website: '',
     address: '', city: '', state: '', zip_code: '', country: '',
-    logo_url: '', status: 'active', created_by: '', created_at: '', updated_at: ''
+    logo_url: '', status: 'active', created_by: '', created_at: '', updated_at: '',
   });
   const [activeObjectEdit, setActiveObjectEdit] = useState({ type: null, id: null, data: null });
-  const [isDocModalOpen,   setIsDocModalOpen]   = useState(false);
-  const [mapProperty,      setMapProperty]      = useState(null);
-  const [stageSaving,      setStageSaving]      = useState(false);
+  const [isDocModalOpen,    setIsDocModalOpen]    = useState(false);
+  const [areaCalcProperty,  setAreaCalcProperty]  = useState(null);
+  const [mapProperty,       setMapProperty]       = useState(null);
+  const [stageSaving,       setStageSaving]       = useState(false);
 
   const accountFields = [
     { accessor: 'account_name',         label: 'Account Name' },
@@ -65,7 +67,7 @@ function AccountDetail() {
     { accessor: 'state',                label: 'State' },
     { accessor: 'zip_code',             label: 'Zip Code' },
     { accessor: 'country',              label: 'Country' },
-    { accessor: 'status',               label: 'Status', type: 'select', options: STATUS_OPTIONS }
+    { accessor: 'status',               label: 'Status', type: 'select', options: STATUS_OPTIONS },
   ];
 
   const clientFields = [
@@ -183,6 +185,7 @@ function AccountDetail() {
     ]},
     { title: 'Building', fields: [
       { accessor: 'total_area',        label: 'Total Area' },
+      { accessor: 'area_unit',         label: 'Area Unit', type: 'select', options: ['sqm', 'sqft', 'aana', 'ropani'] },
       { accessor: 'built_area',        label: 'Built Area' },
       { accessor: 'bedrooms',          label: 'Bedrooms' },
       { accessor: 'bathrooms',         label: 'Bathrooms' },
@@ -441,7 +444,6 @@ function AccountDetail() {
       return (
         <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer'}}>
           <input type="checkbox" checked={checked} onChange={e => handleBoolChange(field.accessor, e.target.checked)} />
-          {checked ? 'Yes' : 'No'}
         </label>
       );
     }
@@ -459,7 +461,6 @@ function AccountDetail() {
       return (
         <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer'}}>
           <input type="checkbox" checked={checked} onChange={e => handleObjectBoolChange(field.accessor, e.target.checked)} />
-          {checked ? 'Yes' : 'No'}
         </label>
       );
     }
@@ -618,7 +619,7 @@ function AccountDetail() {
             </div>
             <div className="ad-meta">
               {[
-                { label: 'Created By', val: renderValue(formData.created_by) },
+                { label: 'Created By', val: renderValue(formData.created_by_name || formData.created_by) },
                 { label: 'Created At', val: formatDate(formData.created_at) },
                 { label: 'Updated At', val: formatDate(formData.updated_at) },
               ].map(m => (
@@ -640,14 +641,24 @@ function AccountDetail() {
           <div className="panel ad-panel">
             {renderSection('Properties', hierarchy.properties, propertyFields, 'property_name',
               item => (
-                <button
-                  key="map"
-                  className="btn btn-sm"
-                  style={{ background: 'rgba(31,58,46,0.08)', color: 'var(--brand,#1f3a2e)', border: 'none' }}
-                  onClick={() => setMapProperty(item)}
-                >
-                  📍 Map
-                </button>
+                <>
+                  <button
+                    key="area-calc"
+                    className="btn btn-sm"
+                    style={{ background: 'rgba(31,58,46,0.08)', color: 'var(--brand,#1f3a2e)', border: 'none' }}
+                    onClick={() => setAreaCalcProperty(item)}
+                  >
+                    ⬡ Area Calc
+                  </button>
+                  <button
+                    key="map"
+                    className="btn btn-sm"
+                    style={{ background: 'rgba(31,58,46,0.08)', color: 'var(--brand,#1f3a2e)', border: 'none' }}
+                    onClick={() => setMapProperty(item)}
+                  >
+                    📍 Map
+                  </button>
+                </>
               )
             )}
           </div>
@@ -752,6 +763,32 @@ function AccountDetail() {
         hierarchy={hierarchy}
         isOpen={isDocModalOpen}
         onClose={() => setIsDocModalOpen(false)}
+      />
+
+      <AreaCalculatorModal
+        isOpen={!!areaCalcProperty}
+        onClose={() => setAreaCalcProperty(null)}
+        accountData={areaCalcProperty}
+        onSave={async ({ land_area, land_area_unit }) => {
+          if (!areaCalcProperty) return;
+          const propId = areaCalcProperty._id || areaCalcProperty.id;
+          const updated = { ...areaCalcProperty, total_area: land_area, area_unit: land_area_unit };
+          try {
+            const res = await accountApi.updateProperty(propId, updated);
+            if (res.data?.success) {
+              setHierarchy(prev => ({
+                ...prev,
+                properties: prev.properties.map(p =>
+                  (p._id || p.id) === propId ? res.data.data : p
+                ),
+              }));
+              toast('Area saved to property');
+              setAreaCalcProperty(null);
+            }
+          } catch {
+            toast('Failed to save area');
+          }
+        }}
       />
 
       {mapProperty && (

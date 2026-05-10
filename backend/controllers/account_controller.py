@@ -60,9 +60,11 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
     def create_account_with_hierarchy():
         try:
             payload = request.get_json()
+            username = _resolve_username(request.user_id)
             success, message, result = bulk_account_service.create_account_with_hierarchy(
-                payload, 
-                request.user_id
+                payload,
+                request.user_id,
+                created_by_name=username,
             )
             
             if success:
@@ -174,8 +176,11 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
     def get_account_hierarchy(account_id):
         try:
             success, message, result = bulk_account_service.get_account_hierarchy(account_id)
-            
+
             if success:
+                account = result.get('account', {})
+                if not account.get('created_by_name') and account.get('created_by'):
+                    account['created_by_name'] = _resolve_username(account['created_by'])
                 return jsonify({'success': True, 'message': message, 'data': result}), 200
             else:
                 return jsonify({'success': False, 'message': message}), 404

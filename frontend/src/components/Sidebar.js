@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks';
 import accountApi from '../services/accountApi';
 
-function Sidebar() {
+function Sidebar({ onOpenAreaCalc }) {
   const navigate  = useNavigate();
   const location  = useLocation();
   const { user, logout } = useAuth();
@@ -97,6 +97,9 @@ function Sidebar() {
           <div className={`item ${isActive('/home/accounts') ? 'active' : ''}`} onClick={() => go('/home/accounts')}>
             <span className="ico">◉</span> Accounts
             {activeCount !== null && <span className="badge">{activeCount}</span>}
+          </div>
+          <div className="item" onClick={onOpenAreaCalc}>
+            <span className="ico">⬡</span> Area Calculator
           </div>
         </div>
 

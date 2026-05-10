@@ -1,0 +1,370 @@
+/* ── Area Calculator — shared (page + modal) ─────────────────── */
+
+/* ── Page wrapper ─────────────────────────────────────────────── */
+.ac-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 0 48px;
+}
+
+/* ── Modal overlay ────────────────────────────────────────────── */
+.ac-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,20,26,.48);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ac-modal {
+  background: var(--surface);
+  border-radius: 20px;
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0,0,0,.18);
+  overflow: hidden;
+}
+
+/* ── Modal header ─────────────────────────────────────────────── */
+.ac-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.ac-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  font-family: var(--serif);
+}
+
+.ac-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--ink-dim);
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background .15s;
+}
+.ac-close:hover { background: var(--line); color: var(--ink); }
+
+/* ── Scroll container ─────────────────────────────────────────── */
+.ac-scroll {
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ── Body ─────────────────────────────────────────────────────── */
+.ac-body {
+  padding: 20px 24px 28px;
+}
+
+/* ── Diagram area ─────────────────────────────────────────────── */
+.ac-diagram {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 12px;
+  height: 200px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.ac-diagram svg {
+  max-width: 100%;
+  height: 100%;
+}
+
+/* ── Controls (shape + unit selectors) ────────────────────────── */
+.ac-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  align-items: center;
+}
+
+.ac-select-wrap {
+  position: relative;
+  flex: 1;
+}
+
+.ac-select {
+  width: 100%;
+  appearance: none;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 36px 9px 13px;
+  font-size: 14px;
+  font-family: var(--sans);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--brand);
+  transition: border-color .15s;
+}
+.ac-select:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+.ac-select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-dim);
+  pointer-events: none;
+  font-size: 14px;
+}
+
+/* ── Input section ────────────────────────────────────────────── */
+.ac-inputs {
+  margin-bottom: 18px;
+}
+
+/* Triangle group */
+.ac-tri-group {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+  margin-bottom: 10px;
+}
+
+.ac-tri-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ac-tri-area {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ok);
+  font-family: var(--mono);
+  margin-left: 4px;
+}
+
+.ac-tri-remove {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ink-dim);
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background .15s, color .15s;
+}
+.ac-tri-remove:hover { background: #fce8e4; color: var(--danger); }
+
+.ac-tri-fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+/* Grid for non-polygon shapes */
+.ac-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.ac-fields-single {
+  grid-template-columns: 1fr;
+  max-width: 240px;
+}
+
+/* Floating-label input */
+.ac-field-wrap {
+  position: relative;
+}
+
+.ac-input {
+  width: 100%;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 12px 6px;
+  font-size: 15px;
+  font-family: var(--mono);
+  color: var(--ink);
+  background: var(--surface);
+  box-sizing: border-box;
+  transition: border-color .15s;
+}
+.ac-input:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+.ac-input:focus + .ac-label,
+.ac-input:not(:placeholder-shown) + .ac-label {
+  top: 5px;
+  font-size: 10px;
+  color: var(--brand);
+}
+
+.ac-label {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--ink-mute);
+  pointer-events: none;
+  transition: top .12s, font-size .12s, color .12s;
+  background: var(--surface);
+  padding: 0 2px;
+}
+
+/* ── Action buttons ───────────────────────────────────────────── */
+.ac-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.ac-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+}
+.ac-btn:hover { opacity: .87; }
+.ac-btn:active { transform: scale(.97); }
+
+.ac-btn-add   { background: #363737; color: white; }
+.ac-btn-calc  { background: #1d3a2d;      color: #fff; }
+.ac-btn-reset { background: #6d312b;      color: #fff; }
+.ac-btn-save  {
+  width: 100%;
+  background: var(--brand);
+  color: var(--accent);
+  margin-top: 12px;
+  padding: 12px;
+  font-size: 14px;
+}
+.ac-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Results panel ────────────────────────────────────────────── */
+.ac-results {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ac-results-head {
+  padding: 12px 16px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+  letter-spacing: -.01em;
+}
+
+.ac-results-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.ac-results-section:last-child { border-bottom: none; }
+
+.ac-results-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--ink-mute);
+  margin-bottom: 8px;
+}
+
+.ac-result-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  gap: 8px;
+}
+
+.ac-result-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d3a2d;
+  min-width: 90px;
+}
+
+.ac-result-sep {
+  color: var(--ink-dim);
+  font-size: 14px;
+}
+
+.ac-result-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: var(--mono);
+}
+
+.ac-result-rapd .ac-result-name {
+  color: var(--brand);
+}
+.ac-result-rapd .ac-result-val {
+  color: var(--brand);
+  letter-spacing: .04em;
+}
+
+/* ── Page topbar ─────────────────────────────────────────────── */
+.ac-page-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0 18px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+}
+
+.ac-page-title {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--serif);
+  color: var(--ink);
+  margin: 0;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 540px) {
+  .ac-tri-fields {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .ac-actions {
+    flex-direction: column;
+  }
+  .ac-btn { width: 100%; }
+  .ac-fields-grid { grid-template-columns: 1fr 1fr; }
+}

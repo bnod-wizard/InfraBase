@@ -62,7 +62,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
   const [account, setAccount] = useState({
     account_name: '', company_registration: '', registration_number: '',
     tax_id: '', business_type: '', phone: '', email: '', website: '',
-    address: '', city: '', state: '', zip_code: '', country: ''
+    address: '', city: '', state: '', zip_code: '', country: '',
   });
 
   const [clients, setClients] = useState([]);
@@ -96,7 +96,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     // Legal
     ownership_type: '', hold_type: '',
     // Building / Other
-    total_area: '', area_unit: 'sqm', bedrooms: '', bathrooms: '',
+    total_area: '', area_unit: 'sqft', bedrooms: '', bathrooms: '',
     construction_year: '', estimated_value: '', purchase_price: '',
     rental_value: '', survey_number: '',
     // Services (boolean)
@@ -429,6 +429,12 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
               <SectionHead>Building / Other Details (भवन / अन्य विवरण)</SectionHead>
               <div className="form-grid">
                 <ClearInput type="text" name="total_area" placeholder="Total Built Area (कुल निर्मित क्षेत्रफल)" value={currentProperty.total_area} onChange={handlePropertyChange} />
+                <SelectInput name="area_unit" value={currentProperty.area_unit} onChange={handlePropertyChange} label="Area Unit (क्षेत्रफल एकाइ)">
+                  <option value="sqft">Sq. Feet (वर्ग फिट)</option>
+                  <option value="sqm">Sq. Meter (वर्ग मिटर)</option>
+                  <option value="aana">Aana (आना)</option>
+                  <option value="ropani">Ropani (रोपनी)</option>
+                </SelectInput>
                 <ClearInput type="number" name="bedrooms" placeholder="Bedrooms (शयनकक्ष)" value={currentProperty.bedrooms} onChange={handlePropertyChange} />
                 <ClearInput type="number" name="bathrooms" placeholder="Bathrooms (शौचालय)" value={currentProperty.bathrooms} onChange={handlePropertyChange} />
                 <ClearInput type="number" name="construction_year" placeholder="Construction Year (निर्माण वर्ष)" value={currentProperty.construction_year} onChange={handlePropertyChange} />

@@ -18,7 +18,7 @@ class BulkAccountCreationService:
         self.property_repository = property_repository
         self.owner_repository = owner_repository
 
-    def create_account_with_hierarchy(self, payload, created_by):
+    def create_account_with_hierarchy(self, payload, created_by, created_by_name=None):
         """
         Create account with all related clients, properties, and owners
         
@@ -54,7 +54,9 @@ class BulkAccountCreationService:
             # Prepare and create account
             account_dict = AccountModel.to_dict(account_data)
             account_dict['created_by'] = created_by
-            account_id = self.account_repository.create_account(account_dict)
+            if created_by_name:
+                account_dict['created_by_name'] = created_by_name
+            account_id = self.account_repository.create_account(account_dict, changed_by_name=created_by_name)
             account_dict['_id'] = account_id
 
             response_data = {

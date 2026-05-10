@@ -6,12 +6,15 @@ import AccountDetailPage from './AccountDetailPage';
 import AccountModal from '../components/AccountModal';
 import TemplatesPage from './TemplatesPage';
 import TemplateBuilder from '../components/TemplateBuilder';
+import AreaCalculatorModal from '../components/AreaCalculatorModal';
 import accountApi from '../services/accountApi';
 
 const HomePage = () => {
+  const [areaCalcOpen, setAreaCalcOpen] = useState(false);
+
   return (
     <div className="app">
-      <Sidebar />
+      <Sidebar onOpenAreaCalc={() => setAreaCalcOpen(true)} />
       <main className="main">
         <Routes>
           <Route path="/" element={<DashboardContent />} />
@@ -21,6 +24,10 @@ const HomePage = () => {
           <Route path="templates/:templateId" element={<TemplateBuilder />} />
         </Routes>
       </main>
+      <AreaCalculatorModal
+        isOpen={areaCalcOpen}
+        onClose={() => setAreaCalcOpen(false)}
+      />
     </div>
   );
 };
