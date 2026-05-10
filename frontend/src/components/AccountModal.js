@@ -3,15 +3,22 @@ import '../styles/AccountModal.css';
 import accountApi from '../services/accountApi';
 import { useToast } from '../context';
 
+const formatRequiredPlaceholder = (placeholder) => {
+  if (!placeholder) return 'This field is required';
+  const labelText = placeholder.split('(')[0].trim().replace(/\s*\*$/, '');
+  return `${labelText} is required`;
+};
+
 const ClearInput = ({ name, value, onChange, error, className, placeholder, ...rest }) => {
   const isDate = rest.type === 'date';
+  const displayPlaceholder = error && !value ? formatRequiredPlaceholder(placeholder) : ' ';
   return (
     <div className={`field-wrap${className ? ` ${className}` : ''}${error ? ' has-error' : ''}`}>
       <input
         name={name}
         value={value}
         onChange={onChange}
-        placeholder=" "
+        placeholder={displayPlaceholder}
         {...rest}
       />
       {placeholder && <label>{placeholder}</label>}
@@ -23,7 +30,6 @@ const ClearInput = ({ name, value, onChange, error, className, placeholder, ...r
           onClick={() => onChange({ target: { name, value: '' } })}
         >✕</button>
       ) : null}
-      {error && <span className="field-error">{error}</span>}
     </div>
   );
 };
@@ -34,7 +40,6 @@ const SelectInput = ({ name, value, onChange, error, label, children }) => (
       {children}
     </select>
     <label>{label}</label>
-    {error && <span className="field-error">{error}</span>}
   </div>
 );
 
@@ -225,6 +230,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
           {currentStep === 1 && (
             <div className="form-step">
               <h3>Account Information (खाता जानकारी)</h3>
+              <SectionHead>Primary Details</SectionHead>
               <div className="form-grid">
                 <ClearInput type="text" name="account_name" placeholder="Account Name (खाता नाम) *" value={account.account_name} onChange={handleAccountChange} error={accountErrors.account_name} />
                 <ClearInput type="text" name="company_registration" placeholder="Company Registration (कम्पनी दर्ता)" value={account.company_registration} onChange={handleAccountChange} />
@@ -234,6 +240,9 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 <ClearInput type="email" name="email" placeholder="Email (इमेल) *" value={account.email} onChange={handleAccountChange} error={accountErrors.email} />
                 <ClearInput type="tel" name="phone" placeholder="Phone (फोन)" value={account.phone} onChange={handleAccountChange} />
                 <ClearInput type="text" name="website" placeholder="Website (वेबसाइट)" value={account.website} onChange={handleAccountChange} />
+              </div>
+              <SectionHead>Address</SectionHead>
+              <div className="form-grid">
                 <ClearInput type="text" name="address" placeholder="Address (ठेगाना)" value={account.address} onChange={handleAccountChange} />
                 <ClearInput type="text" name="city" placeholder="City (शहर)" value={account.city} onChange={handleAccountChange} />
                 <ClearInput type="text" name="state" placeholder="State (प्रदेश)" value={account.state} onChange={handleAccountChange} />
@@ -247,6 +256,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
           {currentStep === 2 && (
             <div className="form-step">
               <h3>Add Clients (ग्राहक थप्नुहोस्)</h3>
+              <SectionHead>Identity</SectionHead>
               <div className="form-grid">
                 <SelectInput name="entity_type" value={currentClient.entity_type} onChange={handleClientChange} label="Client Type (ग्राहक प्रकार)">
                   <option value="individual">Individual (व्यक्तिगत)</option>
@@ -260,9 +270,15 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 <ClearInput type="text" name="first_name" placeholder="First Name (पहिलो नाम) *" value={currentClient.first_name} onChange={handleClientChange} error={clientErrors.first_name} />
                 <ClearInput type="text" name="last_name" placeholder="Last Name (थर)" value={currentClient.last_name} onChange={handleClientChange} />
                 <ClearInput type="text" name="designation" placeholder="Designation (पद)" value={currentClient.designation} onChange={handleClientChange} />
+              </div>
+              <SectionHead>Contact</SectionHead>
+              <div className="form-grid">
                 <ClearInput type="email" name="email" placeholder="Email (इमेल)" value={currentClient.email} onChange={handleClientChange} error={clientErrors.email} />
                 <ClearInput type="tel" name="phone" placeholder="Contact No. (सम्पर्क नं.)" value={currentClient.phone} onChange={handleClientChange} />
                 <ClearInput type="tel" name="mobile" placeholder="Mobile (मोबाइल)" value={currentClient.mobile} onChange={handleClientChange} />
+              </div>
+              <SectionHead>Address</SectionHead>
+              <div className="form-grid">
                 <ClearInput type="text" name="address" placeholder="Address (ठेगाना)" value={currentClient.address} onChange={handleClientChange} />
                 <ClearInput type="text" name="ward_no" placeholder="Ward No. (वडा नं.)" value={currentClient.ward_no} onChange={handleClientChange} />
                 <ClearInput type="text" name="vdc_municipality" placeholder="Municipality / VDC (नगरपालिका / गाविस)" value={currentClient.vdc_municipality} onChange={handleClientChange} />
@@ -271,9 +287,15 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 <ClearInput type="text" name="state" placeholder="State (प्रदेश)" value={currentClient.state} onChange={handleClientChange} />
                 <ClearInput type="text" name="zip_code" placeholder="Zip Code (हुलाक संकेत)" value={currentClient.zip_code} onChange={handleClientChange} />
                 <ClearInput type="text" name="country" placeholder="Country (देश)" value={currentClient.country} onChange={handleClientChange} />
+              </div>
+              <SectionHead>Citizenship</SectionHead>
+              <div className="form-grid">
                 <ClearInput type="text" name="citizenship_no" placeholder="Citizenship No. (नागरिकता नं.)" value={currentClient.citizenship_no} onChange={handleClientChange} />
                 <ClearInput type="date" name="citizenship_issued_date" placeholder="Citizenship Issued Date (नागरिकता जारी मिति)" value={currentClient.citizenship_issued_date} onChange={handleClientChange} />
-                <ClearInput type="text" name="citizenship_issued_office" placeholder="Citizenship Issued Office (नागरिकता जारी कार्यालय)" value={currentClient.citizenship_issued_office} onChange={handleClientChange} />
+                <ClearInput type="text" name="citizenship_issued_office" placeholder="Citizenship Issued Office (नागरिकता जारी कार्यालय)" value={currentClient.citizenship_issued_office} onChange={handleClientChange} className="form-col-2" />
+              </div>
+              <SectionHead>Family / Tax</SectionHead>
+              <div className="form-grid">
                 <ClearInput type="text" name="father_name" placeholder="Father's Name (बुबाको नाम)" value={currentClient.father_name} onChange={handleClientChange} />
                 <ClearInput type="text" name="grandfather_name" placeholder="Grandfather's Name (हजुरबुबाको नाम)" value={currentClient.grandfather_name} onChange={handleClientChange} />
                 <ClearInput type="text" name="husband_name" placeholder="Husband's Name (पतिको नाम)" value={currentClient.husband_name} onChange={handleClientChange} />
@@ -439,7 +461,6 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
               ) : (
                 <>
                   <div className="property-selector">
-                    <label>Select Property for Owner (मालिकको लागि सम्पत्ति छान्नुहोस्) *</label>
                     <SelectInput
                       name="property_selection"
                       value={selectedPropertyId || ''}
@@ -453,6 +474,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                       ))}
                     </SelectInput>
                   </div>
+                  <SectionHead>Owner Identity</SectionHead>
                   <div className="form-grid">
                     <ClearInput type="text" name="owner_name" placeholder="Owner Name (मालिकको नाम) *" value={currentOwner.owner_name} onChange={handleOwnerChange} error={ownerErrors.owner_name} />
                     <SelectInput name="owner_type" value={currentOwner.owner_type} onChange={handleOwnerChange} label="Owner Type (मालिक प्रकार)">
@@ -461,14 +483,23 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                       <option value="partnership">Partnership (साझेदारी)</option>
                     </SelectInput>
                     <ClearInput type="text" name="title" placeholder="Title (उपाधि)" value={currentOwner.title} onChange={handleOwnerChange} />
+                  </div>
+                  <SectionHead>Contact</SectionHead>
+                  <div className="form-grid">
                     <ClearInput type="email" name="email" placeholder="Email (इमेल) *" value={currentOwner.email} onChange={handleOwnerChange} error={ownerErrors.email} />
                     <ClearInput type="tel" name="phone" placeholder="Phone (फोन)" value={currentOwner.phone} onChange={handleOwnerChange} />
                     <ClearInput type="tel" name="mobile" placeholder="Mobile (मोबाइल)" value={currentOwner.mobile} onChange={handleOwnerChange} />
+                  </div>
+                  <SectionHead>Address</SectionHead>
+                  <div className="form-grid">
                     <ClearInput type="text" name="address" placeholder="Address (ठेगाना)" value={currentOwner.address} onChange={handleOwnerChange} />
                     <ClearInput type="text" name="city" placeholder="City (शहर)" value={currentOwner.city} onChange={handleOwnerChange} />
                     <ClearInput type="text" name="state" placeholder="State (प्रदेश)" value={currentOwner.state} onChange={handleOwnerChange} />
                     <ClearInput type="text" name="zip_code" placeholder="Zip Code (हुलाक संकेत)" value={currentOwner.zip_code} onChange={handleOwnerChange} />
                     <ClearInput type="text" name="country" placeholder="Country (देश)" value={currentOwner.country} onChange={handleOwnerChange} />
+                  </div>
+                  <SectionHead>Identification</SectionHead>
+                  <div className="form-grid">
                     <SelectInput name="id_type" value={currentOwner.id_type} onChange={handleOwnerChange} label="ID Type (पहिचान प्रकार)">
                       <option value="passport">Passport (राहदानी)</option>
                       <option value="id_card">ID Card (परिचयपत्र)</option>

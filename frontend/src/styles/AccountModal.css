@@ -256,7 +256,7 @@
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 22px 10px;
+  gap: 10px 14px;
   align-items: start;
 }
 
