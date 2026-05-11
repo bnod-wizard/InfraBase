@@ -122,7 +122,6 @@ function SettingsPage() {
       </div>
 
       {/* ── KPI Cards ── */}
-gdm-select 
 
       {/* ── Content Grid ── */}
       <div className="layout">
