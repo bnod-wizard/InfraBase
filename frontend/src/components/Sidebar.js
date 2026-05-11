@@ -117,7 +117,9 @@ function Sidebar({ onOpenAreaCalc }) {
           <span className="group-label">Insights</span>
           <div className="item"><span className="ico">◢</span> Reports</div>
           <div className="item"><span className="ico">◌</span> Risk &amp; Audit</div>
-          <div className="item"><span className="ico">⚙</span> Settings</div>
+          <div className={`item ${isActive('/home/settings') ? 'active' : ''}`} onClick={() => go('/home/settings')}>
+            <span className="ico">⚙</span> Settings
+          </div>
         </div>
 
         {/* ── User section with dropdown ── */}

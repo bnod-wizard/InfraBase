@@ -20,10 +20,12 @@ class ValuationModel:
             'inspection_date': data.get('inspection_date'),
             'certification_date': data.get('certification_date'),
             # Bank / recipient
+            'bank_id': data.get('bank_id'),
             'bank_name': data.get('bank_name'),
             'bank_branch': data.get('bank_branch'),
             'bank_address': data.get('bank_address'),
             # Certifier
+            'certifier_id': data.get('certifier_id'),
             'certifier_name': data.get('certifier_name'),
             'certifier_phone': data.get('certifier_phone'),
             'nec_no': data.get('nec_no'),
@@ -34,6 +36,7 @@ class ValuationModel:
             'firm_phone': data.get('firm_phone'),
             'firm_email': data.get('firm_email'),
             # Site visit
+            'visitor_id': data.get('visitor_id'),
             'site_visited_by': data.get('site_visited_by'),
             'site_visitor_phone': data.get('site_visitor_phone'),
             'remarks': data.get('remarks'),

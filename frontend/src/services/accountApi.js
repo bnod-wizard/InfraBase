@@ -85,7 +85,17 @@ const accountApi = {
 
   // Document HTML preview (no download)
   previewDocument: (accountId, docType) =>
-    axiosInstance.get(`/accounts/${accountId}/preview/${docType}`)
+    axiosInstance.get(`/accounts/${accountId}/preview/${docType}`),
+
+  // Settings (certifiers, banks, visitors)
+  getSettings: (type) =>
+    axiosInstance.get(`/settings/${type}`),
+  createSetting: (type, data) =>
+    axiosInstance.post(`/settings/${type}`, data),
+  updateSetting: (id, data) =>
+    axiosInstance.put(`/settings/entry/${id}`, data),
+  deleteSetting: (id) =>
+    axiosInstance.delete(`/settings/entry/${id}`),
 };
 
 export default accountApi;

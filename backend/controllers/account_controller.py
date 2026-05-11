@@ -4,10 +4,11 @@ Account Controller - API endpoints for Account operations
 from flask import request, jsonify, send_file
 from datetime import datetime
 from functools import wraps
+from bson import ObjectId
 import io
 
 
-def account_controller(app, account_service, bulk_account_service, auth_service,
+def account_controller(app, account_service, bulk_account_service, auth_service, db=None,
                        valuation_repository=None, document_service=None,
                        client_service=None, owner_service=None, property_service=None,
                        user_repository=None):
@@ -143,6 +144,47 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 if records:
                     from models.valuation_model import ValuationModel
                     valuation = ValuationModel.to_json(records[0])
+
+            # Enrich valuation with fresh settings data using stored IDs
+            settings_col = db['settings']
+            if valuation.get('bank_id'):
+                try:
+                    bank = settings_col.find_one({'_id': ObjectId(valuation['bank_id'])})
+                    if bank:
+                        valuation.update({
+                            'bank_name': bank.get('name') or valuation.get('bank_name'),
+                            'bank_branch': bank.get('branch') or valuation.get('bank_branch'),
+                            'bank_address': bank.get('address') or valuation.get('bank_address'),
+                        })
+                except Exception:
+                    pass
+            if valuation.get('certifier_id'):
+                try:
+                    certifier = settings_col.find_one({'_id': ObjectId(valuation['certifier_id'])})
+                    if certifier:
+                        valuation.update({
+                            'certifier_name': certifier.get('name') or valuation.get('certifier_name'),
+                            'certifier_phone': certifier.get('phone') or valuation.get('certifier_phone'),
+                            'nec_no': certifier.get('nec_no') or valuation.get('nec_no'),
+                            'nec_class': certifier.get('nec_class') or valuation.get('nec_class'),
+                            'nec_type': certifier.get('nec_type') or valuation.get('nec_type'),
+                            'firm_name': certifier.get('firm_name') or valuation.get('firm_name'),
+                            'firm_address': certifier.get('firm_address') or valuation.get('firm_address'),
+                            'firm_phone': certifier.get('firm_phone') or valuation.get('firm_phone'),
+                            'firm_email': certifier.get('firm_email') or valuation.get('firm_email'),
+                        })
+                except Exception:
+                    pass
+            if valuation.get('visitor_id'):
+                try:
+                    visitor = settings_col.find_one({'_id': ObjectId(valuation['visitor_id'])})
+                    if visitor:
+                        valuation.update({
+                            'site_visited_by': visitor.get('name') or valuation.get('site_visited_by'),
+                            'site_visitor_phone': visitor.get('phone') or valuation.get('site_visitor_phone'),
+                        })
+                except Exception:
+                    pass
 
             import io as _io, mammoth
             doc_bytes = document_service.generate(doc_type, hierarchy, valuation)
@@ -328,6 +370,47 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 if records:
                     from models.valuation_model import ValuationModel
                     valuation = ValuationModel.to_json(records[0])
+
+            # Enrich valuation with fresh settings data using stored IDs
+            settings_col = db['settings']
+            if valuation.get('bank_id'):
+                try:
+                    bank = settings_col.find_one({'_id': ObjectId(valuation['bank_id'])})
+                    if bank:
+                        valuation.update({
+                            'bank_name': bank.get('name') or valuation.get('bank_name'),
+                            'bank_branch': bank.get('branch') or valuation.get('bank_branch'),
+                            'bank_address': bank.get('address') or valuation.get('bank_address'),
+                        })
+                except Exception:
+                    pass
+            if valuation.get('certifier_id'):
+                try:
+                    certifier = settings_col.find_one({'_id': ObjectId(valuation['certifier_id'])})
+                    if certifier:
+                        valuation.update({
+                            'certifier_name': certifier.get('name') or valuation.get('certifier_name'),
+                            'certifier_phone': certifier.get('phone') or valuation.get('certifier_phone'),
+                            'nec_no': certifier.get('nec_no') or valuation.get('nec_no'),
+                            'nec_class': certifier.get('nec_class') or valuation.get('nec_class'),
+                            'nec_type': certifier.get('nec_type') or valuation.get('nec_type'),
+                            'firm_name': certifier.get('firm_name') or valuation.get('firm_name'),
+                            'firm_address': certifier.get('firm_address') or valuation.get('firm_address'),
+                            'firm_phone': certifier.get('firm_phone') or valuation.get('firm_phone'),
+                            'firm_email': certifier.get('firm_email') or valuation.get('firm_email'),
+                        })
+                except Exception:
+                    pass
+            if valuation.get('visitor_id'):
+                try:
+                    visitor = settings_col.find_one({'_id': ObjectId(valuation['visitor_id'])})
+                    if visitor:
+                        valuation.update({
+                            'site_visited_by': visitor.get('name') or valuation.get('site_visited_by'),
+                            'site_visitor_phone': visitor.get('phone') or valuation.get('site_visitor_phone'),
+                        })
+                except Exception:
+                    pass
 
             doc_bytes = document_service.generate(doc_type, hierarchy, valuation)
 

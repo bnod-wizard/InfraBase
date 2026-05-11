@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from controllers import AuthController, CustomerController, PDFController
 from controllers.account_controller import account_controller
 from controllers.template_controller import template_controller
+from controllers.settings_controller import settings_controller
 from services import AuthService, CustomerService, PDFService
 from services.account_service import AccountService
 from services.client_service import ClientService
@@ -88,7 +89,7 @@ if db is not None:
         
         # Register account controller with routes
         account_controller(
-            app, account_service, bulk_account_service, auth_service,
+            app, account_service, bulk_account_service, auth_service, db,
             valuation_repository=valuation_repository,
             document_service=document_service,
             client_service=client_service,
@@ -99,6 +100,9 @@ if db is not None:
 
         # Register template controller
         template_controller(app, template_service, auth_service)
+
+        # Register settings controller
+        settings_controller(app, db, auth_service)
 
         print("✓ Controllers, Services, and Repositories initialized")
     except Exception as e:

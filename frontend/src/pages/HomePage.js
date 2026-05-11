@@ -7,6 +7,7 @@ import AccountModal from '../components/AccountModal';
 import TemplatesPage from './TemplatesPage';
 import TemplateBuilder from '../components/TemplateBuilder';
 import AreaCalculatorModal from '../components/AreaCalculatorModal';
+import SettingsPage from './SettingsPage';
 import accountApi from '../services/accountApi';
 
 const HomePage = () => {
@@ -22,6 +23,7 @@ const HomePage = () => {
           <Route path="accounts/:accountId" element={<AccountDetailPage />} />
           <Route path="templates" element={<TemplatesPage />} />
           <Route path="templates/:templateId" element={<TemplateBuilder />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Routes>
       </main>
       <AreaCalculatorModal

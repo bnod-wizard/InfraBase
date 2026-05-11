@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^python3 -m py_compile backend/controllers/account_controller\\.py backend/main\\.py backend/models/valuation_model\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^node -c frontend/src/pages/SettingsPage\\.js && echo \"✓ SettingsPage syntax OK\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

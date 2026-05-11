@@ -1,0 +1,55 @@
+/* Modal Overlay */
+.sp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+/* Modal */
+.sp-modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  max-width: 500px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Stack layout - vertical cards */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Override panel for full width in settings */
+.layout {
+  display: block;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .layout {
+    display: block;
+  }
+}
+
+@media (max-width: 780px) {
+  .topbar {
+    flex-wrap: wrap;
+  }
+}
+
+
+
