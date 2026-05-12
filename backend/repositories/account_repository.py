@@ -50,7 +50,7 @@ class AccountRepository:
     def find_all(self, skip=0, limit=10):
         """Get all accounts with pagination"""
         try:
-            return list(self.collection.find().skip(skip).limit(limit))
+            return list(self.collection.find().sort('created_at', -1).skip(skip).limit(limit))
         except Exception as e:
             raise Exception(f"Error fetching accounts: {str(e)}")
 
@@ -125,7 +125,7 @@ class AccountRepository:
                     {'tax_id': {'$regex': query, '$options': 'i'}}
                 ]
             }
-            return list(self.collection.find(search_filter).skip(skip).limit(limit))
+            return list(self.collection.find(search_filter).sort('created_at', -1).skip(skip).limit(limit))
         except Exception as e:
             raise Exception(f"Error searching accounts: {str(e)}")
 
@@ -161,7 +161,7 @@ class AccountRepository:
             else:
                 query_filter = {}
             
-            accounts = list(self.collection.find(query_filter).skip(skip).limit(limit))
+            accounts = list(self.collection.find(query_filter).sort('created_at', -1).skip(skip).limit(limit))
             total = self.collection.count_documents(query_filter)
             
             return accounts, total

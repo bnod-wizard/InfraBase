@@ -223,7 +223,7 @@ table.accounts tr:hover td{background:#fbfaf6}
 .gen-btn{padding:12px;border-radius:9px;background:var(--brand);color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:8px}
 .gen-btn:hover{background:#0f2a1e}
 
-.activity{padding:8px 0}
+.activity{padding:8px 0;max-height:360px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 .act{display:flex;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line-2)}
 .act:last-child{border-bottom:0}
 .act .time{font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);min-width:42px;padding-top:3px}

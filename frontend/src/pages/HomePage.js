@@ -105,7 +105,7 @@ const DashboardContent = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    accountApi.getRecentChangelogs(20)
+    accountApi.getRecentChangelogs(50)
       .then(res => {
         if (res.data?.success) setActivity(res.data.data || []);
       })
@@ -143,11 +143,6 @@ const DashboardContent = () => {
         <div className="panel">
           <div className="panel-head">
             <h3>Recent Activity</h3>
-            <div className="more">
-              <span className="chip" style={{cursor:'pointer'}} onClick={() => navigate('/home/accounts')}>
-                View all
-              </span>
-            </div>
           </div>
 
           <div className="activity">
