@@ -287,8 +287,8 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
             <div className="gdm-grid-2">
               <Field label="Reference No."     np="सन्दर्भ नं."         name="ref_no"             value={valuation.ref_no}             onChange={handleChange} />
               <Field label="Fiscal Year"       np="आर्थिक वर्ष"          name="fiscal_year"        value={valuation.fiscal_year}        onChange={handleChange} placeholder="e.g. 2082/83" />
-              <Field label="Inspection Date"   np="निरीक्षण मिति"        name="inspection_date"    value={valuation.inspection_date}    onChange={handleChange} placeholder="e.g. Apr 30, 2026" />
-              <Field label="Certification Date" np="प्रमाणीकरण मिति"    name="certification_date" value={valuation.certification_date} onChange={handleChange} placeholder="e.g. May 05, 2026" />
+              <DateField label="Inspection Date"    np="निरीक्षण मिति"     name="inspection_date"    value={valuation.inspection_date}    onChange={handleChange} />
+              <DateField label="Certification Date" np="प्रमाणीकरण मिति" name="certification_date" value={valuation.certification_date} onChange={handleChange} />
             </div>
           </section>
 
@@ -297,7 +297,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
             <p className="gdm-section-label">Bank / Recipient <span className="gdm-section-np">बैंक / प्राप्तकर्ता</span></p>
             {banks.length > 0 && (
               <div className="gdm-field">
-                <label className="gdm-label">Select saved bank <span className="gdm-label-np">सुरक्षित बैंक छान्नुहोस्</span></label>
+                <label className="gdm-label">Select saved bank <span className="gdm-label-np">(सुरक्षित बैंक छान्नुहोस्)</span></label>
                 <select className="gdm-select" value={selBank} onChange={e => handleSelectBank(e.target.value)}>
                   <option value="">— type manually —</option>
                   {banks.map(b => <option key={b._id} value={b._id}>{b.name}{b.branch ? ` · ${b.branch}` : ''}</option>)}
@@ -316,7 +316,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
             <p className="gdm-section-label">Certifier &amp; Firm <span className="gdm-section-np">प्रमाणक र फर्म</span></p>
             {certifiers.length > 0 && (
               <div className="gdm-field">
-                <label className="gdm-label">Select saved certifier <span className="gdm-label-np">सुरक्षित प्रमाणक छान्नुहोस्</span></label>
+                <label className="gdm-label">Select saved certifier <span className="gdm-label-np">(सुरक्षित प्रमाणक छान्नुहोस्)</span></label>
                 <select className="gdm-select" value={selCertifier} onChange={e => handleSelectCertifier(e.target.value)}>
                   <option value="">— type manually —</option>
                   {certifiers.map(c => <option key={c._id} value={c._id}>{c.name}{c.nec_no ? ` (${c.nec_no})` : ''}</option>)}
@@ -343,7 +343,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
             <p className="gdm-section-label">Site Visit (for Proposal) <span className="gdm-section-np">स्थल भ्रमण</span></p>
             {visitors.length > 0 && (
               <div className="gdm-field">
-                <label className="gdm-label">Select saved visitor <span className="gdm-label-np">सुरक्षित भ्रमणकर्ता छान्नुहोस्</span></label>
+                <label className="gdm-label">Select saved visitor <span className="gdm-label-np">(सुरक्षित भ्रमणकर्ता छान्नुहोस्)</span></label>
                 <select className="gdm-select" value={selVisitor} onChange={e => handleSelectVisitor(e.target.value)}>
                   <option value="">— type manually —</option>
                   {visitors.map(v => <option key={v._id} value={v._id}>{v.name}{v.phone ? ` · ${v.phone}` : ''}</option>)}
@@ -402,10 +402,25 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
 }
 
 function Field({ label, np, name, value, onChange, placeholder }) {
+  const floatLabel = `${label}${np ? ` (${np})` : ''}`;
   return (
     <div className="gdm-field">
-      <label className="gdm-label">{label}{np && <span className="gdm-label-np">{np}</span>}</label>
-      <input className="gdm-input" type="text" name={name} value={value || ''} onChange={onChange} placeholder={placeholder || ''} />
+      <div className="field-wrap">
+        <input className="gdm-input" type="text" name={name} value={value || ''} onChange={onChange} placeholder=" " />
+        <label>{floatLabel}</label>
+      </div>
+    </div>
+  );
+}
+
+function DateField({ label, np, name, value, onChange }) {
+  const floatLabel = `${label}${np ? ` (${np})` : ''}`;
+  return (
+    <div className="gdm-field">
+      <div className="field-wrap">
+        <input className="gdm-input" type="date" name={name} value={value || ''} onChange={onChange} placeholder=" " />
+        <label>{floatLabel}</label>
+      </div>
     </div>
   );
 }

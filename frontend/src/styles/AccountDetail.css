@@ -53,18 +53,21 @@
   color: var(--ink-mute);
   font-family: var(--mono);
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
 }
 
 .ad-field-np {
-  font-size: 9px;
-  letter-spacing: 0.04em;
+  font-size: 10px;
+  font-weight: 245;
+  letter-spacing: 0;
   text-transform: none;
   font-family: var(--sans, inherit);
-  color: var(--ink-dim, #b0b0b8);
-  font-weight: 400;
+  color: var(--ink-mute);
 }
+.ad-field-np::before { content: '('; }
+.ad-field-np::after  { content: ')'; }
 
 .ad-group-np {
   font-size: 11px;

@@ -311,6 +311,12 @@ def build_context(hierarchy, valuation):
     ded_total_sqm  = str(round(ded_total_sqft_raw / 10.7639, 2)) if ded_total_sqft_raw else '—'
     ded_triangles  = (ded_obj.get('triangles') or [])
 
+    road_ded_pct   = _to_float(prop.get('road_deduction_percent') or 0)
+    road_ded_amt   = round(ded_total_sqft_raw * road_ded_pct / 100, 2) if ded_total_sqft_raw else 0
+    ded_after_sqft_raw = round(ded_total_sqft_raw - road_ded_amt, 2) if ded_total_sqft_raw else 0
+    ded_after_sqft = str(ded_after_sqft_raw) if ded_after_sqft_raw else '—'
+    ded_after_sqm  = str(round(ded_after_sqft_raw / 10.7639, 2)) if ded_after_sqft_raw else '—'
+
     lorc_obj = prop.get('land_area_as_per_lalpurja') or {}
     lorc_triangles = (lorc_obj.get('triangles') or [])
 
@@ -631,19 +637,19 @@ def build_context(hierarchy, valuation):
                 prop.get('near_hazardous_factory'), prop.get('water_logging')]) else '—')),
         'other_facilities':          'Most kinds of civic amenities are available.',
         'commercial_remarks':        _v(prop.get('notes'), 'N/A.'),
-        # Dynamic triangle lists for template loops ({% for t in lm_triangles %} etc.)
-        'lm_triangles':   [{'side_a': _v(t.get('side_a'),'—'), 'side_b': _v(t.get('side_b'),'—'),
+        # Dynamic triangle lists for template loops ({%tr for t in lm_triangles %} etc.)
+        'lm_triangles':   [{'label': chr(65 + i), 'side_a': _v(t.get('side_a'),'—'), 'side_b': _v(t.get('side_b'),'—'),
                             'side_c': _v(t.get('side_c'),'—'), 'semi_perimeter': _v(t.get('semi_perimeter'),'—'),
                             'area_sqft': _v(t.get('area_sqft'),'—'), 'aana': _v(t.get('aana'),'—')}
-                           for t in lm_triangles],
-        'ded_triangles':  [{'side_a': _v(t.get('side_a'),'—'), 'side_b': _v(t.get('side_b'),'—'),
+                           for i, t in enumerate(lm_triangles)],
+        'ded_triangles':  [{'label': chr(65 + i), 'side_a': _v(t.get('side_a'),'—'), 'side_b': _v(t.get('side_b'),'—'),
                             'side_c': _v(t.get('side_c'),'—'), 'semi_perimeter': _v(t.get('semi_perimeter'),'—'),
                             'area_sqft': _v(t.get('area_sqft'),'—'), 'aana': _v(t.get('aana'),'—')}
-                           for t in ded_triangles],
-        'lorc_triangles': [{'side_a': _v(t.get('side_a'),'—'), 'side_b': _v(t.get('side_b'),'—'),
+                           for i, t in enumerate(ded_triangles)],
+        'lorc_triangles': [{'label': chr(65 + i), 'side_a': _v(t.get('side_a'),'—'), 'side_b': _v(t.get('side_b'),'—'),
                             'side_c': _v(t.get('side_c'),'—'), 'semi_perimeter': _v(t.get('semi_perimeter'),'—'),
                             'area_sqft': _v(t.get('area_sqft'),'—'), 'aana': _v(t.get('aana'),'—')}
-                           for t in lorc_triangles],
+                           for i, t in enumerate(lorc_triangles)],
 
         # Flat vars for static template rows (lm_tri_a/b, ded_tri_a/b)
         **{k: v for prefix, tris in [('lm', lm_triangles), ('ded', ded_triangles)]
@@ -661,8 +667,12 @@ def build_context(hierarchy, valuation):
         # Triangle totals (Section 13 summary rows)
         'lm_total_sqft':  lm_total_sqft,
         'lm_total_sqm':   lm_total_sqm,
-        'ded_total_sqft': ded_total_sqft,
-        'ded_total_sqm':  ded_total_sqm,
+        'ded_total_sqft':    ded_total_sqft,
+        'ded_total_sqm':     ded_total_sqm,
+        'ded_deduct_pct':    str(int(road_ded_pct)) if road_ded_pct == int(road_ded_pct) else str(road_ded_pct),
+        'ded_deduct_sqft':   str(road_ded_amt),
+        'ded_after_sqft':    ded_after_sqft,
+        'ded_after_sqm':     ded_after_sqm,
 
         # Lalpurja area totals (Section 13C)
         'land_area_lorc_sqm':  lorc_sqm,

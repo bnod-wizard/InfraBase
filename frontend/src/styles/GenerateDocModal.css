@@ -186,7 +186,7 @@
 .gdm-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
 }
 
 .gdm-label {
@@ -194,14 +194,16 @@
   font-weight: 500;
   color: var(--ink-2, #374151);
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
 }
 
 .gdm-label-np {
-  font-size: 10px;
-  font-weight: 400;
-  color: var(--ink-mute, #9ca3af);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2, #374151);
+  font-family: var(--sans, inherit);
 }
 
 .gdm-section-np {
@@ -223,6 +225,8 @@
   background: var(--surface, #fff);
   outline: none;
   transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .gdm-input:focus {

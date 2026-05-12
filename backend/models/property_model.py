@@ -57,6 +57,7 @@ class PropertyModel:
             'land_area_meas_trad': property_data.get('land_area_meas_trad'),   # e.g. 0-2-3-3.20
             'land_area_deducted': property_data.get('land_area_deducted'),     # After deduction (Sq.M)
             'land_area_ded_trad': property_data.get('land_area_ded_trad'),     # e.g. 0-2-2-0.76
+            'road_deduction_percent': property_data.get('road_deduction_percent', 10),  # % deducted for road/dev
             'considered_area': property_data.get('considered_area'),           # Area considered (Sq.M)
             'land_area': property_data.get('land_area'),
             'area_unit': property_data.get('area_unit', 'sqm'),
@@ -253,6 +254,7 @@ class PropertyModel:
             'land_area_meas_trad': data.get('land_area_meas_trad'),
             'land_area_deducted': data.get('land_area_deducted'),
             'land_area_ded_trad': data.get('land_area_ded_trad'),
+            'road_deduction_percent': data.get('road_deduction_percent', 10),
             'considered_area': data.get('considered_area'),
             'land_area': data.get('land_area'),
             'area_unit': data.get('area_unit'),
