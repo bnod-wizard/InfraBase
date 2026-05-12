@@ -52,6 +52,28 @@
   text-transform: uppercase;
   color: var(--ink-mute);
   font-family: var(--mono);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ad-field-np {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-family: var(--sans, inherit);
+  color: var(--ink-dim, #b0b0b8);
+  font-weight: 400;
+}
+
+.ad-group-np {
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-family: var(--sans, inherit);
+  color: var(--ink-dim, #b0b0b8);
+  font-weight: 400;
+  margin-left: 6px;
 }
 
 .ad-field span {

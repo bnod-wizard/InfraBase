@@ -54,214 +54,214 @@ function AccountDetail() {
   const [stageSaving,       setStageSaving]       = useState(false);
 
   const accountFields = [
-    { accessor: 'account_name',         label: 'Account Name' },
-    { accessor: 'email',                label: 'Email' },
-    { accessor: 'phone',                label: 'Phone' },
-    { accessor: 'business_type',        label: 'Business Type' },
-    { accessor: 'company_registration', label: 'Company Reg.' },
-    { accessor: 'registration_number',  label: 'Registration No.' },
-    { accessor: 'tax_id',               label: 'Tax ID' },
-    { accessor: 'website',              label: 'Website' },
-    { accessor: 'address',              label: 'Address', fullWidth: true },
-    { accessor: 'city',                 label: 'City' },
-    { accessor: 'state',                label: 'State' },
-    { accessor: 'zip_code',             label: 'Zip Code' },
-    { accessor: 'country',              label: 'Country' },
-    { accessor: 'status',               label: 'Status', type: 'select', options: STATUS_OPTIONS },
+    { accessor: 'account_name',         label: 'Account Name',     np: 'खाता नाम' },
+    { accessor: 'email',                label: 'Email',            np: 'इमेल' },
+    { accessor: 'phone',                label: 'Phone',            np: 'फोन' },
+    { accessor: 'business_type',        label: 'Business Type',    np: 'व्यापार प्रकार' },
+    { accessor: 'company_registration', label: 'Company Reg.',     np: 'कम्पनी दर्ता' },
+    { accessor: 'registration_number',  label: 'Registration No.', np: 'दर्ता नम्बर' },
+    { accessor: 'tax_id',               label: 'Tax ID',           np: 'कर परिचय पत्र' },
+    { accessor: 'website',              label: 'Website',          np: 'वेबसाइट' },
+    { accessor: 'address',              label: 'Address',          np: 'ठेगाना', fullWidth: true },
+    { accessor: 'city',                 label: 'City',             np: 'शहर' },
+    { accessor: 'state',                label: 'State',            np: 'प्रदेश' },
+    { accessor: 'zip_code',             label: 'Zip Code',         np: 'हुलाक संकेत' },
+    { accessor: 'country',              label: 'Country',          np: 'देश' },
+    { accessor: 'status',               label: 'Status',           np: 'स्थिति', type: 'select', options: STATUS_OPTIONS },
   ];
 
   const clientFields = [
-    { title: 'Identity', fields: [
-      { accessor: 'entity_type', label: 'Entity Type', type: 'select', options: ['individual', 'company'] },
-      { accessor: 'gender',      label: 'Gender',      type: 'select', options: ['male', 'female'] },
-      { accessor: 'title',       label: 'Title' },
-      { accessor: 'first_name',  label: 'First Name' },
-      { accessor: 'last_name',   label: 'Last Name' },
-      { accessor: 'designation', label: 'Designation' },
-      { accessor: 'status',      label: 'Status', type: 'select', options: ['active', 'inactive'] },
+    { title: 'Identity', np: 'परिचय', fields: [
+      { accessor: 'entity_type', label: 'Entity Type', np: 'ग्राहक प्रकार', type: 'select', options: ['individual', 'company'] },
+      { accessor: 'gender',      label: 'Gender',      np: 'लिङ्ग',         type: 'select', options: ['male', 'female'] },
+      { accessor: 'title',       label: 'Title',       np: 'उपाधि' },
+      { accessor: 'first_name',  label: 'First Name',  np: 'पहिलो नाम' },
+      { accessor: 'last_name',   label: 'Last Name',   np: 'थर' },
+      { accessor: 'designation', label: 'Designation', np: 'पद' },
+      { accessor: 'status',      label: 'Status',      np: 'स्थिति', type: 'select', options: ['active', 'inactive'] },
     ]},
-    { title: 'Contact', fields: [
-      { accessor: 'email',  label: 'Email' },
-      { accessor: 'phone',  label: 'Contact No.' },
-      { accessor: 'mobile', label: 'Mobile' },
+    { title: 'Contact', np: 'सम्पर्क', fields: [
+      { accessor: 'email',  label: 'Email',       np: 'इमेल' },
+      { accessor: 'phone',  label: 'Contact No.', np: 'सम्पर्क नं.' },
+      { accessor: 'mobile', label: 'Mobile',      np: 'मोबाइल' },
     ]},
-    { title: 'Address', fields: [
-      { accessor: 'address',          label: 'Address', fullWidth: true },
-      { accessor: 'ward_no',          label: 'Ward No.' },
-      { accessor: 'vdc_municipality', label: 'Municipality / VDC' },
-      { accessor: 'district',         label: 'District' },
-      { accessor: 'city',             label: 'City' },
-      { accessor: 'state',            label: 'State' },
-      { accessor: 'zip_code',         label: 'Zip Code' },
-      { accessor: 'country',          label: 'Country' },
+    { title: 'Address', np: 'ठेगाना', fields: [
+      { accessor: 'address',          label: 'Address',            np: 'ठेगाना',                  fullWidth: true },
+      { accessor: 'ward_no',          label: 'Ward No.',           np: 'वडा नं.' },
+      { accessor: 'vdc_municipality', label: 'Municipality / VDC', np: 'नगरपालिका / गाविस' },
+      { accessor: 'district',         label: 'District',           np: 'जिल्ला' },
+      { accessor: 'city',             label: 'City',               np: 'शहर' },
+      { accessor: 'state',            label: 'State',              np: 'प्रदेश' },
+      { accessor: 'zip_code',         label: 'Zip Code',           np: 'हुलाक संकेत' },
+      { accessor: 'country',          label: 'Country',            np: 'देश' },
     ]},
-    { title: 'Citizenship', fields: [
-      { accessor: 'citizenship_no',            label: 'Citizenship No.' },
-      { accessor: 'citizenship_issued_date',   label: 'Issued Date' },
-      { accessor: 'citizenship_issued_office', label: 'Issued Office', fullWidth: true },
+    { title: 'Citizenship', np: 'नागरिकता', fields: [
+      { accessor: 'citizenship_no',            label: 'Citizenship No.', np: 'नागरिकता नं.' },
+      { accessor: 'citizenship_issued_date',   label: 'Issued Date',     np: 'जारी मिति' },
+      { accessor: 'citizenship_issued_office', label: 'Issued Office',   np: 'जारी कार्यालय', fullWidth: true },
     ]},
-    { title: 'Family', fields: [
-      { accessor: 'father_name',      label: "Father's Name" },
-      { accessor: 'grandfather_name', label: "Grandfather's Name" },
-      { accessor: 'husband_name',     label: "Husband's Name" },
+    { title: 'Family', np: 'परिवार', fields: [
+      { accessor: 'father_name',      label: "Father's Name",      np: 'बुबाको नाम' },
+      { accessor: 'grandfather_name', label: "Grandfather's Name", np: 'हजुरबुबाको नाम' },
+      { accessor: 'husband_name',     label: "Husband's Name",     np: 'पतिको नाम' },
     ]},
-    { title: 'Other', fields: [
-      { accessor: 'pan_no', label: 'PAN No.' },
-      { accessor: 'notes',  label: 'Notes', fullWidth: true },
+    { title: 'Other', np: 'अन्य', fields: [
+      { accessor: 'pan_no', label: 'PAN No.', np: 'स्थायी लेखा नं.' },
+      { accessor: 'notes',  label: 'Notes',   np: 'टिप्पणी', fullWidth: true },
     ]},
   ];
 
   const propertyFields = [
-    { title: 'Property Info', fields: [
-      { accessor: 'property_name',      label: 'Property Name' },
-      { accessor: 'property_type',      label: 'Type',      type: 'select', options: ['land', 'building', 'land_and_building', 'apartment', 'commercial', 'industrial'] },
-      { accessor: 'property_mortgaged', label: 'Mortgaged', type: 'select', options: ['Land', 'Building', 'Both'] },
-      { accessor: 'property_status',    label: 'Status',    type: 'select', options: ['active', 'inactive', 'vacant', 'occupied'] },
-      { accessor: 'plot_no',            label: 'Plot No.' },
-      { accessor: 'sheet_no',           label: 'Sheet No.' },
+    { title: 'Property Info', np: 'सम्पत्ति जानकारी', fields: [
+      { accessor: 'property_name',      label: 'Property Name', np: 'सम्पत्तिको नाम' },
+      { accessor: 'property_type',      label: 'Type',          np: 'प्रकार',   type: 'select', options: ['land', 'building', 'land_and_building', 'apartment', 'commercial', 'industrial'] },
+      { accessor: 'property_mortgaged', label: 'Mortgaged',     np: 'धितो',     type: 'select', options: ['Land', 'Building', 'Both'] },
+      { accessor: 'property_status',    label: 'Status',        np: 'स्थिति',   type: 'select', options: ['active', 'inactive', 'vacant', 'occupied'] },
+      { accessor: 'plot_no',            label: 'Plot No.',      np: 'कित्ता नं.' },
+      { accessor: 'sheet_no',           label: 'Sheet No.',     np: 'सिट नं.' },
     ]},
-    { title: 'Location', fields: [
-      { accessor: 'district',         label: 'District' },
-      { accessor: 'ward_no',          label: 'Present Ward No.' },
-      { accessor: 'vdc_municipality', label: 'Present Municipality / VDC' },
-      { accessor: 'sabik_vdc',        label: 'Sabik VDC' },
-      { accessor: 'sabik_ward_no',    label: 'Sabik Ward No.' },
-      { accessor: 'tole',             label: 'Tole / Locality' },
-      { accessor: 'address',          label: 'Address', fullWidth: true },
-      { accessor: 'gps_coordinates',  label: 'GPS Coordinates' },
+    { title: 'Location', np: 'स्थान', fields: [
+      { accessor: 'district',         label: 'District',                   np: 'जिल्ला' },
+      { accessor: 'ward_no',          label: 'Present Ward No.',           np: 'वर्तमान वडा नं.' },
+      { accessor: 'vdc_municipality', label: 'Present Municipality / VDC', np: 'वर्तमान नगरपालिका / गाविस' },
+      { accessor: 'sabik_vdc',        label: 'Sabik VDC',                  np: 'साबिक गाविस' },
+      { accessor: 'sabik_ward_no',    label: 'Sabik Ward No.',             np: 'साबिक वडा नं.' },
+      { accessor: 'tole',             label: 'Tole / Locality',            np: 'टोल / स्थानीयता' },
+      { accessor: 'address',          label: 'Address',                    np: 'ठेगाना', fullWidth: true },
+      { accessor: 'gps_coordinates',  label: 'GPS Coordinates',            np: 'जीपीएस निर्देशांक' },
     ]},
-    { title: 'Land Area', fields: [
-      { accessor: 'land_area_lorc',      label: 'As per Lalpurja',    type: 'area_sq', sqftSource: 'land_area_as_per_lalpurja' },
-      { accessor: 'land_area_lorc_trad', label: 'Lalpurja (R-A-P-D)' },
-      { accessor: 'land_area_measured',  label: 'As per Measurement', type: 'area_sq', sqftSource: 'land_area_as_per_measurement' },
-      { accessor: 'land_area_meas_trad', label: 'Measurement (R-A-P-D)' },
-      { accessor: 'land_area_deducted',  label: 'After Deduction',    type: 'area_sq', sqftSource: 'land_area_after_deduction' },
-      { accessor: 'land_area_ded_trad',  label: 'After Deduction (R-A-P-D)' },
-      { accessor: 'considered_area',     label: 'Area Considered',    type: 'area_sq', sqftSource: 'land_area_after_deduction' },
-      { accessor: 'land_shape',          label: 'Land Shape' },
-      { accessor: 'land_topography',     label: 'Topography' },
-      { accessor: 'land_level',          label: 'Level of Land' },
-      { accessor: 'nature_of_soil',      label: 'Nature of Soil' },
-      { accessor: 'construction_on_land', label: 'Any Construction on Land' },
-      { accessor: 'frontage',            label: 'Frontage (ft)' },
+    { title: 'Land Area', np: 'जग्गा क्षेत्रफल', fields: [
+      { accessor: 'land_area_lorc',       label: 'As per Lalpurja',        np: 'लालपुर्जाअनुसार',    type: 'area_sq', sqftSource: 'land_area_as_per_lalpurja' },
+      { accessor: 'land_area_lorc_trad',  label: 'Lalpurja (R-A-P-D)',     np: 'लालपुर्जा (र-आ-प-दा)' },
+      { accessor: 'land_area_measured',   label: 'As per Measurement',     np: 'नापीअनुसार',          type: 'area_sq', sqftSource: 'land_area_as_per_measurement' },
+      { accessor: 'land_area_meas_trad',  label: 'Measurement (R-A-P-D)',  np: 'नापी (र-आ-प-दा)' },
+      { accessor: 'land_area_deducted',   label: 'After Deduction',        np: 'कटाई पछि',            type: 'area_sq', sqftSource: 'land_area_after_deduction' },
+      { accessor: 'land_area_ded_trad',   label: 'After Deduction (R-A-P-D)', np: 'कटाई पछि (र-आ-प-दा)' },
+      { accessor: 'considered_area',      label: 'Area Considered',        np: 'विचारयोग्य क्षेत्रफल', type: 'area_sq', sqftSource: 'land_area_after_deduction' },
+      { accessor: 'land_shape',           label: 'Land Shape',             np: 'जग्गाको आकार' },
+      { accessor: 'land_topography',      label: 'Topography',             np: 'भूगोल' },
+      { accessor: 'land_level',           label: 'Level of Land',          np: 'जग्गाको स्तर' },
+      { accessor: 'nature_of_soil',       label: 'Nature of Soil',         np: 'माटोको प्रकृति' },
+      { accessor: 'construction_on_land', label: 'Any Construction on Land', np: 'जग्गामा निर्माण' },
+      { accessor: 'frontage',             label: 'Frontage (ft)',          np: 'सामुन्ने (फिट)' },
     ]},
-    { title: 'Land Features', fields: [
-      { accessor: 'positive_features', label: 'Positive Features', fullWidth: true },
-      { accessor: 'negative_features', label: 'Negative Features', fullWidth: true },
+    { title: 'Land Features', np: 'जग्गाका विशेषताहरू', fields: [
+      { accessor: 'positive_features', label: 'Positive Features', np: 'सकारात्मक विशेषताहरू', fullWidth: true },
+      { accessor: 'negative_features', label: 'Negative Features', np: 'नकारात्मक विशेषताहरू', fullWidth: true },
     ]},
-    { title: 'Field Survey — Triangles', fields: [
-      { accessor: 'land_area_as_per_measurement', label: 'Measurement Area (नापी)',       type: 'triangle_group', calcType: 'measurement' },
-      { accessor: 'land_area_as_per_lalpurja',    label: 'Lalpurja Area (लालपुर्जा)',     type: 'triangle_group', calcType: 'lalpurja' },
-      { accessor: 'land_area_after_deduction',    label: 'After Deduction (कटाई पछि)',    type: 'triangle_group', calcType: 'deduction' },
+    { title: 'Field Survey — Triangles', np: 'क्षेत्र सर्वेक्षण — त्रिभुज', fields: [
+      { accessor: 'land_area_as_per_measurement', label: 'Measurement Area (नापी)',    type: 'triangle_group', calcType: 'measurement' },
+      { accessor: 'land_area_as_per_lalpurja',    label: 'Lalpurja Area (लालपुर्जा)', type: 'triangle_group', calcType: 'lalpurja' },
+      { accessor: 'land_area_after_deduction',    label: 'After Deduction (कटाई पछि)', type: 'triangle_group', calcType: 'deduction' },
     ]},
-    { title: 'Boundaries', fields: [
-      { accessor: 'north_boundary', label: 'North' },
-      { accessor: 'south_boundary', label: 'South' },
-      { accessor: 'east_boundary',  label: 'East' },
-      { accessor: 'west_boundary',  label: 'West' },
+    { title: 'Boundaries', np: 'चार किल्ला', fields: [
+      { accessor: 'north_boundary', label: 'North', np: 'उत्तर' },
+      { accessor: 'south_boundary', label: 'South', np: 'दक्षिण' },
+      { accessor: 'east_boundary',  label: 'East',  np: 'पूर्व' },
+      { accessor: 'west_boundary',  label: 'West',  np: 'पश्चिम' },
     ]},
-    { title: 'Building', fields: [
-      { accessor: 'total_area',        label: 'Total Area' },
-      { accessor: 'area_unit',         label: 'Area Unit', type: 'select', options: ['sqm', 'sqft', 'aana', 'ropani'] },
-      { accessor: 'built_area',        label: 'Built Area' },
-      { accessor: 'bedrooms',          label: 'Bedrooms' },
-      { accessor: 'bathrooms',         label: 'Bathrooms' },
-      { accessor: 'construction_year', label: 'Built Year' },
+    { title: 'Building', np: 'भवन', fields: [
+      { accessor: 'total_area',        label: 'Total Area',  np: 'कुल क्षेत्रफल' },
+      { accessor: 'area_unit',         label: 'Area Unit',   np: 'क्षेत्रफल एकाइ', type: 'select', options: ['sqm', 'sqft', 'aana', 'ropani'] },
+      { accessor: 'built_area',        label: 'Built Area',  np: 'निर्मित क्षेत्रफल' },
+      { accessor: 'bedrooms',          label: 'Bedrooms',    np: 'शयनकक्ष' },
+      { accessor: 'bathrooms',         label: 'Bathrooms',   np: 'शौचालय' },
+      { accessor: 'construction_year', label: 'Built Year',  np: 'निर्माण वर्ष' },
     ]},
-    { title: 'Road & Access', fields: [
-      { accessor: 'road_access_field',          label: 'Road Access (full description)', fullWidth: true },
-      { accessor: 'road_width',                 label: 'Road Width (ft)' },
-      { accessor: 'road_type',                  label: 'Road Type', type: 'select', options: ['Pitched Road', 'Concrete Slab Road', 'Gravelled Road', 'Earthen Road', 'Block Paved Road', 'Stone Paved Road', 'Foot Trail'] },
-      { accessor: 'road_side',                  label: 'Road Side', type: 'select', options: ['North', 'South', 'East', 'West', 'North-East', 'North-West', 'South-East', 'South-West'] },
-      { accessor: 'nearest_landmark',    label: 'Nearest Landmark' },
-      { accessor: 'landmark_coordinates', label: 'Landmark GPS' },
-      { accessor: 'nearest_market',       label: 'Nearest Market' },
-      { accessor: 'public_transport_distance',  label: 'Public Transport Distance' },
+    { title: 'Road & Access', np: 'सडक र पहुँच', fields: [
+      { accessor: 'road_access_field',         label: 'Road Access (full description)', np: 'सडक पहुँच (पूर्ण विवरण)', fullWidth: true },
+      { accessor: 'road_width',                label: 'Road Width (ft)',               np: 'सडक चौडाइ (फिट)' },
+      { accessor: 'road_type',                 label: 'Road Type',                     np: 'सडक प्रकार', type: 'select', options: ['Pitched Road', 'Concrete Slab Road', 'Gravelled Road', 'Earthen Road', 'Block Paved Road', 'Stone Paved Road', 'Foot Trail'] },
+      { accessor: 'road_side',                 label: 'Road Side',                     np: 'सडक दिशा',   type: 'select', options: ['North', 'South', 'East', 'West', 'North-East', 'North-West', 'South-East', 'South-West'] },
+      { accessor: 'nearest_landmark',          label: 'Nearest Landmark',              np: 'नजिकको ल्यान्डमार्क' },
+      { accessor: 'landmark_coordinates',      label: 'Landmark GPS',                  np: 'ल्यान्डमार्क जीपीएस' },
+      { accessor: 'nearest_market',            label: 'Nearest Market',                np: 'नजिकको बजार' },
+      { accessor: 'public_transport_distance', label: 'Public Transport Distance',     np: 'सार्वजनिक यातायात दूरी' },
     ]},
-    { title: 'Services', fields: [
-      { accessor: 'motorable_access', label: 'Motorable Access',   type: 'bool' },
-      { accessor: 'water_supply',     label: 'Water Supply Line',  type: 'bool' },
-      { accessor: 'sewerage',         label: 'Sewerage Pipe Line', type: 'bool' },
-      { accessor: 'electricity_line', label: 'Electricity Line',   type: 'bool' },
-      { accessor: 'telephone',        label: 'Telephone Line',     type: 'bool' },
-      { accessor: 'tv_cable',         label: 'TV Cable',           type: 'bool' },
+    { title: 'Services', np: 'सेवाहरू', fields: [
+      { accessor: 'motorable_access', label: 'Motorable Access',   np: 'मोटर पहुँच',  type: 'bool' },
+      { accessor: 'water_supply',     label: 'Water Supply Line',  np: 'खानेपानी',    type: 'bool' },
+      { accessor: 'sewerage',         label: 'Sewerage Pipe Line', np: 'ढलपाइप',     type: 'bool' },
+      { accessor: 'electricity_line', label: 'Electricity Line',   np: 'बिजुली',      type: 'bool' },
+      { accessor: 'telephone',        label: 'Telephone Line',     np: 'टेलिफोन',     type: 'bool' },
+      { accessor: 'tv_cable',         label: 'TV Cable',           np: 'टिभी केबल',   type: 'bool' },
     ]},
-    { title: 'Influencing Factors', fields: [
-      { accessor: 'near_river_stream',      label: 'River / Stream nearby',      type: 'bool' },
-      { accessor: 'near_high_tension_line', label: 'High-tension Line nearby',   type: 'bool' },
-      { accessor: 'near_fuel_depot',        label: 'Fuel Depot nearby',          type: 'bool' },
-      { accessor: 'near_temple',            label: 'Temple / Shrine nearby',     type: 'bool' },
-      { accessor: 'water_logging',          label: 'Water Logging',              type: 'bool' },
-      { accessor: 'near_cremation_area',    label: 'Cremation Area nearby',      type: 'bool' },
-      { accessor: 'near_army_barracks',     label: 'Army Barracks nearby',       type: 'bool' },
-      { accessor: 'near_monument',          label: 'Monument nearby',            type: 'bool' },
-      { accessor: 'near_hazardous_factory', label: 'Hazardous Factory nearby',   type: 'bool' },
-      { accessor: 'near_dumping_site',      label: 'Dumping Site nearby',        type: 'bool' },
+    { title: 'Influencing Factors', np: 'प्रभावकारी तत्वहरू', fields: [
+      { accessor: 'near_river_stream',      label: 'River / Stream nearby',      np: 'नदी / खोला नजिक',         type: 'bool' },
+      { accessor: 'near_high_tension_line', label: 'High-tension Line nearby',   np: 'उच्च तनाव लाइन नजिक',    type: 'bool' },
+      { accessor: 'near_fuel_depot',        label: 'Fuel Depot nearby',          np: 'इन्धन डिपो नजिक',         type: 'bool' },
+      { accessor: 'near_temple',            label: 'Temple / Shrine nearby',     np: 'मन्दिर / धर्मस्थल नजिक', type: 'bool' },
+      { accessor: 'water_logging',          label: 'Water Logging',              np: 'पानी जमिने',               type: 'bool' },
+      { accessor: 'near_cremation_area',    label: 'Cremation Area nearby',      np: 'शमशान घाट नजिक',          type: 'bool' },
+      { accessor: 'near_army_barracks',     label: 'Army Barracks nearby',       np: 'सेना ब्यारेक नजिक',       type: 'bool' },
+      { accessor: 'near_monument',          label: 'Monument nearby',            np: 'स्मारक नजिक',              type: 'bool' },
+      { accessor: 'near_hazardous_factory', label: 'Hazardous Factory nearby',   np: 'हानिकारक कारखाना नजिक',   type: 'bool' },
+      { accessor: 'near_dumping_site',      label: 'Dumping Site nearby',        np: 'फोहोर डम्पिङ नजिक',       type: 'bool' },
     ]},
-    { title: 'Valuation', fields: [
-      { accessor: 'government_rate_per_aana',   label: 'Govt Rate / Aana' },
-      { accessor: 'commercial_rate_per_aana',   label: 'Market Rate / Aana' },
-      { accessor: 'land_area_aana_decimal',     label: 'Land Area (Aana, decimal)' },
-      { accessor: 'market_value_land',          label: 'Market Value — Land' },
-      { accessor: 'market_value_building',      label: 'Market Value — Building' },
-      { accessor: 'govt_value_remarks',         label: 'Govt Value Remarks' },
-      { accessor: 'market_value_remarks',       label: 'Market Value Remarks', fullWidth: true },
-      { accessor: 'fair_market_value_land',     label: 'FMV — Land' },
-      { accessor: 'fair_market_value_building', label: 'FMV — Building' },
-      { accessor: 'fair_market_value_total',    label: 'FMV — Total' },
-      { accessor: 'distress_value_total',       label: 'Distress Value' },
-      { accessor: 'valuation_in_words',         label: 'Value in Words', fullWidth: true },
-      { accessor: 'summary_remarks',            label: 'Summary Remarks', fullWidth: true },
+    { title: 'Valuation', np: 'मूल्यांकन', fields: [
+      { accessor: 'government_rate_per_aana',   label: 'Govt Rate / Aana',         np: 'सरकारी दर / आना' },
+      { accessor: 'commercial_rate_per_aana',   label: 'Market Rate / Aana',        np: 'बजार दर / आना' },
+      { accessor: 'land_area_aana_decimal',     label: 'Land Area (Aana, decimal)', np: 'जग्गा क्षेत्रफल (आना)' },
+      { accessor: 'market_value_land',          label: 'Market Value — Land',       np: 'बजार मूल्य — जग्गा' },
+      { accessor: 'market_value_building',      label: 'Market Value — Building',   np: 'बजार मूल्य — भवन' },
+      { accessor: 'govt_value_remarks',         label: 'Govt Value Remarks',        np: 'सरकारी मूल्य टिप्पणी' },
+      { accessor: 'market_value_remarks',       label: 'Market Value Remarks',      np: 'बजार मूल्य टिप्पणी', fullWidth: true },
+      { accessor: 'fair_market_value_land',     label: 'FMV — Land',               np: 'उचित बजार मूल्य — जग्गा' },
+      { accessor: 'fair_market_value_building', label: 'FMV — Building',            np: 'उचित बजार मूल्य — भवन' },
+      { accessor: 'fair_market_value_total',    label: 'FMV — Total',              np: 'उचित बजार मूल्य — जम्मा' },
+      { accessor: 'distress_value_total',       label: 'Distress Value',            np: 'विपद् मूल्य' },
+      { accessor: 'valuation_in_words',         label: 'Value in Words',            np: 'अक्षरमा मूल्य', fullWidth: true },
+      { accessor: 'summary_remarks',            label: 'Summary Remarks',           np: 'सारांश टिप्पणी', fullWidth: true },
     ]},
-    { title: 'Legal — Land Ownership', fields: [
-      { accessor: 'ownership_type',      label: 'Type of Ownership' },
-      { accessor: 'hold_type',           label: 'Ownership of Land' },
-      { accessor: 'ownership_comments',  label: 'Comments' },
+    { title: 'Legal — Land Ownership', np: 'कानूनी — जग्गा स्वामित्व', fields: [
+      { accessor: 'ownership_type',     label: 'Type of Ownership', np: 'स्वामित्वको प्रकार' },
+      { accessor: 'hold_type',          label: 'Ownership of Land', np: 'जग्गाको स्वामित्व' },
+      { accessor: 'ownership_comments', label: 'Comments',          np: 'टिप्पणी' },
     ]},
-    { title: 'Legal — Land Revenue (Malpot)', fields: [
-      { accessor: 'land_revenue_paid',         label: 'Current Revenue Paid', type: 'bool' },
-      { accessor: 'land_revenue_payment_date', label: 'Date of Payment' },
-      { accessor: 'land_revenue_comments',     label: 'Comments' },
+    { title: 'Legal — Land Revenue (Malpot)', np: 'कानूनी — मालपोत', fields: [
+      { accessor: 'land_revenue_paid',         label: 'Current Revenue Paid', np: 'हालको मालपोत तिरेको', type: 'bool' },
+      { accessor: 'land_revenue_payment_date', label: 'Date of Payment',      np: 'भुक्तानी मिति' },
+      { accessor: 'land_revenue_comments',     label: 'Comments',             np: 'टिप्पणी' },
     ]},
-    { title: 'Legal — Land Registration', fields: [
-      { accessor: 'mode_of_acquisition',        label: 'Normal Sale / Gift' },
-      { accessor: 'lorc_registration_date',     label: 'Date of Registration' },
-      { accessor: 'sale_gift_elapsed',          label: '6-Month 35-Day Period Elapsed', type: 'bool' },
-      { accessor: 'land_registration_comments', label: 'Comments' },
+    { title: 'Legal — Land Registration', np: 'कानूनी — जग्गा दर्ता', fields: [
+      { accessor: 'mode_of_acquisition',        label: 'Normal Sale / Gift',           np: 'सामान्य बिक्री / उपहार' },
+      { accessor: 'lorc_registration_date',     label: 'Date of Registration',         np: 'दर्ता मिति' },
+      { accessor: 'sale_gift_elapsed',          label: '6-Month 35-Day Period Elapsed', np: '६ महिना ३५ दिन अवधि', type: 'bool' },
+      { accessor: 'land_registration_comments', label: 'Comments',                     np: 'टिप्पणी' },
     ]},
-    { title: 'Legal — Survey Maps', fields: [
-      { accessor: 'maps_plots_indicated', label: 'Plots Indicated on Map',          type: 'bool' },
-      { accessor: 'maps_access_marked',   label: 'Access Clearly Marked on Map',    type: 'bool' },
-      { accessor: 'maps_shape_tallies',   label: 'Field Shape Tallies with Map',    type: 'bool' },
-      { accessor: 'maps_comments',        label: 'Comments' },
-      { accessor: 'area_change_comments', label: 'Area Change Comments' },
+    { title: 'Legal — Survey Maps', np: 'कानूनी — नक्शा', fields: [
+      { accessor: 'maps_plots_indicated', label: 'Plots Indicated on Map',       np: 'नक्शामा कित्ता देखाइएको', type: 'bool' },
+      { accessor: 'maps_access_marked',   label: 'Access Clearly Marked on Map', np: 'नक्शामा पहुँच स्पष्ट',    type: 'bool' },
+      { accessor: 'maps_shape_tallies',   label: 'Field Shape Tallies with Map', np: 'नक्शासँग आकार मिल्छ',     type: 'bool' },
+      { accessor: 'maps_comments',        label: 'Comments',                     np: 'टिप्पणी' },
+      { accessor: 'area_change_comments', label: 'Area Change Comments',         np: 'क्षेत्रफल परिवर्तन टिप्पणी' },
     ]},
-    { title: 'Legal — Boundary Certificate', fields: [
-      { accessor: 'boundary_cert_available', label: 'Boundary Certificate Available', type: 'bool' },
-      { accessor: 'boundary_cert_date',      label: 'Date of Certification' },
-      { accessor: 'boundary_cert_comments',  label: 'Comments' },
+    { title: 'Legal — Boundary Certificate', np: 'कानूनी — किल्ला प्रमाणपत्र', fields: [
+      { accessor: 'boundary_cert_available', label: 'Boundary Certificate Available', np: 'सीमा प्रमाणपत्र उपलब्ध', type: 'bool' },
+      { accessor: 'boundary_cert_date',      label: 'Date of Certification',          np: 'प्रमाणीकरण मिति' },
+      { accessor: 'boundary_cert_comments',  label: 'Comments',                       np: 'टिप्पणी' },
     ]},
-    { title: 'Legal — General', fields: [
-      { accessor: 'free_access_available',   label: 'Free Access Available',            type: 'bool' },
-      { accessor: 'acquisition_notice',      label: 'Govt Acquisition Notice Issued',   type: 'bool' },
-      { accessor: 'boundary_clearly_defined', label: 'Boundary Clearly Defined on Site', type: 'bool' },
-      { accessor: 'general_legal_comments',  label: 'Comments' },
-      { accessor: 'legal_reference_no',      label: 'Reference No.' },
+    { title: 'Legal — General', np: 'कानूनी — सामान्य', fields: [
+      { accessor: 'free_access_available',    label: 'Free Access Available',             np: 'स्वतन्त्र पहुँच उपलब्ध', type: 'bool' },
+      { accessor: 'acquisition_notice',       label: 'Govt Acquisition Notice Issued',    np: 'सरकारी अधिग्रहण सूचना', type: 'bool' },
+      { accessor: 'boundary_clearly_defined', label: 'Boundary Clearly Defined on Site',  np: 'सीमा स्पष्ट',           type: 'bool' },
+      { accessor: 'general_legal_comments',   label: 'Comments',                          np: 'टिप्पणी' },
+      { accessor: 'legal_reference_no',       label: 'Reference No.',                     np: 'सन्दर्भ नं.' },
     ]},
-    { title: 'Notes', fields: [
-      { accessor: 'notes', label: 'Notes', fullWidth: true },
+    { title: 'Notes', np: 'टिप्पणी', fields: [
+      { accessor: 'notes', label: 'Notes', np: 'टिप्पणी', fullWidth: true },
     ]},
   ];
 
   const ownerFields = [
-    { accessor: 'owner_name',  label: 'Owner Name' },  { accessor: 'owner_type', label: 'Owner Type' },
-    { accessor: 'title',       label: 'Title' },       { accessor: 'email',      label: 'Email' },
-    { accessor: 'phone',       label: 'Phone' },       { accessor: 'mobile',     label: 'Mobile' },
-    { accessor: 'address',     label: 'Address' },     { accessor: 'city',       label: 'City' },
-    { accessor: 'state',       label: 'State' },       { accessor: 'zip_code',   label: 'Zip Code' },
-    { accessor: 'country',     label: 'Country' },     { accessor: 'id_type',    label: 'ID Type' },
-    { accessor: 'id_number',   label: 'ID Number' },   { accessor: 'pan_number', label: 'PAN Number' },
-    { accessor: 'notes',       label: 'Notes' },       { accessor: 'status',     label: 'Status' }
+    { accessor: 'owner_name',  label: 'Owner Name',  np: 'मालिकको नाम' },  { accessor: 'owner_type', label: 'Owner Type',  np: 'मालिक प्रकार' },
+    { accessor: 'title',       label: 'Title',       np: 'उपाधि' },         { accessor: 'email',      label: 'Email',       np: 'इमेल' },
+    { accessor: 'phone',       label: 'Phone',       np: 'फोन' },           { accessor: 'mobile',     label: 'Mobile',      np: 'मोबाइल' },
+    { accessor: 'address',     label: 'Address',     np: 'ठेगाना' },        { accessor: 'city',       label: 'City',        np: 'शहर' },
+    { accessor: 'state',       label: 'State',       np: 'प्रदेश' },        { accessor: 'zip_code',   label: 'Zip Code',    np: 'हुलाक संकेत' },
+    { accessor: 'country',     label: 'Country',     np: 'देश' },           { accessor: 'id_type',    label: 'ID Type',     np: 'परिचय प्रकार' },
+    { accessor: 'id_number',   label: 'ID Number',   np: 'परिचय नम्बर' },  { accessor: 'pan_number', label: 'PAN Number',  np: 'स्थायी लेखा नम्बर' },
+    { accessor: 'notes',       label: 'Notes',       np: 'टिप्पणी' },       { accessor: 'status',     label: 'Status',      np: 'स्थिति' }
   ];
 
   useEffect(() => { if (accountId) fetchAccountHierarchy(); }, [accountId]);
@@ -549,7 +549,7 @@ function AccountDetail() {
         );
         return (
           <div key={`${itemId}-${field.accessor}`} className="ad-field">
-            <label>{field.label} ({unitSuffix})</label>
+            <label>{field.label} ({unitSuffix}){field.np && <span className="ad-field-np">{field.np}</span>}</label>
             {isEditingItem
               ? renderObjectFieldInput(field, data[field.accessor])
               : <span>{displayValue}</span>}
@@ -558,7 +558,7 @@ function AccountDetail() {
       }
       return (
         <div key={`${itemId}-${field.accessor}`} className={`ad-field${field.fullWidth ? ' full' : ''}`}>
-          <label>{field.label}</label>
+          <label>{field.label}{field.np && <span className="ad-field-np">{field.np}</span>}</label>
           {isEditingItem
             ? renderObjectFieldInput(field, data[field.accessor])
             : <span>{renderValue(data[field.accessor])}</span>}
@@ -568,7 +568,7 @@ function AccountDetail() {
     if (!isGrouped) return <div className="ad-grid-2">{fieldDefs.map(renderOneField)}</div>;
     return fieldDefs.map(group => (
       <div key={group.title} className="ad-field-group">
-        <div className="ad-group-label">{group.title}</div>
+        <div className="ad-group-label">{group.title}{group.np && <span className="ad-group-np">{group.np}</span>}</div>
         <div className="ad-grid-2">{group.fields.map(renderOneField)}</div>
       </div>
     ));
@@ -698,7 +698,7 @@ function AccountDetail() {
             <div className="ad-grid-2">
               {accountFields.map(field => (
                 <div key={field.accessor} className={`ad-field${field.fullWidth ? ' full' : ''}`}>
-                  <label>{field.label}</label>
+                  <label>{field.label}{field.np && <span className="ad-field-np">{field.np}</span>}</label>
                   {isEditing
                     ? renderFieldInput(field)
                     : <span>{renderValue(formData[field.accessor])}</span>}

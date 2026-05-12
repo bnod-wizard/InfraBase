@@ -193,6 +193,25 @@
   font-size: 12px;
   font-weight: 500;
   color: var(--ink-2, #374151);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gdm-label-np {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--ink-mute, #9ca3af);
+}
+
+.gdm-section-np {
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 400;
+  font-family: var(--sans, inherit);
+  color: var(--ink-dim, #b0b0b8);
+  margin-left: 6px;
 }
 
 .gdm-input {
