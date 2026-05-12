@@ -40,6 +40,10 @@ class ValuationModel:
             'site_visited_by': data.get('site_visited_by'),
             'site_visitor_phone': data.get('site_visitor_phone'),
             'remarks': data.get('remarks'),
+            # Document scope selections
+            'selected_client_ids': data.get('selected_client_ids') or [],
+            'selected_owner_ids': data.get('selected_owner_ids') or [],
+            'selected_property_id': data.get('selected_property_id') or '',
             'status': data.get('status', 'draft'),
             'created_by': data.get('created_by'),
             'created_at': data.get('created_at', datetime.utcnow()),

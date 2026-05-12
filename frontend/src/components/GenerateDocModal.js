@@ -23,15 +23,22 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
   const [certifiers, setCertifiers] = useState([]);
   const [banks,      setBanks]      = useState([]);
   const [visitors,   setVisitors]   = useState([]);
-  // Selected setting IDs (for dropdowns)
   const [selCertifier, setSelCertifier] = useState('');
   const [selBank,      setSelBank]      = useState('');
   const [selVisitor,   setSelVisitor]   = useState('');
 
+  // Document scope selections
+  const [selClientIds,  setSelClientIds]  = useState([]);
+  const [selOwnerIds,   setSelOwnerIds]   = useState([]);
+  const [selPropertyId, setSelPropertyId] = useState('');
+
+  const clients    = hierarchy?.clients    || [];
+  const owners     = hierarchy?.owners     || [];
+  const properties = hierarchy?.properties || [];
+
   useEffect(() => {
     if (!isOpen || !accountId) return;
 
-    // Load settings lists
     accountApi.getSettings('certifier').then(r => { if (r.data?.success) setCertifiers(r.data.data || []); }).catch(() => {});
     accountApi.getSettings('bank').then(r => { if (r.data?.success) setBanks(r.data.data || []); }).catch(() => {});
     accountApi.getSettings('visitor').then(r => { if (r.data?.success) setVisitors(r.data.data || []); }).catch(() => {});
@@ -47,17 +54,41 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
       }));
     }
 
+    const cls = hierarchy?.clients    || [];
+    const ows = hierarchy?.owners     || [];
+    const prs = hierarchy?.properties || [];
+
     accountApi.getValuation(accountId).then(res => {
       if (res.data.success && res.data.data) {
-        setValuation(v => ({ ...v, ...res.data.data }));
-        setSelBank(res.data.data.bank_id || '');
-        setSelCertifier(res.data.data.certifier_id || '');
-        setSelVisitor(res.data.data.visitor_id || '');
+        const saved = res.data.data;
+        setValuation(v => ({ ...v, ...saved }));
+        setSelBank(saved.bank_id || '');
+        setSelCertifier(saved.certifier_id || '');
+        setSelVisitor(saved.visitor_id || '');
+
+        setSelClientIds(Array.isArray(saved.selected_client_ids) ? saved.selected_client_ids : cls.map(c => c._id));
+        setSelOwnerIds(Array.isArray(saved.selected_owner_ids)   ? saved.selected_owner_ids  : ows.map(o => o._id));
+        setSelPropertyId(saved.selected_property_id || prs[0]?._id || '');
+      } else {
+        setSelClientIds(cls.map(c => c._id));
+        setSelOwnerIds(ows.map(o => o._id));
+        setSelPropertyId(prs[0]?._id || '');
       }
-    }).catch(() => {});
+    }).catch(() => {
+      setSelClientIds(cls.map(c => c._id));
+      setSelOwnerIds(ows.map(o => o._id));
+      setSelPropertyId(prs[0]?._id || '');
+    });
   }, [isOpen, accountId, hierarchy]);
 
   if (!isOpen) return null;
+
+  const buildPayload = () => ({
+    ...valuation,
+    selected_client_ids: selClientIds,
+    selected_owner_ids:  selOwnerIds,
+    selected_property_id: selPropertyId,
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -81,10 +112,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
 
   const handleSelectCertifier = (id) => {
     setSelCertifier(id);
-    if (!id) {
-      setValuation(v => ({ ...v, certifier_id: '' }));
-      return;
-    }
+    if (!id) { setValuation(v => ({ ...v, certifier_id: '' })); return; }
     const c = certifiers.find(x => x._id === id);
     if (c) setValuation(v => ({
       ...v,
@@ -98,10 +126,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
 
   const handleSelectBank = (id) => {
     setSelBank(id);
-    if (!id) {
-      setValuation(v => ({ ...v, bank_id: '' }));
-      return;
-    }
+    if (!id) { setValuation(v => ({ ...v, bank_id: '' })); return; }
     const b = banks.find(x => x._id === id);
     if (b) setValuation(v => ({
       ...v,
@@ -112,10 +137,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
 
   const handleSelectVisitor = (id) => {
     setSelVisitor(id);
-    if (!id) {
-      setValuation(v => ({ ...v, visitor_id: '' }));
-      return;
-    }
+    if (!id) { setValuation(v => ({ ...v, visitor_id: '' })); return; }
     const vis = visitors.find(x => x._id === id);
     if (vis) setValuation(v => ({
       ...v,
@@ -124,10 +146,16 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
     }));
   };
 
+  const toggleClient = (id) =>
+    setSelClientIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  const toggleOwner = (id) =>
+    setSelOwnerIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      await accountApi.saveValuation(accountId, valuation);
+      await accountApi.saveValuation(accountId, buildPayload());
       toast('Valuation info saved');
     } catch {} finally { setSaving(false); }
   };
@@ -135,7 +163,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
   const handlePreview = async (docType) => {
     setPreview({ open: true, html: null, docType, loading: true, error: null });
     try {
-      await accountApi.saveValuation(accountId, valuation);
+      await accountApi.saveValuation(accountId, buildPayload());
       const res = await accountApi.previewDocument(accountId, docType);
       if (res.data.success) setPreview(p => ({ ...p, html: res.data.html, loading: false }));
       else setPreview(p => ({ ...p, loading: false, error: res.data.message || 'Preview failed' }));
@@ -145,7 +173,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
   const handleGenerate = async (docType) => {
     setGenerating(docType);
     try {
-      await accountApi.saveValuation(accountId, valuation);
+      await accountApi.saveValuation(accountId, buildPayload());
       const res = await accountApi.generateDocument(accountId, docType);
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a');
@@ -158,8 +186,6 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
       alert('Document generation failed.'); console.error(err);
     } finally { setGenerating(null); }
   };
-
-  const prefillSummary = buildPrefillSummary(hierarchy);
 
   return (
     <div className="gdm-overlay" onClick={onClose}>
@@ -174,17 +200,84 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
         </div>
 
         <div className="gdm-body">
-          {prefillSummary && (
-            <section className="gdm-prefill-box">
-              <p className="gdm-section-label">Pre-filled from account data</p>
-              <div className="gdm-prefill-grid">
-                {prefillSummary.map(item => (
-                  <div key={item.label} className="gdm-prefill-item">
-                    <span className="gdm-prefill-label">{item.label}</span>
-                    <span className="gdm-prefill-value">{item.value}</span>
+
+          {/* Document Scope */}
+          {(clients.length > 0 || owners.length > 0 || properties.length > 0) && (
+            <section className="gdm-scope-section">
+              <p className="gdm-section-label">Document Scope</p>
+
+              {clients.length > 0 && (
+                <div className="gdm-scope-row">
+                  <span className="gdm-scope-row-label">
+                    Clients <span className="gdm-scope-hint">— select multiple</span>
+                  </span>
+                  <div className="gdm-scope-chips">
+                    {clients.map(c => {
+                      const id  = c._id;
+                      const name = [c.title, c.first_name, c.last_name].filter(Boolean).join(' ') || '—';
+                      const on  = selClientIds.includes(id);
+                      return (
+                        <button key={id} type="button"
+                          className={`gdm-scope-chip${on ? ' gdm-scope-chip--on' : ''}`}
+                          onClick={() => toggleClient(id)}>
+                          <span className="gdm-scope-chip-indicator">{on ? '✓' : '+'}</span>
+                          {name}
+                        </button>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {owners.length > 0 && (
+                <div className="gdm-scope-row">
+                  <span className="gdm-scope-row-label">
+                    Owners <span className="gdm-scope-hint">— select multiple</span>
+                  </span>
+                  <div className="gdm-scope-chips">
+                    {owners.map(o => {
+                      const id  = o._id;
+                      const name = [o.title, o.owner_name].filter(Boolean).join(' ') || '—';
+                      const on  = selOwnerIds.includes(id);
+                      return (
+                        <button key={id} type="button"
+                          className={`gdm-scope-chip${on ? ' gdm-scope-chip--on' : ''}`}
+                          onClick={() => toggleOwner(id)}>
+                          <span className="gdm-scope-chip-indicator">{on ? '✓' : '+'}</span>
+                          {name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {properties.length > 0 && (
+                <div className="gdm-scope-row">
+                  <span className="gdm-scope-row-label">
+                    Property <span className="gdm-scope-hint">— select one</span>
+                  </span>
+                  <div className="gdm-scope-chips">
+                    {properties.map(p => {
+                      const id = p._id;
+                      const label = [
+                        p.plot_no && `Plot ${p.plot_no}`,
+                        p.vdc_municipality,
+                        p.district,
+                      ].filter(Boolean).join(', ') || p.property_name || '—';
+                      const on = selPropertyId === id;
+                      return (
+                        <button key={id} type="button"
+                          className={`gdm-scope-chip gdm-scope-chip--radio${on ? ' gdm-scope-chip--on' : ''}`}
+                          onClick={() => setSelPropertyId(id)}>
+                          <span className="gdm-scope-chip-indicator">{on ? '●' : '○'}</span>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </section>
           )}
 
@@ -234,9 +327,9 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
               <Field label="Certifier Name"  name="certifier_name"  value={valuation.certifier_name}  onChange={handleChange} />
               <Field label="Certifier Phone" name="certifier_phone" value={valuation.certifier_phone} onChange={handleChange} />
               <Field label="NEC No."         name="nec_no"          value={valuation.nec_no}          onChange={handleChange} />
-              <Field label="NEC Class"      name="nec_class"      value={valuation.nec_class}      onChange={handleChange} placeholder="A" />
-              <Field label="NEC Type"       name="nec_type"       value={valuation.nec_type}       onChange={handleChange} placeholder="Civil" />
-              <Field label="Firm Name"      name="firm_name"      value={valuation.firm_name}      onChange={handleChange} />
+              <Field label="NEC Class"       name="nec_class"       value={valuation.nec_class}       onChange={handleChange} placeholder="A" />
+              <Field label="NEC Type"        name="nec_type"        value={valuation.nec_type}        onChange={handleChange} placeholder="Civil" />
+              <Field label="Firm Name"       name="firm_name"       value={valuation.firm_name}       onChange={handleChange} />
             </div>
             <div className="gdm-grid-2">
               <Field label="Firm Address" name="firm_address" value={valuation.firm_address} onChange={handleChange} />
@@ -258,8 +351,8 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
               </div>
             )}
             <div className="gdm-grid-2">
-              <Field label="Site Visited By"   name="site_visited_by"    value={valuation.site_visited_by}    onChange={handleChange} />
-              <Field label="Visitor Phone"     name="site_visitor_phone" value={valuation.site_visitor_phone} onChange={handleChange} />
+              <Field label="Site Visited By" name="site_visited_by"    value={valuation.site_visited_by}    onChange={handleChange} />
+              <Field label="Visitor Phone"   name="site_visitor_phone" value={valuation.site_visitor_phone} onChange={handleChange} />
             </div>
           </section>
 
@@ -306,32 +399,6 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
       />
     </div>
   );
-}
-
-function buildPrefillSummary(hierarchy) {
-  if (!hierarchy) return null;
-  const items = [];
-  const clients = hierarchy.clients || [];
-  const owners  = hierarchy.owners  || [];
-  const props   = hierarchy.properties || [];
-  if (clients[0]) {
-    const c = clients[0];
-    const name = [c.title, c.first_name, c.last_name].filter(Boolean).join(' ');
-    items.push({ label: 'Client', value: name || '—' });
-    if (c.vdc_municipality) items.push({ label: 'Client Municipality', value: `${c.vdc_municipality}${c.district ? ', ' + c.district : ''}` });
-    if (c.citizenship_no)   items.push({ label: 'Citizenship No.', value: c.citizenship_no });
-  }
-  owners.forEach((o, i) => {
-    const name = [o.title, o.owner_name].filter(Boolean).join(' ');
-    items.push({ label: `Owner ${i + 1}`, value: name || '—' });
-  });
-  if (props[0]) {
-    const p = props[0];
-    if (p.plot_no)          items.push({ label: 'Plot No.', value: p.plot_no });
-    if (p.vdc_municipality) items.push({ label: 'Property Location', value: `${p.vdc_municipality}${p.district ? ', ' + p.district : ''}` });
-    if (p.fair_market_value_total) items.push({ label: 'Fair Market Value', value: `NRs. ${parseFloat(p.fair_market_value_total).toLocaleString()}` });
-  }
-  return items.length > 0 ? items : null;
 }
 
 function Field({ label, name, value, onChange, placeholder }) {

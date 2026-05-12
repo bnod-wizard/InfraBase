@@ -186,6 +186,17 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 except Exception:
                     pass
 
+            # Filter hierarchy by user-selected scope
+            sel_clients = valuation.get('selected_client_ids') or []
+            sel_owners  = valuation.get('selected_owner_ids')  or []
+            sel_prop    = valuation.get('selected_property_id') or ''
+            if sel_clients:
+                hierarchy['clients'] = [c for c in hierarchy.get('clients', []) if c.get('_id') in sel_clients]
+            if sel_owners:
+                hierarchy['owners']  = [o for o in hierarchy.get('owners', [])  if o.get('_id') in sel_owners]
+            if sel_prop:
+                hierarchy['properties'] = [p for p in hierarchy.get('properties', []) if p.get('_id') == sel_prop]
+
             import io as _io, mammoth
             doc_bytes = document_service.generate(doc_type, hierarchy, valuation)
             result    = mammoth.convert_to_html(_io.BytesIO(doc_bytes))
@@ -411,6 +422,17 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                         })
                 except Exception:
                     pass
+
+            # Filter hierarchy by user-selected scope
+            sel_clients = valuation.get('selected_client_ids') or []
+            sel_owners  = valuation.get('selected_owner_ids')  or []
+            sel_prop    = valuation.get('selected_property_id') or ''
+            if sel_clients:
+                hierarchy['clients'] = [c for c in hierarchy.get('clients', []) if c.get('_id') in sel_clients]
+            if sel_owners:
+                hierarchy['owners']  = [o for o in hierarchy.get('owners', [])  if o.get('_id') in sel_owners]
+            if sel_prop:
+                hierarchy['properties'] = [p for p in hierarchy.get('properties', []) if p.get('_id') == sel_prop]
 
             doc_bytes = document_service.generate(doc_type, hierarchy, valuation)
 
