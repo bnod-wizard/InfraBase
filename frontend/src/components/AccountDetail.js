@@ -5,6 +5,7 @@ import GenerateDocModal from './GenerateDocModal';
 import PropertyMapModal from './PropertyMapModal';
 import AccountStagePath from './AccountStagePath';
 import AreaCalculatorModal from './AreaCalculatorModal';
+import AddToAccountModal from './AddToAccountModal';
 import { useToast } from '../context';
 import '../styles/AccountDetail.css';
 
@@ -52,6 +53,7 @@ function AccountDetail() {
   const [areaCalcCtx,       setAreaCalcCtx]       = useState(null); // { property, type: 'measurement'|'lalpurja'|'deduction' }
   const [mapProperty,       setMapProperty]       = useState(null);
   const [stageSaving,       setStageSaving]       = useState(false);
+  const [addModal,          setAddModal]          = useState(null); // 'client' | 'owner' | 'property'
 
   const accountFields = [
     { accessor: 'account_name',         label: 'Account Name',     np: 'खाता नाम' },
@@ -163,12 +165,32 @@ function AccountDetail() {
       { accessor: 'west_boundary',  label: 'West',  np: 'पश्चिम' },
     ]},
     { title: 'Building', np: 'भवन', fields: [
-      { accessor: 'total_area',        label: 'Total Area',  np: 'कुल क्षेत्रफल' },
-      { accessor: 'area_unit',         label: 'Area Unit',   np: 'क्षेत्रफल एकाइ', type: 'select', options: ['sqm', 'sqft', 'aana', 'ropani'] },
-      { accessor: 'built_area',        label: 'Built Area',  np: 'निर्मित क्षेत्रफल' },
-      { accessor: 'bedrooms',          label: 'Bedrooms',    np: 'शयनकक्ष' },
-      { accessor: 'bathrooms',         label: 'Bathrooms',   np: 'शौचालय' },
-      { accessor: 'construction_year', label: 'Built Year',  np: 'निर्माण वर्ष' },
+      { accessor: 'structural_system',    label: 'Type of Structure',       np: 'संरचनाको प्रकार' },
+      { accessor: 'purpose_of_building',  label: 'Purpose of Building',     np: 'भवनको उद्देश्य' },
+      { accessor: 'no_of_floors',         label: 'No. of Floors',           np: 'तलाको संख्या' },
+      { accessor: 'total_sqft_drawing',   label: 'Total Sq.Ft in Drawing',  np: 'नक्शामा वर्गफिट' },
+      { accessor: 'total_area',           label: 'Total Area',              np: 'कुल क्षेत्रफल' },
+      { accessor: 'built_area',           label: 'Built Area',              np: 'निर्मित क्षेत्रफल' },
+      { accessor: 'area_unit',            label: 'Area Unit',               np: 'क्षेत्रफल एकाइ', type: 'select', options: ['sqm', 'sqft', 'aana', 'ropani'] },
+      { accessor: 'thickness_of_slab',    label: 'Thickness of Slab',       np: 'स्ल्याबको मोटाई' },
+      { accessor: 'thickness_of_wall',    label: 'Thickness of Wall',       np: 'भित्ताको मोटाई' },
+      { accessor: 'height_each_floor',    label: 'Height of Each Floor',    np: 'प्रत्येक तलाको उचाइ' },
+      { accessor: 'total_height_building',label: 'Total Height of Building', np: 'भवनको कुल उचाइ' },
+      { accessor: 'breadth_of_building',  label: 'Breadth of Building',     np: 'भवनको चौडाइ' },
+      { accessor: 'length_of_building',   label: 'Length of Building',      np: 'भवनको लम्बाइ' },
+      { accessor: 'foundation_type',      label: 'Foundation Type',         np: 'जगको प्रकार' },
+      { accessor: 'building_age',         label: 'Age of Building',         np: 'भवनको उमेर' },
+      { accessor: 'expected_life',        label: 'Expected Life',           np: 'अपेक्षित आयु' },
+      { accessor: 'construction_on_land', label: 'Construction on Land',    np: 'जग्गामा निर्माण' },
+      { accessor: 'bedrooms',             label: 'Bedrooms',                np: 'शयनकक्ष' },
+      { accessor: 'bathrooms',            label: 'Bathrooms',               np: 'शौचालय' },
+      { accessor: 'construction_year',    label: 'Built Year',              np: 'निर्माण वर्ष' },
+      { accessor: 'remarkable_defects',   label: 'Any Defects',             np: 'कुनै त्रुटि', fullWidth: true },
+      { accessor: 'repair_maintenance',   label: 'Repair & Maintenance',    np: 'मर्मत सम्भार' },
+      { accessor: 'underground_water_tank', label: 'Underground Water Tank', np: 'भूमिगत पानी ट्याङ्की', type: 'bool' },
+      { accessor: 'overhead_water_tank',  label: 'Overhead Water Tank',     np: 'माथिल्लो पानी ट्याङ्की', type: 'bool' },
+      { accessor: 'solar_panel',          label: 'Solar Panel',             np: 'सौर्य प्यानल', type: 'bool' },
+      { accessor: 'deep_boring_tube_well',label: 'Deep Boring / Tube Well', np: 'डिप बोरिङ', type: 'bool' },
     ]},
     { title: 'Road & Access', np: 'सडक र पहुँच', fields: [
       { accessor: 'road_access_field',         label: 'Road Access (full description)', np: 'सडक पहुँच (पूर्ण विवरण)', fullWidth: true },
@@ -579,12 +601,21 @@ function AccountDetail() {
     ));
   };
 
-  const renderSection = (title, items, fields, headerLabel, getExtraActions) => {
+  const renderSection = (title, items, fields, headerLabel, getExtraActions, onAdd) => {
     const type = title.toLowerCase();
     return (
       <div>
         <div className="ad-section-head">
           <h3>{title}</h3>
+          {onAdd && (
+            <button
+              className="btn btn-sm"
+              style={{ background: 'var(--brand,#1f3a2e)', color: '#fff', border: 'none' }}
+              onClick={onAdd}
+            >
+              + Add {title.slice(0, -1)}
+            </button>
+          )}
         </div>
         {items && items.length > 0 ? (
           <div className="ad-obj-list">
@@ -727,7 +758,7 @@ function AccountDetail() {
 
           {/* Clients */}
           <div className="panel ad-panel">
-            {renderSection('Clients', hierarchy.clients, clientFields, 'first_name')}
+            {renderSection('Clients', hierarchy.clients, clientFields, 'first_name', null, () => setAddModal('client'))}
           </div>
 
           {/* Properties */}
@@ -744,13 +775,14 @@ function AccountDetail() {
                     📍 Map
                   </button>
                 </>
-              )
+              ),
+              () => setAddModal('property')
             )}
           </div>
 
           {/* Owners */}
           <div className="panel ad-panel">
-            {renderSection('Owners', hierarchy.owners, ownerFields, 'owner_name')}
+            {renderSection('Owners', hierarchy.owners, ownerFields, 'owner_name', null, () => setAddModal('owner'))}
           </div>
         </div>
 
@@ -902,6 +934,23 @@ function AccountDetail() {
           } catch {
             toast('Failed to save area');
           }
+        }}
+      />
+
+      <AddToAccountModal
+        type={addModal}
+        accountId={accountId}
+        existingProperties={hierarchy?.properties || []}
+        isOpen={!!addModal}
+        onClose={() => setAddModal(null)}
+        onSaved={() => {
+          setAddModal(null);
+          accountApi.getAccountHierarchy(accountId).then(res => {
+            if (res.data?.success) {
+              setHierarchy(res.data.data);
+              setFormData(res.data.data.account || {});
+            }
+          });
         }}
       />
 

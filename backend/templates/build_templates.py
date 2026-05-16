@@ -570,32 +570,7 @@ def build_proposal():
     # ── PAGE 7: Description ────────────────────────────────────────────────────
     page_break(doc)
     p(doc, 'h. Description of the Property', bold=True, size=12, space_after=6)
-    p(doc, 'A. LAND', bold=True, size=10, space_after=4)
-    ldt = doc.add_table(rows=1, cols=3); ldt.style = 'Table Grid'
-    header_row(ldt, ['S.N.', 'Particulars', 'Details'])
-    set_col_widths(ldt, [0.35, 2.7, 3.15])
-    for sn, label, val_txt in [
-        ('1',  'Type of Ownership',                              '{{ ownership_type }}'),
-        ('2',  'Shape of the Land',                             '{{ land_shape }}'),
-        ('3',  'Level of the Land',                             'General'),
-        ('4',  'Topography of Land',                            '{{ land_topography }}'),
-        ('5',  'Nature of Soil',                                'N/A'),
-        ('6',  'Plot No.',                                       '{{ plot_no }}'),
-        ('7',  'Access of the Land as per Blue Print',          '{{ road_access_blueprint }}'),
-        ('8',  'Access of the Land as per Field',               '{{ road_access }}'),
-        ('9',  'Frontage of Land',                              '{{ frontage }}'),
-        ('10', 'Face of Land',                                  '{{ facing }}'),
-        ('11', 'Any Construction on the Land',                  '—'),
-        ('12', 'Sewer Facility on the Land',                    '{{ sewerage }}'),
-        ('13', 'Water Supply Facility on that Area',            '{{ water_supply }}'),
-        ('14', 'Electricity Supply on that Area',               '{{ electricity_line }}'),
-        ('15', 'Nature of the Area',                            '{{ location_type }}'),
-        ('16', 'Whether located below High Tension Electric Line', '{{ near_high_tension_line_text }}'),
-        ('17', 'Address of the Land',                           '{{ property_location_full }}'),
-        ('18', 'Positive Feature of Land',                      'N/A'),
-        ('19', 'Any Negative Feature of The Area',              'N/A'),
-    ]:
-        tbl_row(ldt, [sn, label, val_txt])
+    p(doc, '{{ prop_sections }}', size=10)
 
     # ── PAGE 7: Legal Aspects ──────────────────────────────────────────────────
     page_break(doc)

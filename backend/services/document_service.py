@@ -9,6 +9,9 @@ Logo injection:
 """
 import os, io
 from docxtpl import DocxTemplate
+from docx.shared import Pt, Inches, RGBColor
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'templates')
 
@@ -816,6 +819,143 @@ def _remove_dash_merit_bullets(doc):
         para._element.getparent().remove(para._element)
 
 
+# ── Property section subdoc builder ───────────────────────────────────────────
+
+def _doc_shd(cell, hex_color):
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    s = OxmlElement('w:shd')
+    s.set(qn('w:val'), 'clear')
+    s.set(qn('w:color'), 'auto')
+    s.set(qn('w:fill'), hex_color)
+    tcPr.append(s)
+
+def _doc_header_row(table, cols):
+    row = table.rows[0]
+    for cell, txt in zip(row.cells, cols):
+        cell.text = txt
+        if cell.paragraphs[0].runs:
+            r = cell.paragraphs[0].runs[0]
+            r.bold = True
+            r.font.size = Pt(9.5)
+            r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        _doc_shd(cell, '1F3A2E')
+
+def _doc_tbl_row(table, cells):
+    row = table.add_row()
+    for cell, txt in zip(row.cells, cells):
+        cell.text = str(txt) if txt is not None else '—'
+        if cell.paragraphs[0].runs:
+            cell.paragraphs[0].runs[0].font.size = Pt(9.5)
+    return row
+
+def _doc_set_col_widths(table, widths):
+    for row in table.rows:
+        for i, w in enumerate(widths):
+            if i < len(row.cells):
+                row.cells[i].width = Inches(w)
+
+def _doc_p(doc, text='', bold=False, size=10, space_after=4):
+    para = doc.add_paragraph()
+    para.paragraph_format.space_after = Pt(space_after)
+    if text:
+        run = para.add_run(text)
+        run.bold = bold
+        run.font.size = Pt(size)
+    return para
+
+def _prop_loc_str(prop):
+    p_ward    = _v(prop.get('ward_no'), '')
+    p_vdc     = _v(prop.get('vdc_municipality'), '')
+    p_dist    = _v(prop.get('district'), '')
+    sabik_vdc = _v(prop.get('sabik_vdc'), '')
+    sabik_ward= _v(prop.get('sabik_ward_no'), '')
+    if sabik_vdc or sabik_ward:
+        sabik_str = f'{sabik_vdc}-{sabik_ward}' if (sabik_vdc and sabik_ward) else (sabik_vdc or sabik_ward)
+    else:
+        sabik_str = _v(prop.get('sabik'), '')
+    present = f'{p_vdc}-{p_ward}' if p_ward else p_vdc
+    parts = [x for x in [present, sabik_str and f'(Sabik {sabik_str})', p_dist and f'{p_dist} District'] if x]
+    return ', '.join(parts) or _v(prop.get('address'), '—')
+
+def _add_land_section(sd, prop):
+    _doc_p(sd, 'A. LAND', bold=True, size=10, space_after=4)
+    ldt = sd.add_table(rows=1, cols=3)
+    ldt.style = 'Table Grid'
+    _doc_header_row(ldt, ['S.N.', 'Particulars', 'Details'])
+    _doc_set_col_widths(ldt, [0.35, 2.7, 3.15])
+    for sn, label, val in [
+        ('1',  'Type of Ownership',                               _v(prop.get('ownership_type'), '—')),
+        ('2',  'Shape of the Land',                              _v(prop.get('land_shape'), '—')),
+        ('3',  'Level of the Land',                              _v(prop.get('land_level'), 'General')),
+        ('4',  'Topography of Land',                             _v(prop.get('land_topography'), '—')),
+        ('5',  'Nature of Soil',                                 _v(prop.get('nature_of_soil'), 'N/A')),
+        ('6',  'Plot No.',                                        _v(prop.get('plot_no'), '—')),
+        ('7',  'Access of the Land as per Blue Print',           _v(prop.get('road_access_blueprint'), '—')),
+        ('8',  'Access of the Land as per Field',                _v(prop.get('road_access_field') or _road_access(prop), '—')),
+        ('9',  'Frontage of Land',                               _v(prop.get('frontage'), '—')),
+        ('10', 'Face of Land',                                   _v(prop.get('facing'), '—')),
+        ('11', 'Any Construction on the Land',                   _v(prop.get('construction_on_land'), '—')),
+        ('12', 'Sewer Facility on the Land',                     _yn(prop.get('sewerage'))),
+        ('13', 'Water Supply Facility on that Area',             _yn(prop.get('water_supply'))),
+        ('14', 'Electricity Supply on that Area',                _yn(prop.get('electricity_line'))),
+        ('15', 'Nature of the Area',                             _v(prop.get('nature_of_area') or prop.get('location_type'), 'Residential')),
+        ('16', 'Whether located below High Tension Electric Line', _yn(prop.get('near_high_tension_line'))),
+        ('17', 'Address of the Land',                            _prop_loc_str(prop)),
+        ('18', 'Positive Feature of Land',                       _v(prop.get('positive_features'), 'N/A')),
+        ('19', 'Any Negative Feature of The Area',               _v(prop.get('negative_features'), 'N/A')),
+    ]:
+        _doc_tbl_row(ldt, [sn, label, val])
+
+def _add_building_section(sd, prop):
+    _doc_p(sd, 'B. BUILDING', bold=True, size=10, space_after=4)
+    bdt = sd.add_table(rows=1, cols=3)
+    bdt.style = 'Table Grid'
+    _doc_header_row(bdt, ['S.N.', 'Particulars', 'Details'])
+    _doc_set_col_widths(bdt, [0.35, 2.7, 3.15])
+    for sn, label, val in [
+        ('1',  'Type of Ownership',                               _v(prop.get('ownership_type'), '—')),
+        ('2',  'Purpose of the Building',                         _v(prop.get('purpose_of_building'), '—')),
+        ('3',  'No. of Floor of the Building Constructed',        _v(prop.get('no_of_floors'), '—')),
+        ('4',  'Total Sq.Ft of Building in Drawing',              _v(prop.get('total_sqft_drawing') or prop.get('total_area'), '—')),
+        ('5',  'Type of the Building\'s Structure',               _v(prop.get('structural_system'), '—')),
+        ('6',  'Thickness of Slab',                               _v(prop.get('thickness_of_slab'), '—')),
+        ('7',  'Thickness of Wall',                               _v(prop.get('thickness_of_wall'), '—')),
+        ('8',  'Height of Each Floor of Building',                _v(prop.get('height_each_floor'), '—')),
+        ('10', 'Total Height of Building',                        _v(prop.get('total_height_building'), '—')),
+        ('11', 'Breadth of Building',                             _v(prop.get('breadth_of_building'), '—')),
+        ('12', 'Length of Building',                              _v(prop.get('length_of_building'), '—')),
+        ('13', 'Type of Foundation of Building',                  _v(prop.get('foundation_type'), '—')),
+        ('14', 'Age of the Building',                             _v(prop.get('building_age'), '—')),
+        ('15', 'Expected Life of Building',                       _v(prop.get('expected_life') or prop.get('building_life'), '—')),
+        ('16', 'Any Construction on the Land',                    _v(prop.get('construction_on_land'), '—')),
+        ('17', 'Sewer Facility in the Building',                  _yn(prop.get('sewerage'))),
+        ('18', 'Water Supply Facility in the Building',           _yn(prop.get('water_supply'))),
+        ('19', 'Electricity Supply in the Building',              _yn(prop.get('electricity_line'))),
+        ('20', 'Telephone Facility',                              _yn(prop.get('telephone'))),
+        ('21', 'Underground Water Tank',                          _yn(prop.get('underground_water_tank'))),
+        ('22', 'Overhead Water Tank',                             _yn(prop.get('overhead_water_tank'))),
+        ('23', 'Solar Panel',                                     _yn(prop.get('solar_panel'))),
+        ('24', 'Deep Boring / Tube Well',                         _yn(prop.get('deep_boring_tube_well'))),
+        ('25', 'Any Remarkable Defects (dampness, cracks etc)',   _v(prop.get('remarkable_defects'), 'No')),
+        ('26', 'Repair and Maintenance',                          _v(prop.get('repair_maintenance'), 'No')),
+        ('27', 'Address of the Building',                         _prop_loc_str(prop)),
+    ]:
+        _doc_tbl_row(bdt, [sn, label, val])
+
+def _build_prop_sections_subdoc(tpl, properties):
+    sd = tpl.new_subdoc()
+    for i, prop in enumerate(properties):
+        if i > 0:
+            _doc_p(sd, '', space_after=6)
+        ptype = (prop.get('property_type') or 'land').lower()
+        if ptype == 'building':
+            _add_building_section(sd, prop)
+        else:
+            _add_land_section(sd, prop)
+    return sd
+
+
 class DocumentService:
 
     def generate(self, doc_type, hierarchy, valuation):
@@ -827,6 +967,8 @@ class DocumentService:
             raise FileNotFoundError(f'Template not found: {template_path}')
         tpl = DocxTemplate(template_path)
         context = build_context(hierarchy, valuation)
+        prop_subdoc = _build_prop_sections_subdoc(tpl, hierarchy.get('properties', []))
+        context['prop_sections'] = prop_subdoc
         tpl.render(context)
         _remove_dash_merit_bullets(tpl.docx)
         buf = io.BytesIO()

@@ -465,6 +465,23 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
+    # ── Client create ─────────────────────────────────────────────────────────
+    @app.route('/api/accounts/<account_id>/clients', methods=['POST'])
+    @token_required
+    def create_client(account_id):
+        try:
+            if client_service is None:
+                return jsonify({'success': False, 'message': 'Client service not available'}), 503
+            data = request.get_json()
+            data['account_id'] = account_id
+            user_id = request.user_id if hasattr(request, 'user_id') else None
+            success, message, result = client_service.create_client(data, user_id)
+            if success:
+                return jsonify({'success': True, 'message': message, 'data': result}), 201
+            return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
     # ── Owner update ──────────────────────────────────────────────────────────
     @app.route('/api/owners/<owner_id>', methods=['PUT'])
     @token_required
@@ -476,6 +493,40 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
             success, message, result = owner_service.update_owner(owner_id, data)
             if success:
                 return jsonify({'success': True, 'message': message, 'data': result}), 200
+            return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # ── Owner create ──────────────────────────────────────────────────────────
+    @app.route('/api/accounts/<account_id>/owners', methods=['POST'])
+    @token_required
+    def create_owner(account_id):
+        try:
+            if owner_service is None:
+                return jsonify({'success': False, 'message': 'Owner service not available'}), 503
+            data = request.get_json()
+            data['account_id'] = account_id
+            user_id = request.user_id if hasattr(request, 'user_id') else None
+            success, message, result = owner_service.create_owner(data, user_id)
+            if success:
+                return jsonify({'success': True, 'message': message, 'data': result}), 201
+            return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # ── Property create ───────────────────────────────────────────────────────
+    @app.route('/api/accounts/<account_id>/properties', methods=['POST'])
+    @token_required
+    def create_property(account_id):
+        try:
+            if property_service is None:
+                return jsonify({'success': False, 'message': 'Property service not available'}), 503
+            data = request.get_json()
+            data['account_id'] = account_id
+            user_id = request.user_id if hasattr(request, 'user_id') else None
+            success, message, result = property_service.create_property(data, user_id)
+            if success:
+                return jsonify({'success': True, 'message': message, 'data': result}), 201
             return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500

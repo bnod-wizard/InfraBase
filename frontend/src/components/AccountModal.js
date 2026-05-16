@@ -91,6 +91,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     sheet_no: '', gps_coordinates: '', land_shape: '', land_topography: '',
     road_access_blueprint: '', road_access_field: '', frontage: '', facing: '',
     nearest_landmark: '', nearest_market: '', public_transport_distance: '',
+    positive_features: '', negative_features: '', location_merits: '',
     land_area_lorc: '', land_area_lorc_trad: '',
     land_area_measured: '', land_area_meas_trad: '',
     land_area_deducted: '', land_area_ded_trad: '',
@@ -107,6 +108,14 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     total_area: '', area_unit: 'sqft', bedrooms: '', bathrooms: '',
     construction_year: '', estimated_value: '', purchase_price: '',
     rental_value: '', survey_number: '',
+    // Building extended
+    structural_system: '', purpose_of_building: '', no_of_floors: '', total_sqft_drawing: '',
+    thickness_of_slab: '', thickness_of_wall: '', height_each_floor: '', total_height_building: '',
+    breadth_of_building: '', length_of_building: '', foundation_type: '', expected_life: '',
+    building_age: '', built_area: '', construction_on_land: '',
+    underground_water_tank: false, overhead_water_tank: false,
+    solar_panel: false, deep_boring_tube_well: false,
+    remarkable_defects: '', repair_maintenance: '',
     // Services (boolean)
     motorable_access: false, water_supply: false, sewerage: false,
     electricity_line: false, telephone: false, tv_cable: false,
@@ -154,6 +163,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
   const handleAccountChange  = e => { const { name, value } = e.target; setAccount(prev => ({ ...prev, [name]: value })); };
   const handleClientChange   = e => { const { name, value } = e.target; setCurrentClient(prev => ({ ...prev, [name]: value })); };
   const handlePropertyChange = e => { const { name, value } = e.target; setCurrentProperty(prev => ({ ...prev, [name]: value })); };
+  const handlePropertyBoolChange = (name, val) => setCurrentProperty(prev => ({ ...prev, [name]: val }));
   const handleOwnerChange    = e => { const { name, value } = e.target; setCurrentOwner(prev => ({ ...prev, [name]: value })); };
 
   const addClient = () => {
@@ -374,7 +384,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
             <div className="form-step">
               <h3>Add Properties (सम्पत्ति थप्नुहोस्)</h3>
 
-              {/* — Location of Site — */}
+              {/* — Location of Site (COMMON) — */}
               <SectionHead>Location of Site (सम्पत्तिको स्थान)</SectionHead>
               <div className="form-grid">
                 <ClearInput type="text" name="property_name" placeholder="Property Name (सम्पत्तिको नाम) *" value={currentProperty.property_name} onChange={handlePropertyChange} error={propertyErrors.property_name} />
@@ -389,67 +399,111 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 <ClearInput type="text" name="sabik_vdc" placeholder="Sabik VDC (साबिक गाविस – जस्तै Jorpati VDC)" value={currentProperty.sabik_vdc} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="sabik_ward_no" placeholder="Sabik Ward No. (साबिक वडा नं.)" value={currentProperty.sabik_ward_no} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="address" placeholder="Property Address (सम्पत्तिको ठेगाना) *" value={currentProperty.address} onChange={handlePropertyChange} error={propertyErrors.address} className="form-col-2" />
-              </div>
-
-              {/* — Land Detail Information — */}
-              <SectionHead>Land Detail Information (जग्गा विवरण)</SectionHead>
-              <div className="form-grid">
-                <ClearInput type="text" name="mode_of_acquisition" placeholder="Mode of Acquisition (प्राप्तिको तरिका – जस्तै Sale)" value={currentProperty.mode_of_acquisition} onChange={handlePropertyChange} />
-                <ClearInput type="date" name="land_revenue_payment_date" placeholder="Land Revenue Payment Date (मालपोत तिरेको मिति)" value={currentProperty.land_revenue_payment_date} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="sheet_no" placeholder="Sheet No. (सिट नं.)" value={currentProperty.sheet_no} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="tole" placeholder="Locality / Tole (स्थानीयता / टोल)" value={currentProperty.tole} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="gps_coordinates" placeholder='GPS Co-ordinates (जीपीएस निर्देशांक – जस्तै 27°43′23.40"N, 85°22′35.91"E)' value={currentProperty.gps_coordinates} onChange={handlePropertyChange} className="form-col-2" />
-                <ClearInput type="text" name="land_shape" placeholder="Shape of the Land (जग्गाको आकार – जस्तै Regular)" value={currentProperty.land_shape} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="land_topography" placeholder="Topography of Land (जग्गाको भूगोल – जस्तै Plain)" value={currentProperty.land_topography} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="road_access_blueprint" placeholder="Road Access as per Blueprint / Trace Map (नक्शाअनुसार सडक पहुँच)" value={currentProperty.road_access_blueprint} onChange={handlePropertyChange} className="form-col-2" />
-                <ClearInput type="text" name="road_access_field" placeholder="Road Access as per Field (स्थलगत सडक पहुँच)" value={currentProperty.road_access_field} onChange={handlePropertyChange} className="form-col-2" />
-                <ClearInput type="text" name="frontage" placeholder='Frontage of the Land (जग्गाको सामुन्ने – जस्तै 28′-00")' value={currentProperty.frontage} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="facing" placeholder='Face of the Land (जग्गाको फेस – जस्तै 28′-00" West Side)' value={currentProperty.facing} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="gps_coordinates" placeholder='GPS Co-ordinates (जीपीएस निर्देशांक)' value={currentProperty.gps_coordinates} onChange={handlePropertyChange} className="form-col-2" />
                 <ClearInput type="text" name="nearest_landmark" placeholder="Nearest Landmark (नजिकको ल्यान्डमार्क)" value={currentProperty.nearest_landmark} onChange={handlePropertyChange} className="form-col-2" />
                 <ClearInput type="text" name="nearest_market" placeholder="Nearest Market (नजिकको बजार)" value={currentProperty.nearest_market} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="public_transport_distance" placeholder="Public Transport Distance (सार्वजनिक यातायात दूरी)" value={currentProperty.public_transport_distance} onChange={handlePropertyChange} />
-                <div className="field-wrap form-col-2">
-                  <textarea
-                    name="location_merits"
-                    rows={4}
-                    placeholder=" "
-                    value={currentProperty.location_merits || ''}
-                    onChange={handlePropertyChange}
-                    style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }}
-                  />
-                  <label>Merits of Location (स्थानका विशेषताहरू) — one per line</label>
-                </div>
-                {/* ── Area Calculator Buttons ── */}
-              </div>
-              <div className="area-calc-group">
-                {[
-                  { type: 'lalpurja',    label: 'Lalpurja Area', hint: 'As per legal document (लालपुर्जा)', obj: currentProperty.land_area_as_per_lalpurja },
-                  { type: 'measurement', label: 'Measurement Area', hint: 'As per field survey (नापी)', obj: currentProperty.land_area_as_per_measurement },
-                  { type: 'deduction',   label: 'After Deduction', hint: 'Net area after road/other deductions', obj: currentProperty.land_area_after_deduction },
-                ].map(({ type, label, hint, obj }) => (
-                  <div key={type} className="area-calc-card">
-                    <div className="area-calc-card-info">
-                      <span className="area-calc-card-label">{label}</span>
-                      <span className="area-calc-card-hint">{hint}</span>
-                      {obj && obj.triangles && obj.triangles.length > 0 && (
-                        <span className="area-calc-card-result">
-                          {obj.triangles.length} triangle{obj.triangles.length > 1 ? 's' : ''} ·{' '}
-                          {obj.unit === 'Meter' || obj.unit === 'Centimeter'
-                            ? `${obj.total_sqm} m²`
-                            : `${obj.total_sqft} sqft`} · {obj.rapd}
-                        </span>
-                      )}
-                    </div>
-                    <button type="button" className="area-calc-card-btn" onClick={() => setAreaDrawerType(type)}>
-                      {obj && obj.triangles && obj.triangles.length > 0 ? '✏ Edit' : '⊞ Calculate'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="form-grid">
               </div>
 
-              {/* — Boundaries — */}
+              {/* — LAND-ONLY fields — */}
+              {currentProperty.property_type !== 'building' && (<>
+                <SectionHead>Land Details (जग्गा विवरण)</SectionHead>
+                <div className="form-grid">
+                  <ClearInput type="text" name="mode_of_acquisition" placeholder="Mode of Acquisition (प्राप्तिको तरिका – Sale)" value={currentProperty.mode_of_acquisition} onChange={handlePropertyChange} />
+                  <ClearInput type="date" name="land_revenue_payment_date" placeholder="Land Revenue Payment Date (मालपोत तिरेको मिति)" value={currentProperty.land_revenue_payment_date} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="sheet_no" placeholder="Sheet No. (सिट नं.)" value={currentProperty.sheet_no} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="tole" placeholder="Locality / Tole (स्थानीयता / टोल)" value={currentProperty.tole} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="land_shape" placeholder="Shape of the Land (जग्गाको आकार – Regular)" value={currentProperty.land_shape} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="land_topography" placeholder="Topography of Land (जग्गाको भूगोल – Plain)" value={currentProperty.land_topography} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="road_access_blueprint" placeholder="Road Access as per Blueprint (नक्शाअनुसार सडक पहुँच)" value={currentProperty.road_access_blueprint} onChange={handlePropertyChange} className="form-col-2" />
+                  <ClearInput type="text" name="road_access_field" placeholder="Road Access as per Field (स्थलगत सडक पहुँच)" value={currentProperty.road_access_field} onChange={handlePropertyChange} className="form-col-2" />
+                  <ClearInput type="text" name="frontage" placeholder='Frontage of the Land (जग्गाको सामुन्ने – 28′-00")' value={currentProperty.frontage} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="facing" placeholder='Face of the Land (जग्गाको फेस – West Side)' value={currentProperty.facing} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="construction_on_land" placeholder="Any Construction on Land (जग्गामा निर्माण)" value={currentProperty.construction_on_land} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="positive_features" placeholder="Positive Features of Land (सकारात्मक विशेषताहरू)" value={currentProperty.positive_features || ''} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="negative_features" placeholder="Any Negative Features (नकारात्मक विशेषताहरू)" value={currentProperty.negative_features || ''} onChange={handlePropertyChange} />
+                </div>
+                <div className="area-calc-group">
+                  {[
+                    { type: 'lalpurja',    label: 'Lalpurja Area', hint: 'As per legal document (लालपुर्जा)', obj: currentProperty.land_area_as_per_lalpurja },
+                    { type: 'measurement', label: 'Measurement Area', hint: 'As per field survey (नापी)', obj: currentProperty.land_area_as_per_measurement },
+                    { type: 'deduction',   label: 'After Deduction', hint: 'Net area after road/other deductions', obj: currentProperty.land_area_after_deduction },
+                  ].map(({ type, label, hint, obj }) => (
+                    <div key={type} className="area-calc-card">
+                      <div className="area-calc-card-info">
+                        <span className="area-calc-card-label">{label}</span>
+                        <span className="area-calc-card-hint">{hint}</span>
+                        {obj && obj.triangles && obj.triangles.length > 0 && (
+                          <span className="area-calc-card-result">
+                            {obj.triangles.length} triangle{obj.triangles.length > 1 ? 's' : ''} ·{' '}
+                            {obj.unit === 'Meter' || obj.unit === 'Centimeter'
+                              ? `${obj.total_sqm} m²`
+                              : `${obj.total_sqft} sqft`} · {obj.rapd}
+                          </span>
+                        )}
+                      </div>
+                      <button type="button" className="area-calc-card-btn" onClick={() => setAreaDrawerType(type)}>
+                        {obj && obj.triangles && obj.triangles.length > 0 ? '✏ Edit' : '⊞ Calculate'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="field-wrap form-col-2" style={{marginTop:'12px'}}>
+                  <textarea name="location_merits" rows={4} placeholder=" " value={currentProperty.location_merits || ''} onChange={handlePropertyChange}
+                    style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }} />
+                  <label>Merits of Location (स्थानका विशेषताहरू) — one per line</label>
+                </div>
+              </>)}
+
+              {/* — BUILDING-ONLY fields — */}
+              {currentProperty.property_type === 'building' && (<>
+                <SectionHead>Building Details (भवन विवरण)</SectionHead>
+                <div className="form-grid">
+                  <ClearInput type="text" name="structural_system" placeholder="Type of Structure (संरचनाको प्रकार – RCC Frame Structure)" value={currentProperty.structural_system} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="purpose_of_building" placeholder="Purpose of Building (भवनको उद्देश्य – Residential)" value={currentProperty.purpose_of_building} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="no_of_floors" placeholder="No. of Floors (तलाको संख्या – 3 & Half Floors)" value={currentProperty.no_of_floors} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="total_sqft_drawing" placeholder="Total Sq.Ft in Drawing (नक्शामा कुल वर्गफिट)" value={currentProperty.total_sqft_drawing} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="total_area" placeholder="Total Built Area (कुल निर्मित क्षेत्रफल)" value={currentProperty.total_area} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="built_area" placeholder="Built Area (निर्मित क्षेत्रफल)" value={currentProperty.built_area} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="thickness_of_slab" placeholder='Thickness of Slab (स्ल्याबको मोटाई – 4")' value={currentProperty.thickness_of_slab} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="thickness_of_wall" placeholder='Thickness of Wall (भित्ताको मोटाई – 9")' value={currentProperty.thickness_of_wall} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="height_each_floor" placeholder="Height of Each Floor (प्रत्येक तलाको उचाइ – 9′-4″)" value={currentProperty.height_each_floor} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="total_height_building" placeholder="Total Height of Building (भवनको कुल उचाइ – 40′-10″)" value={currentProperty.total_height_building} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="breadth_of_building" placeholder="Breadth of Building (भवनको चौडाइ – 28′-08″)" value={currentProperty.breadth_of_building} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="length_of_building" placeholder="Length of Building (भवनको लम्बाइ – 40′-08″)" value={currentProperty.length_of_building} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="foundation_type" placeholder="Foundation Type (जगको प्रकार – Isolated)" value={currentProperty.foundation_type} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="building_age" placeholder="Age of Building (भवनको उमेर – 2.5 Years)" value={currentProperty.building_age} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="expected_life" placeholder="Expected Life of Building (भवनको अपेक्षित आयु – 45 Years)" value={currentProperty.expected_life} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="construction_on_land" placeholder="Any Construction on Land (जग्गामा निर्माण – RCC Building)" value={currentProperty.construction_on_land} onChange={handlePropertyChange} />
+                  <ClearInput type="number" name="bedrooms" placeholder="Bedrooms (शयनकक्ष)" value={currentProperty.bedrooms} onChange={handlePropertyChange} />
+                  <ClearInput type="number" name="bathrooms" placeholder="Bathrooms (शौचालय)" value={currentProperty.bathrooms} onChange={handlePropertyChange} />
+                  <ClearInput type="number" name="construction_year" placeholder="Construction Year (निर्माण वर्ष)" value={currentProperty.construction_year} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="remarkable_defects" placeholder="Any Defects (कुनै त्रुटि – dampness, cracks)" value={currentProperty.remarkable_defects} onChange={handlePropertyChange} />
+                  <ClearInput type="text" name="repair_maintenance" placeholder="Repair & Maintenance (मर्मत सम्भार)" value={currentProperty.repair_maintenance} onChange={handlePropertyChange} />
+                  <ClearInput type="number" name="estimated_value" placeholder="Estimated Value (अनुमानित मूल्य)" value={currentProperty.estimated_value} onChange={handlePropertyChange} />
+                  <ClearInput type="number" name="purchase_price" placeholder="Purchase Price (खरिद मूल्य)" value={currentProperty.purchase_price} onChange={handlePropertyChange} />
+                </div>
+                <div className="check-grid" style={{marginTop:'8px'}}>
+                  {[
+                    ['underground_water_tank', 'Underground Water Tank (भूमिगत पानी ट्याङ्की)'],
+                    ['overhead_water_tank',    'Overhead Water Tank (माथिल्लो पानी ट्याङ्की)'],
+                    ['solar_panel',            'Solar Panel (सौर्य प्यानल)'],
+                    ['deep_boring_tube_well',  'Deep Boring / Tube Well (डिप बोरिङ)'],
+                  ].map(([name, label]) => (
+                    <label key={name} className="check-label">
+                      <input type="checkbox" checked={!!currentProperty[name]} onChange={e => handlePropertyBoolChange(name, e.target.checked)} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+                <div className="field-wrap form-col-2" style={{marginTop:'12px'}}>
+                  <textarea name="location_merits" rows={4} placeholder=" " value={currentProperty.location_merits || ''} onChange={handlePropertyChange}
+                    style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }} />
+                  <label>Merits of Location (स्थानका विशेषताहरू) — one per line</label>
+                </div>
+              </>)}
+
+              {/* — COMMON: Boundaries — */}
               <SectionHead>Parameters of the Four Boundaries (चार किल्ला)</SectionHead>
               <div className="form-grid">
                 <ClearInput type="text" name="north_boundary" placeholder="North Boundary (उत्तर किल्ला)" value={currentProperty.north_boundary} onChange={handlePropertyChange} />
@@ -460,7 +514,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 <ClearInput type="text" name="legal_reference_no" placeholder="Reference No. (सन्दर्भ नं.)" value={currentProperty.legal_reference_no} onChange={handlePropertyChange} />
               </div>
 
-              {/* — Services — */}
+              {/* — COMMON: Services — */}
               <SectionHead>Services (सेवाहरू)</SectionHead>
               <div className="check-grid">
                 {[
@@ -479,7 +533,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 ))}
               </div>
 
-              {/* — Influencing Factors — */}
+              {/* — COMMON: Influencing Factors — */}
               <SectionHead>Influencing Factors (प्रभावकारी तत्वहरू)</SectionHead>
               <div className="check-grid">
                 {[
@@ -502,28 +556,11 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 ))}
               </div>
 
-              {/* — Land Legal Aspect — */}
-              <SectionHead>Land Legal Aspect (जग्गाको कानूनी पक्ष)</SectionHead>
+              {/* — COMMON: Legal — */}
+              <SectionHead>Legal (कानूनी पक्ष)</SectionHead>
               <div className="form-grid">
-                <ClearInput type="text" name="ownership_type" placeholder="Ownership Type (स्वामित्व प्रकार – जस्तै Joint)" value={currentProperty.ownership_type} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="hold_type" placeholder="Hold Type (होल्ड प्रकार – जस्तै Freehold)" value={currentProperty.hold_type} onChange={handlePropertyChange} />
-              </div>
-
-              {/* — Building / Other — */}
-              <SectionHead>Building / Other Details (भवन / अन्य विवरण)</SectionHead>
-              <div className="form-grid">
-                <ClearInput type="text" name="total_area" placeholder="Total Built Area (कुल निर्मित क्षेत्रफल)" value={currentProperty.total_area} onChange={handlePropertyChange} />
-                <SelectInput name="area_unit" value={currentProperty.area_unit} onChange={handlePropertyChange} label="Area Unit (क्षेत्रफल एकाइ)">
-                  <option value="sqft">Sq. Feet (वर्ग फिट)</option>
-                  <option value="sqm">Sq. Meter (वर्ग मिटर)</option>
-                  <option value="aana">Aana (आना)</option>
-                  <option value="ropani">Ropani (रोपनी)</option>
-                </SelectInput>
-                <ClearInput type="number" name="bedrooms" placeholder="Bedrooms (शयनकक्ष)" value={currentProperty.bedrooms} onChange={handlePropertyChange} />
-                <ClearInput type="number" name="bathrooms" placeholder="Bathrooms (शौचालय)" value={currentProperty.bathrooms} onChange={handlePropertyChange} />
-                <ClearInput type="number" name="construction_year" placeholder="Construction Year (निर्माण वर्ष)" value={currentProperty.construction_year} onChange={handlePropertyChange} />
-                <ClearInput type="number" name="estimated_value" placeholder="Estimated Value (अनुमानित मूल्य)" value={currentProperty.estimated_value} onChange={handlePropertyChange} />
-                <ClearInput type="number" name="purchase_price" placeholder="Purchase Price (खरिद मूल्य)" value={currentProperty.purchase_price} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="ownership_type" placeholder="Ownership Type (स्वामित्व प्रकार – Joint)" value={currentProperty.ownership_type} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="hold_type" placeholder="Hold Type (होल्ड प्रकार – Freehold)" value={currentProperty.hold_type} onChange={handlePropertyChange} />
               </div>
 
               <button className="add-btn" onClick={addProperty}>+ Add Property (सम्पत्ति थप्नुहोस्)</button>

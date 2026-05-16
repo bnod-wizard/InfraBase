@@ -69,6 +69,24 @@ class PropertyModel:
             'positive_features': property_data.get('positive_features', ''), # Positive feature of land
             'negative_features': property_data.get('negative_features', ''), # Negative feature of area
             'location_merits': property_data.get('location_merits', ''),    # Manual merit bullet points (one per line)
+            # Building details (extended)
+            'purpose_of_building': property_data.get('purpose_of_building', ''),
+            'no_of_floors': property_data.get('no_of_floors', ''),
+            'total_sqft_drawing': property_data.get('total_sqft_drawing', ''),
+            'thickness_of_slab': property_data.get('thickness_of_slab', ''),
+            'thickness_of_wall': property_data.get('thickness_of_wall', ''),
+            'height_each_floor': property_data.get('height_each_floor', ''),
+            'total_height_building': property_data.get('total_height_building', ''),
+            'breadth_of_building': property_data.get('breadth_of_building', ''),
+            'length_of_building': property_data.get('length_of_building', ''),
+            'foundation_type': property_data.get('foundation_type', ''),
+            'expected_life': property_data.get('expected_life', ''),
+            'underground_water_tank': property_data.get('underground_water_tank', False),
+            'overhead_water_tank': property_data.get('overhead_water_tank', False),
+            'solar_panel': property_data.get('solar_panel', False),
+            'deep_boring_tube_well': property_data.get('deep_boring_tube_well', False),
+            'remarkable_defects': property_data.get('remarkable_defects', ''),
+            'repair_maintenance': property_data.get('repair_maintenance', ''),
             'frontage': property_data.get('frontage'),
             'water_facility': property_data.get('water_facility'),
             # Dynamic triangle measurements — three area types

@@ -74,6 +74,11 @@ const accountApi = {
   saveValuation: (accountId, data) =>
     axiosInstance.post(`/accounts/${accountId}/valuation`, data),
 
+  // Create sub-objects on existing account
+  createClient:   (accountId, data) => axiosInstance.post(`/accounts/${accountId}/clients`, data),
+  createOwner:    (accountId, data) => axiosInstance.post(`/accounts/${accountId}/owners`, data),
+  createProperty: (accountId, data) => axiosInstance.post(`/accounts/${accountId}/properties`, data),
+
   // Update sub-objects
   updateClient:   (clientId, data)   => axiosInstance.put(`/clients/${clientId}`, data),
   updateOwner:    (ownerId, data)    => axiosInstance.put(`/owners/${ownerId}`, data),
