@@ -58,6 +58,8 @@ function AccountDetail() {
   const [sidebarDocs,       setSidebarDocs]       = useState([]);
   const [docToDelete,       setDocToDelete]       = useState(null);
   const [docViewer,         setDocViewer]         = useState(null);
+  const [docSearch,         setDocSearch]         = useState('');
+  const [docTypeFilter,     setDocTypeFilter]     = useState('');
   const [expandedCards,     setExpandedCards]     = useState({});
   const toggleCard = id => setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
   const [areaCalcCtx,       setAreaCalcCtx]       = useState(null); // { property, type: 'measurement'|'lalpurja'|'deduction' }
@@ -766,7 +768,7 @@ function AccountDetail() {
             </>
           )}
           <button className="btn btn-secondary" style={{ display:'flex', alignItems:'center', gap:5 }} onClick={() => setIsUploadModalOpen(true)}><IconUpload size={14} /> Upload Document</button>
-          <button className="btn" onClick={() => setIsDocModalOpen(true)}>⎙ Generate Document</button>
+          <button className="btn" onClick={() => setIsDocModalOpen(true)}>Generate Document</button>
         </div>
       </div> 
 
@@ -900,58 +902,90 @@ function AccountDetail() {
                 onClick={() => setIsUploadModalOpen(true)}
               ><IconUpload size={12} /> Upload</button>
             </div>
-            <div className="activity" style={{ maxHeight: 320, overflowY: sidebarDocs.length > 5 ? 'auto' : 'visible', paddingRight: sidebarDocs.length > 5 ? 4 : 0 }}>
+            {sidebarDocs.length > 0 && (
+              <div style={{ display:'flex', gap:6, padding:'4px 18px', alignItems:'center' }}>
+                <input
+                  type="text"
+                  placeholder="Search docs…"
+                  value={docSearch}
+                  onChange={e => setDocSearch(e.target.value)}
+                  style={{ flex:1, fontSize:'11px', padding:'4px 8px', border:'1px solid #ddd', borderRadius:6, outline:'none', minWidth:0 }}
+                />
+                <select
+                  value={docTypeFilter}
+                  onChange={e => setDocTypeFilter(e.target.value)}
+                  style={{ fontSize:'11px', padding:'4px 6px', border:'1px solid #ddd', borderRadius:6, background:'#fff', cursor:'pointer', maxWidth:100 }}
+                >
+                  <option value="">All types</option>
+                  {[...new Set(sidebarDocs.map(d => d.doc_type).filter(Boolean))].sort().map(t => (
+                    <option key={t} value={t}>{t.replace(/_/g,' ')}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {(() => {
+              const filtered = sidebarDocs.filter(d => {
+                const matchName = !docSearch || (d.original_name || '').toLowerCase().includes(docSearch.toLowerCase());
+                const matchType = !docTypeFilter || d.doc_type === docTypeFilter;
+                return matchName && matchType;
+              });
+              return (
+            <div className="activity" style={{ maxHeight: 320, overflowY: filtered.length > 5 ? 'auto' : 'visible', paddingRight: filtered.length > 5 ? 4 : 0 }}>
               {sidebarDocs.length === 0 ? (
                 <div className="act">
-                  <div className="swatch" />
                   <div className="body"><b>No documents</b><small>Upload files to this account</small></div>
                 </div>
-              ) : sidebarDocs.map(doc => {
+              ) : filtered.length === 0 ? (
+                <div style={{ padding:'12px 0', textAlign:'center', fontSize:'12px', color:'#aaa' }}>No matching documents.</div>
+              ) : filtered.map(doc => {
                 const token = localStorage.getItem('authToken');
                 const ext = (doc.file_ext || '').toLowerCase();
-                const icon = ['jpg','jpeg','png','tiff','tif'].includes(ext) ? '🖼' : ext === 'pdf' ? '📄' : ['doc','docx'].includes(ext) ? '📝' : ['xls','xlsx'].includes(ext) ? '📊' : '📎';
                 const BASE = `http://localhost:5001/api/accounts/${accountId}/documents/${doc._id}`;
+                const supported = ['jpg','jpeg','png','tiff','tif','gif','pdf'].includes(ext);
                 return (
-                  <div key={doc._id} className="act" style={{ flexDirection:'column', alignItems:'flex-start', gap:4, padding:'8px 0' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:6, width:'100%', minWidth:0 }}>
-                      <div className="swatch" style={{ flexShrink:0 }} />
-                      <span title={doc.original_name} style={{ fontSize:'12px', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1, minWidth:0 }}>
-                        {icon} {doc.original_name}
-                      </span>
-                    </div>
-                    {doc.description && (
-                      <span title={doc.description} style={{ fontSize:'11px', color:'#888', paddingLeft:22, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%', display:'block' }}>
-                        {doc.description}
-                      </span>
-                    )}
-                    <div style={{ display:'flex', alignItems:'center', gap:6, paddingLeft:22, flexWrap:'wrap' }}>
-                      <span style={{ background:'#e8f0ec', color:'#1f3a2e', borderRadius:'4px', padding:'1px 5px', fontSize:'10px', fontWeight:600, textTransform:'capitalize' }}>
-                        {doc.doc_type?.replace(/_/g,' ')}
-                      </span>
-                      {doc.created_at && (
-                        <span style={{ fontSize:'10px', color:'#aaa' }}>
-                          {new Date(doc.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}
-                        </span>
+                  <div key={doc._id} className="act">
+                    <div className="body" style={{ minWidth:0, flex:1 }}>
+                      <b title={doc.original_name} style={{ display:'block', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                        {doc.original_name}
+                      </b>
+                      {doc.description && (
+                        <small title={doc.description} style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'block' }}>
+                          {doc.description}
+                        </small>
                       )}
-                      <button
-                        title="View"
-                        style={{ background:'none', border:'none', color:'#555', cursor:'pointer', padding:0, display:'flex', alignItems:'center' }}
-                        onClick={() => {
-                          const ext = (doc.file_ext || '').toLowerCase();
-                          const supported = ['jpg','jpeg','png','tiff','tif','gif','pdf'].includes(ext);
-                          if (supported) setDocViewer({ ...doc, viewUrl: `${BASE}/view?token=${token}` });
-                          else window.open(`${BASE}/view?token=${token}`, '_blank');
-                        }}
-                      ><IconView size={14} /></button>
-                      <a href={`${BASE}/download?token=${token}`}
-                        title="Download" style={{ color:'#555', display:'flex', alignItems:'center' }}><IconDownload size={14} /></a>
-                      <button onClick={() => setDocToDelete(doc)} title="Delete"
-                        style={{ background:'none', border:'none', color:'#c44', cursor:'pointer', padding:0, display:'flex', alignItems:'center' }}><IconDelete size={14} /></button>
+                      <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:4, flexWrap:'wrap' }}>
+                        {doc.doc_type && (
+                          <span style={{ background:'#e8f0ec', color:'#1f3a2e', borderRadius:4, padding:'1px 5px', fontSize:'10px', fontWeight:600, textTransform:'capitalize' }}>
+                            {doc.doc_type.replace(/_/g,' ')}
+                          </span>
+                        )}
+                        {doc.created_at && (
+                          <span style={{ fontSize:'10px', color:'var(--ink-mute)' }}>
+                            {new Date(doc.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}
+                          </span>
+                        )}
+                        <span style={{ marginLeft:'auto', display:'flex', gap:4, alignItems:'center' }}>
+                          <button
+                            title="View"
+                            style={{ background:'none', border:'none', color:'var(--ink-dim)', cursor:'pointer', padding:0, display:'flex', alignItems:'center' }}
+                            onClick={() => {
+                              if (supported) setDocViewer({ ...doc, viewUrl: `${BASE}/view?token=${token}` });
+                              else window.open(`${BASE}/view?token=${token}`, '_blank');
+                            }}
+                          ><IconView size={14} /></button>
+                          <a href={`${BASE}/download?token=${token}`} title="Download"
+                            style={{ color:'var(--ink-dim)', display:'flex', alignItems:'center' }}><IconDownload size={14} /></a>
+                          <button onClick={() => setDocToDelete(doc)} title="Delete"
+                            style={{ background:'none', border:'none', color:'#c44', cursor:'pointer', padding:0, display:'flex', alignItems:'center' }}><IconDelete size={14} /></button>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
+              );
+            })()}
           </div>
 
           <div className="panel">
