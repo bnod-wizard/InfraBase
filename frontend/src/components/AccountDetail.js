@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import accountApi from '../services/accountApi';
+import AccountStagePath from './AccountStagePath';
 import GenerateDocModal from './GenerateDocModal';
 import UploadDocumentModal from './UploadDocumentModal';
 import PropertyMapModal from './PropertyMapModal';
-import AccountStagePath from './AccountStagePath';
 import AreaCalculatorModal from './AreaCalculatorModal';
 import AddToAccountModal from './AddToAccountModal';
 import ConfirmModal from './ConfirmModal';
@@ -56,6 +56,7 @@ function AccountDetail() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [sidebarDocs,       setSidebarDocs]       = useState([]);
   const [docToDelete,       setDocToDelete]       = useState(null);
+  const [docViewer,         setDocViewer]         = useState(null);
   const [expandedCards,     setExpandedCards]     = useState({});
   const toggleCard = id => setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
   const [areaCalcCtx,       setAreaCalcCtx]       = useState(null); // { property, type: 'measurement'|'lalpurja'|'deduction' }
@@ -366,6 +367,7 @@ function AccountDetail() {
     if (hierarchy?.account) setFormData(hierarchy.account);
     setIsEditing(false);
   };
+
 
   const handleStageChange = async newStatus => {
     setStageSaving(true);
@@ -705,7 +707,7 @@ function AccountDetail() {
   );
 
   return (
-    <div className="page-shell">
+    <div className="page-shell ad-root">
 
       {/* ── Topbar — matches AccountsPage ── */}
       <div className="topbar">
@@ -722,13 +724,11 @@ function AccountDetail() {
         </div>
         <div className="right">
           <button className="btn btn-secondary btn-sm" onClick={() => navigate('/home/accounts')}>← Back</button>
-          {isEditing ? (
+          {isEditing && (
             <>
               <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
               <button className="btn" onClick={handleSave}>Save Changes</button>
             </>
-          ) : (
-            <button className="btn btn-secondary" style={{ display:'flex', alignItems:'center', gap:5 }} onClick={() => setIsEditing(true)}><IconEdit size={14} /> Edit</button>
           )}
           <button className="btn btn-secondary" style={{ display:'flex', alignItems:'center', gap:5 }} onClick={() => setIsUploadModalOpen(true)}><IconUpload size={14} /> Upload Document</button>
           <button className="btn" onClick={() => setIsDocModalOpen(true)}>⎙ Generate Document</button>
@@ -893,8 +893,21 @@ function AccountDetail() {
                       <span style={{ background:'#e8f0ec', color:'#1f3a2e', borderRadius:'4px', padding:'1px 5px', fontSize:'10px', fontWeight:600, textTransform:'capitalize' }}>
                         {doc.doc_type?.replace(/_/g,' ')}
                       </span>
-                      <a href={`${BASE}/view?token=${token}`} target="_blank" rel="noreferrer"
-                        title="View" style={{ color:'#555', display:'flex', alignItems:'center' }}><IconView size={14} /></a>
+                      {doc.created_at && (
+                        <span style={{ fontSize:'10px', color:'#aaa' }}>
+                          {new Date(doc.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}
+                        </span>
+                      )}
+                      <button
+                        title="View"
+                        style={{ background:'none', border:'none', color:'#555', cursor:'pointer', padding:0, display:'flex', alignItems:'center' }}
+                        onClick={() => {
+                          const ext = (doc.file_ext || '').toLowerCase();
+                          const supported = ['jpg','jpeg','png','tiff','tif','gif','pdf'].includes(ext);
+                          if (supported) setDocViewer({ ...doc, viewUrl: `${BASE}/view?token=${token}` });
+                          else window.open(`${BASE}/view?token=${token}`, '_blank');
+                        }}
+                      ><IconView size={14} /></button>
                       <a href={`${BASE}/download?token=${token}`}
                         title="Download" style={{ color:'#555', display:'flex', alignItems:'center' }}><IconDownload size={14} /></a>
                       <button onClick={() => setDocToDelete(doc)} title="Delete"
@@ -1065,7 +1078,8 @@ function AccountDetail() {
       {mapProperty && (
         <PropertyMapModal
           property={mapProperty}
-          onClose={() => setMapProperty(null)}
+          accountId={accountId}
+          onClose={() => { setMapProperty(null); fetchSidebarDocs(); }}
           onPropertyUpdate={(updated) => {
             setMapProperty(updated);
             setHierarchy(prev => {
@@ -1080,6 +1094,41 @@ function AccountDetail() {
           }}
         />
       )}
+
+      {/* ── Document viewer modal ── */}
+      {docViewer && (() => {
+        const ext = (docViewer.file_ext || '').toLowerCase();
+        const isImage = ['jpg','jpeg','png','tiff','tif','gif'].includes(ext);
+        return (
+          <div
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.72)', zIndex:1200, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}
+            onClick={() => setDocViewer(null)}
+          >
+            <div
+              style={{ background:'#fff', borderRadius:12, overflow:'hidden', display:'flex', flexDirection:'column', maxWidth:'92vw', maxHeight:'92vh', width: isImage ? 'auto' : '92vw', boxShadow:'0 24px 80px rgba(0,0,0,0.4)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Viewer header */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid #eee', gap:12, flexShrink:0 }}>
+                <span style={{ fontSize:13, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'70vw' }}>{docViewer.original_name}</span>
+                <div style={{ display:'flex', gap:8, flexShrink:0 }}>
+                  <a href={docViewer.viewUrl} target="_blank" rel="noreferrer"
+                    style={{ fontSize:12, padding:'4px 10px', borderRadius:6, border:'1px solid #ddd', color:'#555', textDecoration:'none' }}>
+                    Open in tab
+                  </a>
+                  <button onClick={() => setDocViewer(null)}
+                    style={{ background:'none', border:'none', fontSize:18, cursor:'pointer', color:'#888', lineHeight:1 }}>✕</button>
+                </div>
+              </div>
+              {/* Viewer body */}
+              {isImage
+                ? <img src={docViewer.viewUrl} alt={docViewer.original_name} style={{ maxWidth:'92vw', maxHeight:'calc(92vh - 52px)', objectFit:'contain', display:'block' }} />
+                : <iframe src={docViewer.viewUrl} title={docViewer.original_name} style={{ width:'92vw', height:'calc(92vh - 52px)', border:'none', display:'block' }} />
+              }
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

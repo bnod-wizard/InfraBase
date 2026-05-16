@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 're
 import L from 'leaflet';
 import html2canvas from 'html2canvas';
 import accountApi from '../services/accountApi';
+import { useToast } from '../context';
 import 'leaflet/dist/leaflet.css';
 import '../styles/PropertyMapModal.css';
 
@@ -150,7 +151,7 @@ const TILE_LAYERS = {
   },
 };
 
-export default function PropertyMapModal({ property, onClose, onPropertyUpdate }) {
+export default function PropertyMapModal({ property, accountId, onClose, onPropertyUpdate }) {
   const [mode, setMode]           = useState('view');
   const [tileStyle, setTileStyle] = useState('satellite');
   const [query, setQuery]         = useState('');
@@ -176,6 +177,7 @@ export default function PropertyMapModal({ property, onClose, onPropertyUpdate }
   const [savingLandmark, setSavingLandmark] = useState(false);
   const [landmarkSaved, setLandmarkSaved]   = useState(false);
 
+  const toast = useToast();
   const mapRef     = useRef(null);
   const captureRef = useRef(null);
 
@@ -408,7 +410,7 @@ export default function PropertyMapModal({ property, onClose, onPropertyUpdate }
     }
   };
 
-  // ── Screenshot ───────────────────────────────────────────────────────────────
+  // ── Screenshot → upload to account documents ─────────────────────────────────
   const takeScreenshot = async () => {
     if (!captureRef.current) return;
     setScreenshotting(true); setError('');
@@ -416,15 +418,42 @@ export default function PropertyMapModal({ property, onClose, onPropertyUpdate }
       const canvas = await html2canvas(captureRef.current, {
         useCORS: true, allowTaint: true, scale: 2, logging: false, imageTimeout: 8000,
       });
-      const a = document.createElement('a');
-      const base = (property?.property_name || property?.plot_no || 'property')
-        .replace(/\s+/g, '_').toLowerCase();
-      a.download = `${base}${route ? '_route' : '_location'}.png`;
-      a.href = canvas.toDataURL('image/png');
-      a.click();
+
+      // Build filename with date-time stamp
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const stamp = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+      const base  = (property?.property_name || property?.plot_no || 'property').replace(/\s+/g, '_').toLowerCase();
+      const filename = `${base}_map_${stamp}.png`;
+
+      // Convert canvas to Blob and upload
+      canvas.toBlob(async (blob) => {
+        if (!blob) { toast('Screenshot capture failed.'); setScreenshotting(false); return; }
+        try {
+          const form = new FormData();
+          form.append('file', blob, filename);
+          form.append('doc_type', 'photo');
+          form.append('description', `Map screenshot — ${property?.property_name || property?.plot_no || 'property'}`);
+          const token = localStorage.getItem('authToken');
+          const res = await fetch(`http://localhost:5001/api/accounts/${accountId}/documents`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: form,
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            toast(`Screenshot saved — ${filename}`);
+          } else {
+            toast(data.message || 'Upload failed.');
+          }
+        } catch {
+          toast('Upload failed — check your connection.');
+        } finally {
+          setScreenshotting(false);
+        }
+      }, 'image/png');
     } catch {
-      setError("Screenshot failed — use OS shortcut (Cmd+Shift+4 / Win+Shift+S) instead.");
-    } finally {
+      toast('Screenshot failed — use OS shortcut (Cmd+Shift+4 / Win+Shift+S) instead.');
       setScreenshotting(false);
     }
   };
@@ -711,8 +740,8 @@ export default function PropertyMapModal({ property, onClose, onPropertyUpdate }
                 {savingLandmark ? 'Saving…' : landmarkSaved ? '✓ Landmark Saved' : '📌 Save Landmark'}
               </button>
             )}
-            <button className="pmap-btn-primary" onClick={takeScreenshot} disabled={screenshotting}>
-              {screenshotting ? 'Capturing…' : '📷 Screenshot Map'}
+            <button className="pmap-btn-primary" onClick={takeScreenshot} disabled={screenshotting || !accountId}>
+              {screenshotting ? 'Uploading…' : 'Save Map'}
             </button>
           </div>
         </div>

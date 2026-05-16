@@ -1,3 +1,17 @@
+/* ── Independent column scroll ── */
+.ad-root > .layout {
+  align-items: start;
+}
+
+.ad-root > .layout > .stack,
+.ad-root > .layout > aside.stack {
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+
 /* ── Mini KPI row: 3 columns ── */
 .ad-kpis {
   grid-template-columns: repeat(3, 1fr);
@@ -247,6 +261,18 @@
 @media (max-width: 1200px) {
   .layout    { grid-template-columns: 1fr; }
   .ad-kpis   { grid-template-columns: repeat(3, 1fr); }
+
+  /* Disable independent scroll — stack columns vertically */
+  .ad-root > .layout {
+    align-items: unset;
+  }
+  .ad-root > .layout > .stack,
+  .ad-root > .layout > aside.stack {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+    padding-bottom: 0;
+  }
 }
 
 @media (max-width: 780px) {

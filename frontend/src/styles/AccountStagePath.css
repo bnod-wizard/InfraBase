@@ -185,6 +185,7 @@
   .sp-stepper::before,
   .sp-stepper::after { display: none; }
 }
+
 @media (max-width: 600px) {
   .sp-stepper { grid-template-columns: repeat(2, 1fr); }
   .sp-panel   { padding: 18px 16px 16px; }
