@@ -43,7 +43,7 @@ class ValuationModel:
             # Document scope selections
             'selected_client_ids': data.get('selected_client_ids') or [],
             'selected_owner_ids': data.get('selected_owner_ids') or [],
-            'selected_property_id': data.get('selected_property_id') or '',
+            'selected_property_ids': data.get('selected_property_ids') or [],
             'status': data.get('status', 'draft'),
             'created_by': data.get('created_by'),
             'created_at': data.get('created_at', datetime.utcnow()),

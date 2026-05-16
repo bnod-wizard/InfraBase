@@ -171,6 +171,14 @@ def _traditional(val, fallback='0'):
 
 def _merit_lines(prop, val):
     """Generate importance bullet points from property data."""
+    # Use manually entered merits if provided (one per line)
+    manual = (prop.get('location_merits') or '').strip()
+    if manual:
+        lines = [l.strip() for l in manual.splitlines() if l.strip()]
+        while len(lines) < 5:
+            lines.append('—')
+        return lines[:5]
+
     merits = []
     vdc  = _v(prop.get('vdc_municipality'), '')
     ward = _v(prop.get('ward_no'), '')
@@ -795,6 +803,19 @@ def _inject_logo_post(docx_bytes):
         return docx_bytes
 
 
+def _remove_dash_merit_bullets(doc):
+    """Delete rendered merit bullet paragraphs that contain only the '—' placeholder."""
+    to_remove = []
+    for para in doc.paragraphs:
+        text = para.text.strip()
+        # Matches paragraphs like '▪  —' or bare '—'
+        stripped = text.lstrip('▪').strip()
+        if stripped == '—':
+            to_remove.append(para)
+    for para in to_remove:
+        para._element.getparent().remove(para._element)
+
+
 class DocumentService:
 
     def generate(self, doc_type, hierarchy, valuation):
@@ -807,6 +828,7 @@ class DocumentService:
         tpl = DocxTemplate(template_path)
         context = build_context(hierarchy, valuation)
         tpl.render(context)
+        _remove_dash_merit_bullets(tpl.docx)
         buf = io.BytesIO()
         tpl.save(buf)
         raw = buf.getvalue()

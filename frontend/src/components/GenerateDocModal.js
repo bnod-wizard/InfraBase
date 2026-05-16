@@ -30,7 +30,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
   // Document scope selections
   const [selClientIds,  setSelClientIds]  = useState([]);
   const [selOwnerIds,   setSelOwnerIds]   = useState([]);
-  const [selPropertyId, setSelPropertyId] = useState('');
+  const [selPropertyIds, setSelPropertyIds] = useState([]);
 
   const clients    = hierarchy?.clients    || [];
   const owners     = hierarchy?.owners     || [];
@@ -68,16 +68,16 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
 
         setSelClientIds(Array.isArray(saved.selected_client_ids) ? saved.selected_client_ids : cls.map(c => c._id));
         setSelOwnerIds(Array.isArray(saved.selected_owner_ids)   ? saved.selected_owner_ids  : ows.map(o => o._id));
-        setSelPropertyId(saved.selected_property_id || prs[0]?._id || '');
+        setSelPropertyIds(Array.isArray(saved.selected_property_ids) ? saved.selected_property_ids : prs.map(p => p._id));
       } else {
         setSelClientIds(cls.map(c => c._id));
         setSelOwnerIds(ows.map(o => o._id));
-        setSelPropertyId(prs[0]?._id || '');
+        setSelPropertyIds(prs.map(p => p._id));
       }
     }).catch(() => {
       setSelClientIds(cls.map(c => c._id));
       setSelOwnerIds(ows.map(o => o._id));
-      setSelPropertyId(prs[0]?._id || '');
+      setSelPropertyIds(prs.map(p => p._id));
     });
   }, [isOpen, accountId, hierarchy]);
 
@@ -87,7 +87,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
     ...valuation,
     selected_client_ids: selClientIds,
     selected_owner_ids:  selOwnerIds,
-    selected_property_id: selPropertyId,
+    selected_property_ids: selPropertyIds,
   });
 
   const handleChange = (e) => {
@@ -151,6 +151,9 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
 
   const toggleOwner = (id) =>
     setSelOwnerIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  const toggleProperty = (id) =>
+    setSelPropertyIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -255,7 +258,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
               {properties.length > 0 && (
                 <div className="gdm-scope-row">
                   <span className="gdm-scope-row-label">
-                    Property <span className="gdm-scope-hint">सम्पत्ति — select one</span>
+                    Property <span className="gdm-scope-hint">सम्पत्ति</span>
                   </span>
                   <div className="gdm-scope-chips">
                     {properties.map(p => {
@@ -265,12 +268,12 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
                         p.vdc_municipality,
                         p.district,
                       ].filter(Boolean).join(', ') || p.property_name || '—';
-                      const on = selPropertyId === id;
+                      const on = selPropertyIds.includes(id);
                       return (
                         <button key={id} type="button"
-                          className={`gdm-scope-chip gdm-scope-chip--radio${on ? ' gdm-scope-chip--on' : ''}`}
-                          onClick={() => setSelPropertyId(id)}>
-                          <span className="gdm-scope-chip-indicator">{on ? '●' : '○'}</span>
+                          className={`gdm-scope-chip${on ? ' gdm-scope-chip--on' : ''}`}
+                          onClick={() => toggleProperty(id)}>
+                          <span className="gdm-scope-chip-indicator">{on ? '✔' : '○'}</span>
                           {label}
                         </button>
                       );

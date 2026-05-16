@@ -149,6 +149,7 @@ function AccountDetail() {
     { title: 'Land Features', np: 'जग्गाका विशेषताहरू', fields: [
       { accessor: 'positive_features', label: 'Positive Features', np: 'सकारात्मक विशेषताहरू', fullWidth: true },
       { accessor: 'negative_features', label: 'Negative Features', np: 'नकारात्मक विशेषताहरू', fullWidth: true },
+      { accessor: 'location_merits',   label: 'Merits of Location', np: 'स्थानका विशेषताहरू — one per line', type: 'textarea', fullWidth: true },
     ]},
     { title: 'Field Survey — Triangles', np: 'क्षेत्र सर्वेक्षण — त्रिभुज', fields: [
       { accessor: 'land_area_as_per_measurement', label: 'Measurement Area (नापी)',    type: 'triangle_group', calcType: 'measurement' },
@@ -441,6 +442,9 @@ function AccountDetail() {
           <input type="checkbox" checked={checked} onChange={e => handleObjectBoolChange(field.accessor, e.target.checked)} />
         </label>
       );
+    }
+    if (field.type === 'textarea') {
+      return <textarea name={field.accessor} value={value || ''} rows={4} onChange={e => handleObjectEditChange(field.accessor, e.target.value)} style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }} />;
     }
     return <input type={field.type || 'text'} name={field.accessor} value={value || ''} onChange={e => handleObjectEditChange(field.accessor, e.target.value)} />;
   };

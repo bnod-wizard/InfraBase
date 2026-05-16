@@ -381,9 +381,6 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 <SelectInput name="property_type" value={currentProperty.property_type} onChange={handlePropertyChange} label="Property Type (सम्पत्ति प्रकार)">
                   <option value="land">Land (जग्गा)</option>
                   <option value="building">Building (भवन)</option>
-                  <option value="land_and_building">Land &amp; Building (जग्गा र भवन)</option>
-                  <option value="apartment">Apartment (अपार्टमेन्ट)</option>
-                  <option value="commercial">Commercial (व्यावसायिक)</option>
                 </SelectInput>
                 <ClearInput type="text" name="plot_no" placeholder="Plot No. (कित्ता नं.)" value={currentProperty.plot_no} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={currentProperty.district} onChange={handlePropertyChange} />
@@ -411,6 +408,17 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 <ClearInput type="text" name="nearest_landmark" placeholder="Nearest Landmark (नजिकको ल्यान्डमार्क)" value={currentProperty.nearest_landmark} onChange={handlePropertyChange} className="form-col-2" />
                 <ClearInput type="text" name="nearest_market" placeholder="Nearest Market (नजिकको बजार)" value={currentProperty.nearest_market} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="public_transport_distance" placeholder="Public Transport Distance (सार्वजनिक यातायात दूरी)" value={currentProperty.public_transport_distance} onChange={handlePropertyChange} />
+                <div className="field-wrap form-col-2">
+                  <textarea
+                    name="location_merits"
+                    rows={4}
+                    placeholder=" "
+                    value={currentProperty.location_merits || ''}
+                    onChange={handlePropertyChange}
+                    style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }}
+                  />
+                  <label>Merits of Location (स्थानका विशेषताहरू) — one per line</label>
+                </div>
                 {/* ── Area Calculator Buttons ── */}
               </div>
               <div className="area-calc-group">

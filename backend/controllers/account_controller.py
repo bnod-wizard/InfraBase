@@ -189,13 +189,13 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
             # Filter hierarchy by user-selected scope
             sel_clients = valuation.get('selected_client_ids') or []
             sel_owners  = valuation.get('selected_owner_ids')  or []
-            sel_prop    = valuation.get('selected_property_id') or ''
+            sel_props   = valuation.get('selected_property_ids') or []
             if sel_clients:
                 hierarchy['clients'] = [c for c in hierarchy.get('clients', []) if c.get('_id') in sel_clients]
             if sel_owners:
                 hierarchy['owners']  = [o for o in hierarchy.get('owners', [])  if o.get('_id') in sel_owners]
-            if sel_prop:
-                hierarchy['properties'] = [p for p in hierarchy.get('properties', []) if p.get('_id') == sel_prop]
+            if sel_props:
+                hierarchy['properties'] = [p for p in hierarchy.get('properties', []) if p.get('_id') in sel_props]
 
             import io as _io, mammoth
             doc_bytes = document_service.generate(doc_type, hierarchy, valuation)
@@ -426,13 +426,13 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
             # Filter hierarchy by user-selected scope
             sel_clients = valuation.get('selected_client_ids') or []
             sel_owners  = valuation.get('selected_owner_ids')  or []
-            sel_prop    = valuation.get('selected_property_id') or ''
+            sel_props   = valuation.get('selected_property_ids') or []
             if sel_clients:
                 hierarchy['clients'] = [c for c in hierarchy.get('clients', []) if c.get('_id') in sel_clients]
             if sel_owners:
                 hierarchy['owners']  = [o for o in hierarchy.get('owners', [])  if o.get('_id') in sel_owners]
-            if sel_prop:
-                hierarchy['properties'] = [p for p in hierarchy.get('properties', []) if p.get('_id') == sel_prop]
+            if sel_props:
+                hierarchy['properties'] = [p for p in hierarchy.get('properties', []) if p.get('_id') in sel_props]
 
             doc_bytes = document_service.generate(doc_type, hierarchy, valuation)
 

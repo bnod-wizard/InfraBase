@@ -68,6 +68,7 @@ class PropertyModel:
             'construction_on_land': property_data.get('construction_on_land', ''),  # Any construction
             'positive_features': property_data.get('positive_features', ''), # Positive feature of land
             'negative_features': property_data.get('negative_features', ''), # Negative feature of area
+            'location_merits': property_data.get('location_merits', ''),    # Manual merit bullet points (one per line)
             'frontage': property_data.get('frontage'),
             'water_facility': property_data.get('water_facility'),
             # Dynamic triangle measurements — three area types
