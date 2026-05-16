@@ -26,6 +26,7 @@
   flex-direction: column;
   box-shadow: -8px 0 40px rgba(0,0,0,.16);
   animation: ac-slide-in .22s ease;
+  border-radius: 15px 0 0 15px;
 }
 
 @keyframes ac-slide-in {

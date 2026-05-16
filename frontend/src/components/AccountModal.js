@@ -59,7 +59,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
   const [clientErrors, setClientErrors] = useState({});
   const [propertyErrors, setPropertyErrors] = useState({});
   const [ownerErrors, setOwnerErrors] = useState({});
-  const [stepError, setStepError] = useState('');
+
 
   const [account, setAccount] = useState({
     account_name: '', company_registration: '', registration_number: '',
@@ -252,7 +252,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     setProperties([]); setCurrentProperty(EMPTY_PROPERTY);
     setOwners([]); setCurrentOwner(EMPTY_OWNER);
     setSelectedPropertyId(null);
-    setAccountErrors({}); setClientErrors({}); setPropertyErrors({}); setOwnerErrors({}); setStepError('');
+    setAccountErrors({}); setClientErrors({}); setPropertyErrors({}); setOwnerErrors({});
   };
 
   if (!isOpen) return null;
@@ -694,13 +694,11 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
         <div className="account-modal-footer">
           <button
             className="btn-secondary"
-            onClick={() => { if (currentStep > 1) { setStepError(''); setCurrentStep(currentStep - 1); } }}
+            onClick={() => { if (currentStep > 1) { setCurrentStep(currentStep - 1); } }}
             disabled={currentStep === 1 || isLoading}
           >
             ← Back
           </button>
-
-          {stepError && <span className="error-message step-error-message">{stepError}</span>}
 
           <div className="button-group">
             {currentStep < 4 ? (
@@ -732,12 +730,12 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                         district:        prev.district        || account.district        || '',
                         country:         prev.country         || account.country         || '',
                       }));
-                      setStepError(''); setCurrentStep(2);
+                      setCurrentStep(2);
                     }
                     return;
                   }
                   if (currentStep === 2) {
-                    if (clients.length === 0) { setStepError('Please add at least one client before continuing.'); return; }
+                    if (clients.length === 0) { toast('Please add at least one client before continuing.', 'error'); return; }
                     // Prefill property location from last client's address
                     const lastClient = clients[clients.length - 1];
                     setCurrentProperty(prev => ({
@@ -748,11 +746,11 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                       district:         prev.district         || lastClient.district         || '',
                       country:          prev.country          || lastClient.country          || '',
                     }));
-                    setStepError(''); setCurrentStep(3);
+                    setCurrentStep(3);
                     return;
                   }
                   if (currentStep === 3) {
-                    if (properties.length === 0) { setStepError('Please add at least one property before continuing.'); return; }
+                    if (properties.length === 0) { toast('Please add at least one property before continuing.', 'error'); return; }
                     // Prefill owner contact + address from last client
                     const lastClient = clients[clients.length - 1];
                     if (lastClient) {
@@ -768,10 +766,9 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                         country:          prev.country          || lastClient.country          || '',
                       }));
                     }
-                    setStepError(''); setCurrentStep(4);
+                    setCurrentStep(4);
                     return;
                   }
-                  setStepError('');
                   setCurrentStep(currentStep + 1);
                 }}
                 disabled={isLoading}
@@ -780,8 +777,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
               <button
                 className="btn-success"
                 onClick={() => {
-                  if (owners.length === 0) { setStepError('Please add at least one owner before saving.'); return; }
-                  setStepError('');
+                  if (owners.length === 0) { toast('Please add at least one owner before saving.', 'error'); return; }
                   handleSubmit();
                 }}
                 disabled={isLoading}
