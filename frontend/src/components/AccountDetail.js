@@ -8,6 +8,7 @@ import PropertyMapModal from './PropertyMapModal';
 import AreaCalculatorModal from './AreaCalculatorModal';
 import AddToAccountModal from './AddToAccountModal';
 import ConfirmModal from './ConfirmModal';
+import GPSPickerModal from './GPSPickerModal';
 import { IconView, IconDelete, IconDownload, IconAdd, IconEdit, IconUpload } from './Icons';
 import { useToast } from '../context';
 import '../styles/AccountDetail.css';
@@ -62,6 +63,7 @@ function AccountDetail() {
   const [areaCalcCtx,       setAreaCalcCtx]       = useState(null); // { property, type: 'measurement'|'lalpurja'|'deduction' }
   const [mapProperty,       setMapProperty]       = useState(null);
   const [stageSaving,       setStageSaving]       = useState(false);
+  const [gpsPickerOpen,     setGpsPickerOpen]     = useState(false);
   const [addModal,          setAddModal]          = useState(null); // 'client' | 'owner' | 'property'
 
   const accountFields = [
@@ -389,7 +391,15 @@ function AccountDetail() {
     }
   };
 
-  const startObjectEdit  = (type, item) => setActiveObjectEdit({ type, id: item._id || item.id || null, data: { ...item } });
+  const startObjectEdit = (type, item) => {
+    const id = item._id || item.id || null;
+    setActiveObjectEdit({ type, id, data: { ...item } });
+    setExpandedCards(prev => ({ ...prev, [id]: true }));
+    setTimeout(() => {
+      const el = document.querySelector(`[data-card-id="${id}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
   const cancelObjectEdit = () => setActiveObjectEdit({ type: null, id: null, data: null });
   const handleObjectEditChange = (name, value) => setActiveObjectEdit(prev => ({ ...prev, data: { ...prev.data, [name]: value } }));
 
@@ -605,6 +615,20 @@ function AccountDetail() {
           </div>
         );
       }
+      if (field.accessor === 'gps_coordinates' && isEditingItem) {
+        return (
+          <div key={`${itemId}-${field.accessor}`} className={`ad-field${field.fullWidth ? ' full' : ''}`} style={{ position:'relative' }}>
+            <label>{field.label}{field.np && <span className="ad-field-np">{field.np}</span>}</label>
+            {renderObjectFieldInput(field, data[field.accessor])}
+            <button
+              type="button"
+              title="Pick on Map"
+              onClick={() => setGpsPickerOpen(true)}
+              style={{ position:'absolute', right:8, bottom:8, background:'none', border:'none', cursor:'pointer', fontSize:16, lineHeight:1, padding:'2px', color:'#1f3a2e', opacity:0.7 }}
+            >📍</button>
+          </div>
+        );
+      }
       return (
         <div key={`${itemId}-${field.accessor}`} className={`ad-field${field.fullWidth ? ' full' : ''}`}>
           <label>{field.label}{field.np && <span className="ad-field-np">{field.np}</span>}</label>
@@ -647,7 +671,7 @@ function AccountDetail() {
               const data = isEditingItem ? activeObjectEdit.data : item;
               const isExpanded = !!expandedCards[itemId];
               return (
-                <div key={itemId || Math.random()} className="ad-obj-card">
+                <div key={itemId || Math.random()} className="ad-obj-card" data-card-id={itemId}>
                   <div
                     className="ad-obj-head"
                     style={{ cursor: 'pointer', userSelect: 'none' }}
@@ -664,13 +688,18 @@ function AccountDetail() {
                     <div className="ad-obj-actions">
                       {isEditingItem ? (
                         <>
-                          <button className="btn btn-sm" onClick={saveObjectEdit}>Save</button>
                           <button className="btn btn-sm btn-secondary" onClick={cancelObjectEdit}>Cancel</button>
+                          <button className="btn btn-sm" onClick={saveObjectEdit}>Save</button>
                         </>
                       ) : (
                         <>
                           {getExtraActions && getExtraActions(item)}
-                          <button className="btn btn-sm btn-secondary" style={{ display:'flex', alignItems:'center', gap:4 }} onClick={e => { e.stopPropagation(); startObjectEdit(type, item); }}><IconEdit size={13} /> Edit</button>
+                          <button
+                            className="btn btn-sm btn-secondary"
+                            style={{ display:'flex', alignItems:'center', gap:4, opacity: (isEditing || (activeObjectEdit.type && !isEditingItem)) ? 0.4 : 1 }}
+                            disabled={!!(isEditing || (activeObjectEdit.type && !isEditingItem))}
+                            onClick={e => { e.stopPropagation(); startObjectEdit(type, item); }}
+                          ><IconEdit size={13} /> Edit</button>
                         </>
                       )}
                     </div>
@@ -723,11 +752,17 @@ function AccountDetail() {
           )}
         </div>
         <div className="right">
-          <button className="btn btn-secondary btn-sm" onClick={() => navigate('/home/accounts')}>← Back</button>
+          <button className="btn btn-secondary" onClick={() => navigate('/home/accounts')}>← Back</button>
           {isEditing && (
             <>
               <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
-              <button className="btn" onClick={handleSave}>Save Changes</button>
+              <button className="btn" onClick={handleSave}>Save</button>
+            </>
+          )}
+          {activeObjectEdit.type && (
+            <>
+              <button className="btn btn-secondary" onClick={cancelObjectEdit}>Cancel</button>
+              <button className="btn" onClick={saveObjectEdit}>Save</button>
             </>
           )}
           <button className="btn btn-secondary" style={{ display:'flex', alignItems:'center', gap:5 }} onClick={() => setIsUploadModalOpen(true)}><IconUpload size={14} /> Upload Document</button>
@@ -756,11 +791,11 @@ function AccountDetail() {
               <div className="ad-obj-actions">
                 {isEditing ? (
                   <>
-                    <button className="btn btn-sm" onClick={handleSave}>Save</button>
                     <button className="btn btn-sm btn-secondary" onClick={handleCancel}>Cancel</button>
+                    <button className="btn btn-sm" onClick={handleSave}>Save</button>
                   </>
                 ) : (
-                  <button className="btn btn-sm btn-secondary" onClick={() => setIsEditing(true)}>✏ Edit</button>
+                  <button className="btn btn-sm btn-secondary" disabled={!!activeObjectEdit.type} style={{ opacity: activeObjectEdit.type ? 0.4 : 1 }} onClick={() => setIsEditing(true)}>✏ Edit</button>
                 )}
               </div>
             </div>
@@ -1094,6 +1129,13 @@ function AccountDetail() {
           }}
         />
       )}
+
+      <GPSPickerModal
+        isOpen={gpsPickerOpen}
+        onClose={() => setGpsPickerOpen(false)}
+        initialCoords={activeObjectEdit.data?.gps_coordinates}
+        onPick={coords => handleObjectEditChange('gps_coordinates', coords)}
+      />
 
       {/* ── Document viewer modal ── */}
       {docViewer && (() => {

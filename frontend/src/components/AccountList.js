@@ -218,6 +218,7 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
                         <button
                           className="icon-btn small"
                           title="View"
+                          style={{ borderColor: '#2563eb', color: '#2563eb' }}
                           onClick={() => navigate(`/home/accounts/${account._id}`)}
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -228,6 +229,7 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
                         <button
                           className="icon-btn small"
                           title="Delete"
+                          style={{ borderColor: '#dc2626', color: '#dc2626' }}
                           onClick={() => handleDelete(account._id)}
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -3,6 +3,7 @@ import '../styles/AccountModal.css';
 import accountApi from '../services/accountApi';
 import { useToast } from '../context';
 import AreaCalculatorModal from './AreaCalculatorModal';
+import GPSPickerModal from './GPSPickerModal';
 
 const formatRequiredPlaceholder = (placeholder) => {
   if (!placeholder) return 'This field is required';
@@ -78,6 +79,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
 
   const [properties, setProperties] = useState([]);
   const [areaDrawerType, setAreaDrawerType] = useState(null); // 'measurement' | 'lalpurja' | 'deduction'
+  const [gpsPickerOpen,  setGpsPickerOpen]  = useState(false);
   const EMPTY_AREA_OBJ = { triangles: [], total_sqft: '', total_sqm: '', total_aana: '', rapd: '' };
   const EMPTY_PROPERTY = {
     // Identity
@@ -417,7 +419,13 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 <ClearInput type="text" name="sabik_ward_no" placeholder="Sabik Ward No. (साबिक वडा नं.)" value={currentProperty.sabik_ward_no} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="country" placeholder="Country (देश)" value={currentProperty.country} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="address" placeholder="Tole / Street Address (टोल / सडक ठेगाना) *" value={currentProperty.address} onChange={handlePropertyChange} error={propertyErrors.address} className="form-col-2" />
-                <ClearInput type="text" name="gps_coordinates" placeholder='GPS Co-ordinates (जीपीएस निर्देशांक)' value={currentProperty.gps_coordinates} onChange={handlePropertyChange} className="form-col-2" />
+                <div className="form-col-2" style={{ position:'relative' }}>
+                  <ClearInput type="text" name="gps_coordinates" placeholder='GPS Co-ordinates (जीपीएस निर्देशांक)' value={currentProperty.gps_coordinates} onChange={handlePropertyChange} />
+                  <button type="button" title="Pick on Map" onClick={() => setGpsPickerOpen(true)}
+                    style={{ position:'absolute', right: currentProperty.gps_coordinates ? 28 : 10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', fontSize:16, lineHeight:1, padding:'2px', color:'#1f3a2e', opacity:0.7 }}>
+                    📍
+                  </button>
+                </div>
                 <ClearInput type="text" name="nearest_landmark" placeholder="Nearest Landmark (नजिकको ल्यान्डमार्क)" value={currentProperty.nearest_landmark} onChange={handlePropertyChange} className="form-col-2" />
                 <ClearInput type="text" name="nearest_market" placeholder="Nearest Market (नजिकको बजार)" value={currentProperty.nearest_market} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="public_transport_distance" placeholder="Public Transport Distance (सार्वजनिक यातायात दूरी)" value={currentProperty.public_transport_distance} onChange={handlePropertyChange} />
@@ -784,6 +792,12 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
         </div>
       </div>
     </div>
+    <GPSPickerModal
+      isOpen={gpsPickerOpen}
+      onClose={() => setGpsPickerOpen(false)}
+      initialCoords={currentProperty.gps_coordinates}
+      onPick={coords => setCurrentProperty(prev => ({ ...prev, gps_coordinates: coords }))}
+    />
     </>
   );
 };

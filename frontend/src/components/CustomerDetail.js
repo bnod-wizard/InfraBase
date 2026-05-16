@@ -458,7 +458,7 @@ function CustomerDetail({ customerId: customIdProp, onClose, isModal }) {
           {isEditing ? (
             <>
               <button className="btn btn-primary" onClick={handleSave}>
-                💾 Save Changes
+                💾 Save
               </button>
               <button className="btn btn-secondary" onClick={handleCancel}>
                 ❌ Cancel
