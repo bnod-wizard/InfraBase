@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import accountApi from '../services/accountApi';
 import { useToast } from '../context';
 import AreaCalculatorModal from './AreaCalculatorModal';
@@ -45,14 +45,14 @@ const EMPTY_AREA_OBJ = { triangles: [], total_sqft: '', total_sqm: '', total_aan
 const EMPTY_CLIENT = {
   entity_type: 'individual', gender: 'male', title: '', first_name: '', last_name: '',
   designation: '', email: '', phone: '', mobile: '',
-  address: '', ward_no: '', vdc_municipality: '', district: '', city: '', state: '', zip_code: '', country: '',
+  address: '', ward_no: '', vdc_municipality: '', district: '', country: '',
   citizenship_no: '', citizenship_issued_date: '', citizenship_issued_office: '',
   father_name: '', grandfather_name: '', husband_name: '', pan_no: '',
 };
 
 const EMPTY_OWNER = {
   owner_name: '', owner_type: 'individual', title: '', email: '', phone: '',
-  mobile: '', address: '', city: '', state: '', zip_code: '', country: '',
+  mobile: '', address: '', ward_no: '', vdc_municipality: '', district: '', country: '',
   id_type: 'passport', id_number: '', pan_number: '', bank_account: '', bank_name: '',
   property_id: '',
 };
@@ -96,7 +96,7 @@ const EMPTY_PROPERTY = {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function AddToAccountModal({ type, accountId, existingProperties = [], isOpen, onClose, onSaved }) {
+export default function AddToAccountModal({ type, accountId, existingProperties = [], existingClients = [], existingOwners = [], isOpen, onClose, onSaved }) {
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -105,6 +105,62 @@ export default function AddToAccountModal({ type, accountId, existingProperties 
   const [client,   setClient]   = useState(EMPTY_CLIENT);
   const [owner,    setOwner]    = useState(EMPTY_OWNER);
   const [property, setProperty] = useState(EMPTY_PROPERTY);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setErrors({});
+
+    if (type === 'client') {
+      const last = existingClients[existingClients.length - 1];
+      setClient(last ? {
+        ...EMPTY_CLIENT,
+        address: last.address || '', ward_no: last.ward_no || '',
+        vdc_municipality: last.vdc_municipality || '', district: last.district || '',
+        country: last.country || '',
+        phone: last.phone || '', mobile: last.mobile || '',
+      } : { ...EMPTY_CLIENT });
+    }
+
+    if (type === 'owner') {
+      const last = existingOwners[existingOwners.length - 1];
+      setOwner(last ? {
+        ...EMPTY_OWNER,
+        address: last.address || '', ward_no: last.ward_no || '',
+        vdc_municipality: last.vdc_municipality || '', district: last.district || '',
+        country: last.country || '', phone: last.phone || '', mobile: last.mobile || '',
+      } : { ...EMPTY_OWNER });
+    }
+
+    if (type === 'property') {
+      const lastProp  = existingProperties[existingProperties.length - 1];
+      const lastOwner = existingOwners[existingOwners.length - 1];
+      if (lastProp) {
+        setProperty({
+          ...EMPTY_PROPERTY,
+          ward_no:          lastOwner?.ward_no          || lastProp.ward_no          || '',
+          vdc_municipality: lastOwner?.vdc_municipality || lastProp.vdc_municipality || '',
+          district:         lastOwner?.district         || lastProp.district         || '',
+          sabik_vdc:        lastProp.sabik_vdc          || '',
+          country:          lastOwner?.country          || lastProp.country          || '',
+          nearest_market:            lastProp.nearest_market            || '',
+          public_transport_distance: lastProp.public_transport_distance || '',
+          nearest_landmark:          lastProp.nearest_landmark          || '',
+          address: lastOwner?.address || lastProp.address || '',
+        });
+      } else if (lastOwner) {
+        setProperty({
+          ...EMPTY_PROPERTY,
+          address:          lastOwner.address          || '',
+          ward_no:          lastOwner.ward_no          || '',
+          vdc_municipality: lastOwner.vdc_municipality || '',
+          district:         lastOwner.district         || '',
+          country:          lastOwner.country          || '',
+        });
+      } else {
+        setProperty({ ...EMPTY_PROPERTY });
+      }
+    }
+  }, [isOpen, type]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isOpen) return null;
 
@@ -155,10 +211,6 @@ export default function AddToAccountModal({ type, accountId, existingProperties 
       toast(`${type.charAt(0).toUpperCase() + type.slice(1)} added successfully`);
       onSaved();
       onClose();
-      if (type === 'client')   setClient(EMPTY_CLIENT);
-      if (type === 'owner')    setOwner(EMPTY_OWNER);
-      if (type === 'property') setProperty(EMPTY_PROPERTY);
-      setErrors({});
     } catch (err) {
       toast('Failed to save — ' + (err?.response?.data?.message || err.message));
     } finally {
@@ -226,13 +278,10 @@ export default function AddToAccountModal({ type, accountId, existingProperties 
                 </div>
                 <SectionHead>Address</SectionHead>
                 <div className="form-grid">
-                  <ClearInput type="text" name="address" placeholder="Address (ठेगाना)" value={client.address} onChange={hc} />
+                  <ClearInput type="text" name="address" placeholder="Address / Tole (ठेगाना / टोल)" value={client.address} onChange={hc} />
                   <ClearInput type="text" name="ward_no" placeholder="Ward No. (वडा नं.)" value={client.ward_no} onChange={hc} />
                   <ClearInput type="text" name="vdc_municipality" placeholder="Municipality / VDC (नगरपालिका / गाविस)" value={client.vdc_municipality} onChange={hc} />
                   <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={client.district} onChange={hc} />
-                  <ClearInput type="text" name="city" placeholder="City (शहर)" value={client.city} onChange={hc} />
-                  <ClearInput type="text" name="state" placeholder="State (प्रदेश)" value={client.state} onChange={hc} />
-                  <ClearInput type="text" name="zip_code" placeholder="Zip Code (हुलाक संकेत)" value={client.zip_code} onChange={hc} />
                   <ClearInput type="text" name="country" placeholder="Country (देश)" value={client.country} onChange={hc} />
                 </div>
                 <SectionHead>Citizenship</SectionHead>
@@ -280,10 +329,10 @@ export default function AddToAccountModal({ type, accountId, existingProperties 
                 </div>
                 <SectionHead>Address</SectionHead>
                 <div className="form-grid">
-                  <ClearInput type="text" name="address" placeholder="Address (ठेगाना)" value={owner.address} onChange={ho} />
-                  <ClearInput type="text" name="city" placeholder="City (शहर)" value={owner.city} onChange={ho} />
-                  <ClearInput type="text" name="state" placeholder="State (प्रदेश)" value={owner.state} onChange={ho} />
-                  <ClearInput type="text" name="zip_code" placeholder="Zip Code (हुलाक संकेत)" value={owner.zip_code} onChange={ho} />
+                  <ClearInput type="text" name="address" placeholder="Address / Tole (ठेगाना / टोल)" value={owner.address} onChange={ho} />
+                  <ClearInput type="text" name="ward_no" placeholder="Ward No. (वडा नं.)" value={owner.ward_no} onChange={ho} />
+                  <ClearInput type="text" name="vdc_municipality" placeholder="Municipality / VDC (नगरपालिका / गाविस)" value={owner.vdc_municipality} onChange={ho} />
+                  <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={owner.district} onChange={ho} />
                   <ClearInput type="text" name="country" placeholder="Country (देश)" value={owner.country} onChange={ho} />
                 </div>
                 <SectionHead>Identification</SectionHead>
@@ -311,12 +360,13 @@ export default function AddToAccountModal({ type, accountId, existingProperties 
                     <option value="building">Building (भवन)</option>
                   </SelectInput>
                   <ClearInput type="text" name="plot_no" placeholder="Plot No. (कित्ता नं.)" value={property.plot_no} onChange={hp} />
-                  <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={property.district} onChange={hp} />
-                  <ClearInput type="text" name="vdc_municipality" placeholder="Present Municipality / VDC" value={property.vdc_municipality} onChange={hp} />
                   <ClearInput type="text" name="ward_no" placeholder="Present Ward No. (वर्तमान वडा नं.)" value={property.ward_no} onChange={hp} />
+                  <ClearInput type="text" name="vdc_municipality" placeholder="Present Municipality / VDC (वर्तमान नगरपालिका / गाविस)" value={property.vdc_municipality} onChange={hp} />
+                  <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={property.district} onChange={hp} />
                   <ClearInput type="text" name="sabik_vdc" placeholder="Sabik VDC (साबिक गाविस)" value={property.sabik_vdc} onChange={hp} />
                   <ClearInput type="text" name="sabik_ward_no" placeholder="Sabik Ward No. (साबिक वडा नं.)" value={property.sabik_ward_no} onChange={hp} />
-                  <ClearInput type="text" name="address" placeholder="Property Address (सम्पत्तिको ठेगाना) *" value={property.address} onChange={hp} error={errors.address} className="form-col-2" />
+                  <ClearInput type="text" name="country" placeholder="Country (देश)" value={property.country} onChange={hp} />
+                  <ClearInput type="text" name="address" placeholder="Tole / Street Address (टोल / सडक ठेगाना) *" value={property.address} onChange={hp} error={errors.address} className="form-col-2" />
                   <ClearInput type="text" name="gps_coordinates" placeholder="GPS Co-ordinates (जीपीएस निर्देशांक)" value={property.gps_coordinates} onChange={hp} className="form-col-2" />
                   <ClearInput type="text" name="nearest_landmark" placeholder="Nearest Landmark (नजिकको ल्यान्डमार्क)" value={property.nearest_landmark} onChange={hp} className="form-col-2" />
                   <ClearInput type="text" name="nearest_market" placeholder="Nearest Market (नजिकको बजार)" value={property.nearest_market} onChange={hp} />
@@ -365,7 +415,7 @@ export default function AddToAccountModal({ type, accountId, existingProperties 
                   </div>
                   <div className="field-wrap form-col-2" style={{ marginTop: 12 }}>
                     <textarea name="location_merits" rows={3} placeholder=" " value={property.location_merits} onChange={hp}
-                      style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }} />
+                      style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit', borderRadius: '10px' }} />
                     <label>Merits of Location (स्थानका विशेषताहरू) — one per line</label>
                   </div>
                 </>)}
@@ -409,7 +459,7 @@ export default function AddToAccountModal({ type, accountId, existingProperties 
                   </div>
                   <div className="field-wrap form-col-2" style={{ marginTop: 12 }}>
                     <textarea name="location_merits" rows={3} placeholder=" " value={property.location_merits} onChange={hp}
-                      style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }} />
+                      style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit', borderRadius: '10px' }} />
                     <label>Merits of Location (स्थानका विशेषताहरू) — one per line</label>
                   </div>
                 </>)}

@@ -63,14 +63,14 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
   const [account, setAccount] = useState({
     account_name: '', company_registration: '', registration_number: '',
     tax_id: '', business_type: '', phone: '', email: '', website: '',
-    address: '', city: '', state: '', zip_code: '', country: '',
+    address: '', ward_no: '', vdc_municipality: '', district: '', country: '',
   });
 
   const [clients, setClients] = useState([]);
   const EMPTY_CLIENT = {
     entity_type: 'individual', gender: 'male', title: '', first_name: '', last_name: '',
     designation: '', email: '', phone: '', mobile: '', address: '', ward_no: '',
-    vdc_municipality: '', district: '', city: '', state: '', zip_code: '', country: '',
+    vdc_municipality: '', district: '', country: '',
     citizenship_no: '', citizenship_issued_date: '', citizenship_issued_office: '',
     father_name: '', grandfather_name: '', husband_name: '', pan_no: '',
   };
@@ -84,8 +84,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     property_name: '', property_type: 'land', property_status: 'vacant',
     // Location
     plot_no: '', district: '', vdc_municipality: '', ward_no: '',
-    sabik_vdc: '', sabik_ward_no: '', tole: '', address: '',
-    city: '', state: '', zip_code: '', country: '',
+    sabik_vdc: '', sabik_ward_no: '', tole: '', address: '', country: '',
     // Land detail
     mode_of_acquisition: '', lorc_registration_date: '', land_revenue_payment_date: '',
     sheet_no: '', gps_coordinates: '', land_shape: '', land_topography: '',
@@ -155,7 +154,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
   const [owners, setOwners] = useState([]);
   const EMPTY_OWNER = {
     owner_name: '', owner_type: 'individual', title: '', email: '', phone: '',
-    mobile: '', address: '', city: '', state: '', zip_code: '', country: '',
+    mobile: '', address: '', ward_no: '', vdc_municipality: '', district: '', country: '',
     id_type: 'passport', id_number: '', pan_number: '', bank_account: '', bank_name: ''
   };
   const [currentOwner, setCurrentOwner] = useState(EMPTY_OWNER);
@@ -173,7 +172,13 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     setClientErrors(errors);
     if (Object.keys(errors).length === 0) {
       setClients([...clients, { ...currentClient, id: Date.now() }]);
-      setCurrentClient(EMPTY_CLIENT);
+      // Prefill next client's address from the one just added
+      setCurrentClient({
+        ...EMPTY_CLIENT,
+        address: currentClient.address, ward_no: currentClient.ward_no,
+        vdc_municipality: currentClient.vdc_municipality, district: currentClient.district,
+        country: currentClient.country,
+      });
       setClientErrors({});
     }
   };
@@ -187,7 +192,16 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     setPropertyErrors(errors);
     if (Object.keys(errors).length === 0) {
       setProperties([...properties, { ...currentProperty, id: Date.now() }]);
-      setCurrentProperty(EMPTY_PROPERTY);
+      // Prefill next property with shared location fields
+      setCurrentProperty({
+        ...EMPTY_PROPERTY,
+        ward_no: currentProperty.ward_no, vdc_municipality: currentProperty.vdc_municipality,
+        district: currentProperty.district, sabik_vdc: currentProperty.sabik_vdc,
+        country: currentProperty.country,
+        nearest_market: currentProperty.nearest_market,
+        public_transport_distance: currentProperty.public_transport_distance,
+        nearest_landmark: currentProperty.nearest_landmark,
+      });
       setPropertyErrors({});
     }
   };
@@ -203,7 +217,13 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
     setOwnerErrors(errors);
     if (Object.keys(errors).length === 0) {
       setOwners([...owners, { ...currentOwner, property_id: selectedPropertyId, id: Date.now() }]);
-      setCurrentOwner(EMPTY_OWNER);
+      // Prefill next owner's address from the one just added
+      setCurrentOwner({
+        ...EMPTY_OWNER,
+        address: currentOwner.address, ward_no: currentOwner.ward_no,
+        vdc_municipality: currentOwner.vdc_municipality, district: currentOwner.district,
+        country: currentOwner.country,
+      });
       setOwnerErrors({});
     }
   };
@@ -225,7 +245,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
 
   const resetForm = () => {
     setCurrentStep(1);
-    setAccount({ account_name: '', company_registration: '', registration_number: '', tax_id: '', business_type: '', phone: '', email: '', website: '', address: '', city: '', state: '', zip_code: '', country: '' });
+    setAccount({ account_name: '', company_registration: '', registration_number: '', tax_id: '', business_type: '', phone: '', email: '', website: '', address: '', ward_no: '', vdc_municipality: '', district: '', country: '' });
     setClients([]); setCurrentClient(EMPTY_CLIENT);
     setProperties([]); setCurrentProperty(EMPTY_PROPERTY);
     setOwners([]); setCurrentOwner(EMPTY_OWNER);
@@ -305,10 +325,10 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
               </div>
               <SectionHead>Address</SectionHead>
               <div className="form-grid">
-                <ClearInput type="text" name="address" placeholder="Address (ठेगाना)" value={account.address} onChange={handleAccountChange} />
-                <ClearInput type="text" name="city" placeholder="City (शहर)" value={account.city} onChange={handleAccountChange} />
-                <ClearInput type="text" name="state" placeholder="State (प्रदेश)" value={account.state} onChange={handleAccountChange} />
-                <ClearInput type="text" name="zip_code" placeholder="Zip Code (हुलाक संकेत)" value={account.zip_code} onChange={handleAccountChange} />
+                <ClearInput type="text" name="address" placeholder="Address / Tole (ठेगाना / टोल)" value={account.address} onChange={handleAccountChange} />
+                <ClearInput type="text" name="ward_no" placeholder="Ward No. (वडा नं.)" value={account.ward_no} onChange={handleAccountChange} />
+                <ClearInput type="text" name="vdc_municipality" placeholder="Municipality / VDC (नगरपालिका / गाविस)" value={account.vdc_municipality} onChange={handleAccountChange} />
+                <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={account.district} onChange={handleAccountChange} />
                 <ClearInput type="text" name="country" placeholder="Country (देश)" value={account.country} onChange={handleAccountChange} />
               </div>
             </div>
@@ -341,13 +361,10 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
               </div>
               <SectionHead>Address</SectionHead>
               <div className="form-grid">
-                <ClearInput type="text" name="address" placeholder="Address (ठेगाना)" value={currentClient.address} onChange={handleClientChange} />
+                <ClearInput type="text" name="address" placeholder="Address / Tole (ठेगाना / टोल)" value={currentClient.address} onChange={handleClientChange} />
                 <ClearInput type="text" name="ward_no" placeholder="Ward No. (वडा नं.)" value={currentClient.ward_no} onChange={handleClientChange} />
                 <ClearInput type="text" name="vdc_municipality" placeholder="Municipality / VDC (नगरपालिका / गाविस)" value={currentClient.vdc_municipality} onChange={handleClientChange} />
                 <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={currentClient.district} onChange={handleClientChange} />
-                <ClearInput type="text" name="city" placeholder="City (शहर)" value={currentClient.city} onChange={handleClientChange} />
-                <ClearInput type="text" name="state" placeholder="State (प्रदेश)" value={currentClient.state} onChange={handleClientChange} />
-                <ClearInput type="text" name="zip_code" placeholder="Zip Code (हुलाक संकेत)" value={currentClient.zip_code} onChange={handleClientChange} />
                 <ClearInput type="text" name="country" placeholder="Country (देश)" value={currentClient.country} onChange={handleClientChange} />
               </div>
               <SectionHead>Citizenship</SectionHead>
@@ -393,12 +410,13 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                   <option value="building">Building (भवन)</option>
                 </SelectInput>
                 <ClearInput type="text" name="plot_no" placeholder="Plot No. (कित्ता नं.)" value={currentProperty.plot_no} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={currentProperty.district} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="vdc_municipality" placeholder="Present Municipality / VDC (वर्तमान नगरपालिका / गाविस)" value={currentProperty.vdc_municipality} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="ward_no" placeholder="Present Ward No. (वर्तमान वडा नं.)" value={currentProperty.ward_no} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="sabik_vdc" placeholder="Sabik VDC (साबिक गाविस – जस्तै Jorpati VDC)" value={currentProperty.sabik_vdc} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="vdc_municipality" placeholder="Present Municipality / VDC (वर्तमान नगरपालिका / गाविस)" value={currentProperty.vdc_municipality} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={currentProperty.district} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="sabik_vdc" placeholder="Sabik VDC (साबिक गाविस)" value={currentProperty.sabik_vdc} onChange={handlePropertyChange} />
                 <ClearInput type="text" name="sabik_ward_no" placeholder="Sabik Ward No. (साबिक वडा नं.)" value={currentProperty.sabik_ward_no} onChange={handlePropertyChange} />
-                <ClearInput type="text" name="address" placeholder="Property Address (सम्पत्तिको ठेगाना) *" value={currentProperty.address} onChange={handlePropertyChange} error={propertyErrors.address} className="form-col-2" />
+                <ClearInput type="text" name="country" placeholder="Country (देश)" value={currentProperty.country} onChange={handlePropertyChange} />
+                <ClearInput type="text" name="address" placeholder="Tole / Street Address (टोल / सडक ठेगाना) *" value={currentProperty.address} onChange={handlePropertyChange} error={propertyErrors.address} className="form-col-2" />
                 <ClearInput type="text" name="gps_coordinates" placeholder='GPS Co-ordinates (जीपीएस निर्देशांक)' value={currentProperty.gps_coordinates} onChange={handlePropertyChange} className="form-col-2" />
                 <ClearInput type="text" name="nearest_landmark" placeholder="Nearest Landmark (नजिकको ल्यान्डमार्क)" value={currentProperty.nearest_landmark} onChange={handlePropertyChange} className="form-col-2" />
                 <ClearInput type="text" name="nearest_market" placeholder="Nearest Market (नजिकको बजार)" value={currentProperty.nearest_market} onChange={handlePropertyChange} />
@@ -450,7 +468,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 </div>
                 <div className="field-wrap form-col-2" style={{marginTop:'12px'}}>
                   <textarea name="location_merits" rows={4} placeholder=" " value={currentProperty.location_merits || ''} onChange={handlePropertyChange}
-                    style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }} />
+                    style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit', borderRadius: '10px' }} />
                   <label>Merits of Location (स्थानका विशेषताहरू) — one per line</label>
                 </div>
               </>)}
@@ -498,7 +516,7 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                 </div>
                 <div className="field-wrap form-col-2" style={{marginTop:'12px'}}>
                   <textarea name="location_merits" rows={4} placeholder=" " value={currentProperty.location_merits || ''} onChange={handlePropertyChange}
-                    style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }} />
+                    style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit', borderRadius: '10px' }} />
                   <label>Merits of Location (स्थानका विशेषताहरू) — one per line</label>
                 </div>
               </>)}
@@ -619,10 +637,10 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                   </div>
                   <SectionHead>Address</SectionHead>
                   <div className="form-grid">
-                    <ClearInput type="text" name="address" placeholder="Address (ठेगाना)" value={currentOwner.address} onChange={handleOwnerChange} />
-                    <ClearInput type="text" name="city" placeholder="City (शहर)" value={currentOwner.city} onChange={handleOwnerChange} />
-                    <ClearInput type="text" name="state" placeholder="State (प्रदेश)" value={currentOwner.state} onChange={handleOwnerChange} />
-                    <ClearInput type="text" name="zip_code" placeholder="Zip Code (हुलाक संकेत)" value={currentOwner.zip_code} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="address" placeholder="Address / Tole (ठेगाना / टोल)" value={currentOwner.address} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="ward_no" placeholder="Ward No. (वडा नं.)" value={currentOwner.ward_no} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="vdc_municipality" placeholder="Municipality / VDC (नगरपालिका / गाविस)" value={currentOwner.vdc_municipality} onChange={handleOwnerChange} />
+                    <ClearInput type="text" name="district" placeholder="District (जिल्ला)" value={currentOwner.district} onChange={handleOwnerChange} />
                     <ClearInput type="text" name="country" placeholder="Country (देश)" value={currentOwner.country} onChange={handleOwnerChange} />
                   </div>
                   <SectionHead>Identification</SectionHead>
@@ -687,11 +705,64 @@ const AccountModal = ({ isOpen, onClose, onSubmit }) => {
                     if (!account.email.trim()) { errors.email = 'Email is required'; }
                     else if (!/\S+@\S+\.\S+/.test(account.email)) { errors.email = 'Please enter a valid email address'; }
                     setAccountErrors(errors);
-                    if (Object.keys(errors).length === 0) { setStepError(''); setCurrentStep(currentStep + 1); }
+                    if (Object.keys(errors).length === 0) {
+                      // Prefill client from account
+                      const nameParts = (account.account_name || '').trim().split(/\s+/);
+                      const firstName = nameParts[0] || '';
+                      const lastName  = nameParts.slice(1).join(' ');
+                      setCurrentClient(prev => ({
+                        ...prev,
+                        first_name:      prev.first_name      || firstName,
+                        last_name:       prev.last_name       || lastName,
+                        email:           prev.email           || account.email           || '',
+                        phone:           prev.phone           || account.phone           || '',
+                        mobile:          prev.mobile          || account.phone           || '',
+                        pan_no:          prev.pan_no          || account.tax_id          || '',
+                        address:         prev.address         || account.address         || '',
+                        ward_no:         prev.ward_no         || account.ward_no         || '',
+                        vdc_municipality:prev.vdc_municipality|| account.vdc_municipality|| '',
+                        district:        prev.district        || account.district        || '',
+                        country:         prev.country         || account.country         || '',
+                      }));
+                      setStepError(''); setCurrentStep(2);
+                    }
                     return;
                   }
-                  if (currentStep === 2 && clients.length === 0) { setStepError('Please add at least one client before continuing.'); return; }
-                  if (currentStep === 3 && properties.length === 0) { setStepError('Please add at least one property before continuing.'); return; }
+                  if (currentStep === 2) {
+                    if (clients.length === 0) { setStepError('Please add at least one client before continuing.'); return; }
+                    // Prefill property location from last client's address
+                    const lastClient = clients[clients.length - 1];
+                    setCurrentProperty(prev => ({
+                      ...prev,
+                      address:          prev.address          || lastClient.address          || '',
+                      ward_no:          prev.ward_no          || lastClient.ward_no          || '',
+                      vdc_municipality: prev.vdc_municipality || lastClient.vdc_municipality || '',
+                      district:         prev.district         || lastClient.district         || '',
+                      country:          prev.country          || lastClient.country          || '',
+                    }));
+                    setStepError(''); setCurrentStep(3);
+                    return;
+                  }
+                  if (currentStep === 3) {
+                    if (properties.length === 0) { setStepError('Please add at least one property before continuing.'); return; }
+                    // Prefill owner contact + address from last client
+                    const lastClient = clients[clients.length - 1];
+                    if (lastClient) {
+                      setCurrentOwner(prev => ({
+                        ...prev,
+                        email:            prev.email            || lastClient.email            || '',
+                        phone:            prev.phone            || lastClient.phone            || '',
+                        mobile:           prev.mobile           || lastClient.mobile           || '',
+                        address:          prev.address          || lastClient.address          || '',
+                        ward_no:          prev.ward_no          || lastClient.ward_no          || '',
+                        vdc_municipality: prev.vdc_municipality || lastClient.vdc_municipality || '',
+                        district:         prev.district         || lastClient.district         || '',
+                        country:          prev.country          || lastClient.country          || '',
+                      }));
+                    }
+                    setStepError(''); setCurrentStep(4);
+                    return;
+                  }
                   setStepError('');
                   setCurrentStep(currentStep + 1);
                 }}

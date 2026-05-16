@@ -222,10 +222,24 @@ def build_context(hierarchy, valuation):
     val        = valuation or {}
 
     # Firm info – prefer valuation metadata, fall back to account
-    firm_name    = _v(val.get('firm_name'),    account.get('account_name', ''))
-    firm_address = _v(val.get('firm_address'), account.get('address', ''))
-    firm_phone   = _v(val.get('firm_phone'),   account.get('phone', ''))
-    firm_email   = _v(val.get('firm_email'),   account.get('email', ''))
+    firm_name  = _v(val.get('firm_name'),  account.get('account_name', ''))
+    firm_phone = _v(val.get('firm_phone'), account.get('phone', ''))
+    firm_email = _v(val.get('firm_email'), account.get('email', ''))
+    # Build firm address from structured fields (ward / municipality / district)
+    _acct_ward  = _v(account.get('ward_no'), '')
+    _acct_vdc   = _v(account.get('vdc_municipality'), '')
+    _acct_dist  = _v(account.get('district'), '')
+    _acct_str   = _v(account.get('address'), '')
+    _acct_country = _v(account.get('country'), 'Nepal')
+    _acct_parts = [p for p in [
+        _acct_str,
+        _acct_ward  and f'Ward No. {_acct_ward}',
+        _acct_vdc,
+        _acct_dist  and f'{_acct_dist} District',
+        _acct_country,
+    ] if p]
+    _acct_addr_built = ', '.join(_acct_parts) if _acct_parts else ''
+    firm_address = _v(val.get('firm_address'), _acct_addr_built)
 
     # First client
     c = clients[0] if clients else {}
@@ -434,14 +448,20 @@ def build_context(hierarchy, valuation):
     # Sabik display: "Jorpati VDC Sabik"
     sabik_display = f'{sabik_vdc} Sabik' if sabik_vdc else (sabik_str or '—')
 
-    # Firm address split for cover (street / city+country)
-    _fparts = [p.strip() for p in firm_address.split(',') if p.strip()]
-    if len(_fparts) >= 3:
-        firm_street       = ', '.join(_fparts[:-2])
-        firm_city_country = ', '.join(_fparts[-2:])
+    # Firm address split for cover (street line / city+country line)
+    if _acct_str and (_acct_vdc or _acct_dist):
+        firm_street = _acct_str + (f', Ward No. {_acct_ward}' if _acct_ward else '')
+        _city_parts = [p for p in [_acct_vdc, _acct_dist and f'{_acct_dist} District', _acct_country] if p]
+        firm_city_country = ', '.join(_city_parts) if _city_parts else 'Nepal'
     else:
-        firm_street       = firm_address
-        firm_city_country = 'Kathmandu, Nepal'
+        # Fall back: split on commas
+        _fparts = [p.strip() for p in firm_address.split(',') if p.strip()]
+        if len(_fparts) >= 3:
+            firm_street       = ', '.join(_fparts[:-2])
+            firm_city_country = ', '.join(_fparts[-2:])
+        else:
+            firm_street       = firm_address
+            firm_city_country = 'Kathmandu, Nepal'
 
     ctx = {
         # Firm

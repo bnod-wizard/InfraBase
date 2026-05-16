@@ -45,7 +45,7 @@ function AccountDetail() {
   const [formData,         setFormData]         = useState({
     account_name: '', company_registration: '', registration_number: '',
     tax_id: '', business_type: '', phone: '', email: '', website: '',
-    address: '', city: '', state: '', zip_code: '', country: '',
+    address: '', ward_no: '', vdc_municipality: '', district: '', country: '',
     logo_url: '', status: 'active', created_by: '', created_at: '', updated_at: '',
   });
   const [activeObjectEdit, setActiveObjectEdit] = useState({ type: null, id: null, data: null });
@@ -64,11 +64,11 @@ function AccountDetail() {
     { accessor: 'registration_number',  label: 'Registration No.', np: 'दर्ता नम्बर' },
     { accessor: 'tax_id',               label: 'Tax ID',           np: 'कर परिचय पत्र' },
     { accessor: 'website',              label: 'Website',          np: 'वेबसाइट' },
-    { accessor: 'address',              label: 'Address',          np: 'ठेगाना', fullWidth: true },
-    { accessor: 'city',                 label: 'City',             np: 'शहर' },
-    { accessor: 'state',                label: 'State',            np: 'प्रदेश' },
-    { accessor: 'zip_code',             label: 'Zip Code',         np: 'हुलाक संकेत' },
-    { accessor: 'country',              label: 'Country',          np: 'देश' },
+    { accessor: 'address',          label: 'Address / Tole',       np: 'ठेगाना / टोल', fullWidth: true },
+    { accessor: 'ward_no',          label: 'Ward No.',             np: 'वडा नं.' },
+    { accessor: 'vdc_municipality', label: 'Municipality / VDC',   np: 'नगरपालिका / गाविस' },
+    { accessor: 'district',         label: 'District',             np: 'जिल्ला' },
+    { accessor: 'country',          label: 'Country',              np: 'देश' },
     { accessor: 'status',               label: 'Status',           np: 'स्थिति', type: 'select', options: STATUS_OPTIONS },
   ];
 
@@ -88,13 +88,10 @@ function AccountDetail() {
       { accessor: 'mobile', label: 'Mobile',      np: 'मोबाइल' },
     ]},
     { title: 'Address', np: 'ठेगाना', fields: [
-      { accessor: 'address',          label: 'Address',            np: 'ठेगाना',                  fullWidth: true },
+      { accessor: 'address',          label: 'Address / Tole',     np: 'ठेगाना / टोल',            fullWidth: true },
       { accessor: 'ward_no',          label: 'Ward No.',           np: 'वडा नं.' },
       { accessor: 'vdc_municipality', label: 'Municipality / VDC', np: 'नगरपालिका / गाविस' },
       { accessor: 'district',         label: 'District',           np: 'जिल्ला' },
-      { accessor: 'city',             label: 'City',               np: 'शहर' },
-      { accessor: 'state',            label: 'State',              np: 'प्रदेश' },
-      { accessor: 'zip_code',         label: 'Zip Code',           np: 'हुलाक संकेत' },
       { accessor: 'country',          label: 'Country',            np: 'देश' },
     ]},
     { title: 'Citizenship', np: 'नागरिकता', fields: [
@@ -281,9 +278,11 @@ function AccountDetail() {
     { accessor: 'owner_name',  label: 'Owner Name',  np: 'मालिकको नाम' },  { accessor: 'owner_type', label: 'Owner Type',  np: 'मालिक प्रकार' },
     { accessor: 'title',       label: 'Title',       np: 'उपाधि' },         { accessor: 'email',      label: 'Email',       np: 'इमेल' },
     { accessor: 'phone',       label: 'Phone',       np: 'फोन' },           { accessor: 'mobile',     label: 'Mobile',      np: 'मोबाइल' },
-    { accessor: 'address',     label: 'Address',     np: 'ठेगाना' },        { accessor: 'city',       label: 'City',        np: 'शहर' },
-    { accessor: 'state',       label: 'State',       np: 'प्रदेश' },        { accessor: 'zip_code',   label: 'Zip Code',    np: 'हुलाक संकेत' },
-    { accessor: 'country',     label: 'Country',     np: 'देश' },           { accessor: 'id_type',    label: 'ID Type',     np: 'परिचय प्रकार' },
+    { accessor: 'address',          label: 'Address / Tole',     np: 'ठेगाना / टोल' },
+    { accessor: 'ward_no',          label: 'Ward No.',           np: 'वडा नं.' },
+    { accessor: 'vdc_municipality', label: 'Municipality / VDC', np: 'नगरपालिका / गाविस' },
+    { accessor: 'district',         label: 'District',           np: 'जिल्ला' },
+    { accessor: 'country',          label: 'Country',            np: 'देश' },           { accessor: 'id_type',    label: 'ID Type',     np: 'परिचय प्रकार' },
     { accessor: 'id_number',   label: 'ID Number',   np: 'परिचय नम्बर' },  { accessor: 'pan_number', label: 'PAN Number',  np: 'स्थायी लेखा नम्बर' },
     { accessor: 'notes',       label: 'Notes',       np: 'टिप्पणी' },       { accessor: 'status',     label: 'Status',      np: 'स्थिति' }
   ];
@@ -466,7 +465,7 @@ function AccountDetail() {
       );
     }
     if (field.type === 'textarea') {
-      return <textarea name={field.accessor} value={value || ''} rows={4} onChange={e => handleObjectEditChange(field.accessor, e.target.value)} style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }} />;
+      return <textarea name={field.accessor} value={value || ''} rows={4} onChange={e => handleObjectEditChange(field.accessor, e.target.value)} style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit', borderRadius: '10px' }} />;
     }
     return <input type={field.type || 'text'} name={field.accessor} value={value || ''} onChange={e => handleObjectEditChange(field.accessor, e.target.value)} />;
   };
@@ -809,10 +808,10 @@ function AccountDetail() {
             <div className="panel-head"><h3>Quick Info</h3></div>
             <div className="ad-info-rows">
               {[
-                { label: 'Status',  val: formData.status || '—' },
-                { label: 'Tax ID',  val: renderValue(formData.tax_id) },
-                { label: 'City',    val: renderValue(formData.city) },
-                { label: 'Country', val: renderValue(formData.country) },
+                { label: 'Status',   val: formData.status || '—' },
+                { label: 'Tax ID',   val: renderValue(formData.tax_id) },
+                { label: 'District', val: renderValue(formData.district) },
+                { label: 'Country',  val: renderValue(formData.country) },
                 { label: 'Created', val: formatDate(formData.created_at) },
                 { label: 'Updated', val: formatDate(formData.updated_at) },
               ].map(row => (
@@ -940,6 +939,8 @@ function AccountDetail() {
       <AddToAccountModal
         type={addModal}
         accountId={accountId}
+        existingClients={hierarchy?.clients || []}
+        existingOwners={hierarchy?.owners || []}
         existingProperties={hierarchy?.properties || []}
         isOpen={!!addModal}
         onClose={() => setAddModal(null)}
