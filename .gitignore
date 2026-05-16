@@ -1,0 +1,23 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+venv_new/
+.venv*/
+*.egg-info/
+
+# Node
+node_modules/
+/frontend/build
+
+# macOS
+.DS_Store
+
+# Uploads (local storage, not for git)
+backend/uploads/

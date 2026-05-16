@@ -21,7 +21,9 @@ from services.property_service import PropertyService
 from services.bulk_account_service import BulkAccountCreationService
 from services.document_service import DocumentService
 from services.template_service import TemplateService
+from services.account_document_service import AccountDocumentService
 from repositories import UserRepository, CustomerRepository
+from repositories.account_document_repository import AccountDocumentRepository
 from repositories.account_repository import AccountRepository
 from repositories.client_repository import ClientRepository
 from repositories.owner_repository import OwnerRepository
@@ -81,6 +83,8 @@ if db is not None:
         )
         document_service = DocumentService()
         template_service = TemplateService(template_repository)
+        account_document_repository = AccountDocumentRepository(db)
+        account_document_service = AccountDocumentService(account_document_repository)
 
         # Controller Layer
         auth_controller = AuthController(auth_service)
@@ -96,6 +100,7 @@ if db is not None:
             owner_service=owner_service,
             property_service=property_service,
             user_repository=user_repository,
+            account_document_service=account_document_service,
         )
 
         # Register template controller

@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import accountApi from '../services/accountApi';
 import GenerateDocModal from './GenerateDocModal';
+import UploadDocumentModal from './UploadDocumentModal';
 import PropertyMapModal from './PropertyMapModal';
 import AccountStagePath from './AccountStagePath';
 import AreaCalculatorModal from './AreaCalculatorModal';
 import AddToAccountModal from './AddToAccountModal';
+import ConfirmModal from './ConfirmModal';
+import { IconView, IconDelete, IconDownload, IconAdd, IconEdit, IconUpload } from './Icons';
 import { useToast } from '../context';
 import '../styles/AccountDetail.css';
 
@@ -50,6 +53,9 @@ function AccountDetail() {
   });
   const [activeObjectEdit, setActiveObjectEdit] = useState({ type: null, id: null, data: null });
   const [isDocModalOpen,    setIsDocModalOpen]    = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [sidebarDocs,       setSidebarDocs]       = useState([]);
+  const [docToDelete,       setDocToDelete]       = useState(null);
   const [areaCalcCtx,       setAreaCalcCtx]       = useState(null); // { property, type: 'measurement'|'lalpurja'|'deduction' }
   const [mapProperty,       setMapProperty]       = useState(null);
   const [stageSaving,       setStageSaving]       = useState(false);
@@ -317,6 +323,19 @@ function AccountDetail() {
       console.error('Failed to load changelog:', err);
     }
   };
+
+  const fetchSidebarDocs = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await fetch(`http://localhost:5001/api/accounts/${accountId}/documents`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) setSidebarDocs(data.data || []);
+    } catch { /* silent */ }
+  };
+
+  useEffect(() => { if (accountId) fetchSidebarDocs(); }, [accountId]);
 
   const handleInputChange = e => {
     const { name, value } = e.target;
@@ -609,10 +628,10 @@ function AccountDetail() {
           {onAdd && (
             <button
               className="btn btn-sm"
-              style={{ background: 'var(--brand,#1f3a2e)', color: '#fff', border: 'none' }}
+              style={{ background: 'var(--brand,#1f3a2e)', color: '#fff', border: 'none', display:'flex', alignItems:'center', gap:5 }}
               onClick={onAdd}
             >
-              + Add {title.slice(0, -1)}
+              <IconAdd size={14} color="#fff" /> Add {title.slice(0, -1)}
             </button>
           )}
         </div>
@@ -635,7 +654,7 @@ function AccountDetail() {
                       ) : (
                         <>
                           {getExtraActions && getExtraActions(item)}
-                          <button className="btn btn-sm btn-secondary" onClick={() => startObjectEdit(type, item)}>Edit</button>
+                          <button className="btn btn-sm btn-secondary" style={{ display:'flex', alignItems:'center', gap:4 }} onClick={() => startObjectEdit(type, item)}><IconEdit size={13} /> Edit</button>
                         </>
                       )}
                     </div>
@@ -695,8 +714,9 @@ function AccountDetail() {
               <button className="btn" onClick={handleSave}>Save Changes</button>
             </>
           ) : (
-            <button className="btn btn-secondary" onClick={() => setIsEditing(true)}>✏ Edit</button>
+            <button className="btn btn-secondary" style={{ display:'flex', alignItems:'center', gap:5 }} onClick={() => setIsEditing(true)}><IconEdit size={14} /> Edit</button>
           )}
+          <button className="btn btn-secondary" style={{ display:'flex', alignItems:'center', gap:5 }} onClick={() => setIsUploadModalOpen(true)}><IconUpload size={14} /> Upload Document</button>
           <button className="btn" onClick={() => setIsDocModalOpen(true)}>⎙ Generate Document</button>
         </div>
       </div> 
@@ -824,6 +844,61 @@ function AccountDetail() {
           </div>
 
           <div className="panel">
+            <div className="panel-head" style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <h3>Documents {sidebarDocs.length > 0 && <span style={{ background:'#1f3a2e', color:'#fff', borderRadius:'10px', padding:'1px 7px', fontSize:'11px', fontWeight:600, marginLeft:6 }}>{sidebarDocs.length}</span>}</h3>
+              <button
+                style={{ display:'flex', alignItems:'center', gap:4, fontSize:'11px', padding:'3px 10px', borderRadius:'6px', border:'1px solid #ddd', background:'none', cursor:'pointer', color:'#555' }}
+                onClick={() => setIsUploadModalOpen(true)}
+              ><IconUpload size={12} /> Upload</button>
+            </div>
+            <div className="activity">
+              {sidebarDocs.length === 0 ? (
+                <div className="act">
+                  <div className="swatch" />
+                  <div className="body"><b>No documents</b><small>Upload files to this account</small></div>
+                </div>
+              ) : sidebarDocs.slice(0, 6).map(doc => {
+                const token = localStorage.getItem('authToken');
+                const ext = (doc.file_ext || '').toLowerCase();
+                const icon = ['jpg','jpeg','png','tiff','tif'].includes(ext) ? '🖼' : ext === 'pdf' ? '📄' : ['doc','docx'].includes(ext) ? '📝' : ['xls','xlsx'].includes(ext) ? '📊' : '📎';
+                const BASE = `http://localhost:5001/api/accounts/${accountId}/documents/${doc._id}`;
+                return (
+                  <div key={doc._id} className="act" style={{ flexDirection:'column', alignItems:'flex-start', gap:4, padding:'8px 0' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, width:'100%', minWidth:0 }}>
+                      <div className="swatch" style={{ flexShrink:0 }} />
+                      <span title={doc.original_name} style={{ fontSize:'12px', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1, minWidth:0 }}>
+                        {icon} {doc.original_name}
+                      </span>
+                    </div>
+                    {doc.description && (
+                      <span title={doc.description} style={{ fontSize:'11px', color:'#888', paddingLeft:22, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%', display:'block' }}>
+                        {doc.description}
+                      </span>
+                    )}
+                    <div style={{ display:'flex', alignItems:'center', gap:6, paddingLeft:22, flexWrap:'wrap' }}>
+                      <span style={{ background:'#e8f0ec', color:'#1f3a2e', borderRadius:'4px', padding:'1px 5px', fontSize:'10px', fontWeight:600, textTransform:'capitalize' }}>
+                        {doc.doc_type?.replace(/_/g,' ')}
+                      </span>
+                      <a href={`${BASE}/view?token=${token}`} target="_blank" rel="noreferrer"
+                        title="View" style={{ color:'#555', display:'flex', alignItems:'center' }}><IconView size={14} /></a>
+                      <a href={`${BASE}/download?token=${token}`}
+                        title="Download" style={{ color:'#555', display:'flex', alignItems:'center' }}><IconDownload size={14} /></a>
+                      <button onClick={() => setDocToDelete(doc)} title="Delete"
+                        style={{ background:'none', border:'none', color:'#c44', cursor:'pointer', padding:0, display:'flex', alignItems:'center' }}><IconDelete size={14} /></button>
+                    </div>
+                  </div>
+                );
+              })}
+              {sidebarDocs.length > 6 && (
+                <div className="act" style={{ cursor:'pointer' }} onClick={() => setIsUploadModalOpen(true)}>
+                  <div className="swatch" />
+                  <div className="body"><small style={{ color:'#1f3a2e', fontWeight:600 }}>View all {sidebarDocs.length} documents →</small></div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="panel">
             <div className="panel-head"><h3>Recent Activity</h3></div>
             <div className="activity">
               {changelog.length > 0 ? changelog.map((log, idx) => {
@@ -879,6 +954,30 @@ function AccountDetail() {
         hierarchy={hierarchy}
         isOpen={isDocModalOpen}
         onClose={() => setIsDocModalOpen(false)}
+      />
+
+      <UploadDocumentModal
+        isOpen={isUploadModalOpen}
+        onClose={() => { setIsUploadModalOpen(false); fetchSidebarDocs(); }}
+        accountId={accountId}
+        accountName={formData.account_name || 'Account'}
+      />
+
+      <ConfirmModal
+        isOpen={!!docToDelete}
+        title="Remove document record"
+        message={`Remove "${docToDelete?.original_name}" from this account? The file will remain in storage but the record will be deleted.`}
+        confirmLabel="Delete record"
+        variant="danger"
+        onConfirm={async () => {
+          const token = localStorage.getItem('authToken');
+          await fetch(`http://localhost:5001/api/accounts/${accountId}/documents/${docToDelete._id}?meta_only=true`, {
+            method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+          });
+          setSidebarDocs(prev => prev.filter(d => d._id !== docToDelete._id));
+          setDocToDelete(null);
+        }}
+        onCancel={() => setDocToDelete(null)}
       />
 
       <AreaCalculatorModal

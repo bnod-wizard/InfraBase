@@ -11,7 +11,7 @@ import io
 def account_controller(app, account_service, bulk_account_service, auth_service, db=None,
                        valuation_repository=None, document_service=None,
                        client_service=None, owner_service=None, property_service=None,
-                       user_repository=None):
+                       user_repository=None, account_document_service=None):
     """Register account-related routes"""
 
     def token_required(f):
@@ -24,6 +24,9 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                     token = auth_header.split(" ")[1]
                 except IndexError:
                     return jsonify({'error': 'Invalid token format'}), 401
+            # Also accept token as query param (for direct download/view links)
+            if not token:
+                token = request.args.get('token')
 
             if not token:
                 return jsonify({'error': 'Token is missing'}), 401
@@ -558,5 +561,94 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 return jsonify({'success': True, 'message': message, 'data': result}), 200
             else:
                 return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # ── Account Documents ─────────────────────────────────────────────────────
+
+    @app.route('/api/accounts/<account_id>/documents', methods=['GET'])
+    @token_required
+    def list_account_documents(account_id):
+        try:
+            if account_document_service is None:
+                return jsonify({'success': False, 'message': 'Document storage not available'}), 503
+            docs = account_document_service.list_for_account(account_id)
+            return jsonify({'success': True, 'data': docs}), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/accounts/<account_id>/documents', methods=['POST'])
+    @token_required
+    def upload_account_document(account_id):
+        try:
+            if account_document_service is None:
+                return jsonify({'success': False, 'message': 'Document storage not available'}), 503
+            if 'file' not in request.files:
+                return jsonify({'success': False, 'message': 'No file provided'}), 400
+            file_obj  = request.files['file']
+            doc_type  = request.form.get('doc_type', 'other')
+            description = request.form.get('description', '')
+            username  = _resolve_username(request.user_id)
+            doc = account_document_service.upload(
+                account_id, file_obj, doc_type, description,
+                uploaded_by=request.user_id, uploaded_by_name=username
+            )
+            return jsonify({'success': True, 'message': 'File uploaded', 'data': doc}), 201
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/accounts/<account_id>/documents/<doc_id>', methods=['PUT'])
+    @token_required
+    def update_account_document(account_id, doc_id):
+        try:
+            if account_document_service is None:
+                return jsonify({'success': False, 'message': 'Document storage not available'}), 503
+            updates = request.get_json() or {}
+            doc = account_document_service.update_meta(doc_id, updates)
+            if not doc:
+                return jsonify({'success': False, 'message': 'Document not found'}), 404
+            return jsonify({'success': True, 'message': 'Updated', 'data': doc}), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/accounts/<account_id>/documents/<doc_id>', methods=['DELETE'])
+    @token_required
+    def delete_account_document(account_id, doc_id):
+        try:
+            if account_document_service is None:
+                return jsonify({'success': False, 'message': 'Document storage not available'}), 503
+            meta_only = request.args.get('meta_only', 'false').lower() == 'true'
+            ok = account_document_service.delete_meta_only(doc_id) if meta_only else account_document_service.delete(doc_id)
+            if not ok:
+                return jsonify({'success': False, 'message': 'Document not found'}), 404
+            return jsonify({'success': True, 'message': 'Deleted'}), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/accounts/<account_id>/documents/<doc_id>/download', methods=['GET'])
+    @token_required
+    def download_account_document(account_id, doc_id):
+        try:
+            if account_document_service is None:
+                return jsonify({'success': False, 'message': 'Document storage not available'}), 503
+            url, _ = account_document_service.get_presigned_url(doc_id, inline=False)
+            if not url:
+                return jsonify({'success': False, 'message': 'File not found'}), 404
+            from flask import redirect
+            return redirect(url)
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/accounts/<account_id>/documents/<doc_id>/view', methods=['GET'])
+    @token_required
+    def view_account_document(account_id, doc_id):
+        try:
+            if account_document_service is None:
+                return jsonify({'success': False, 'message': 'Document storage not available'}), 503
+            url, _ = account_document_service.get_presigned_url(doc_id, inline=True)
+            if not url:
+                return jsonify({'success': False, 'message': 'File not found'}), 404
+            from flask import redirect
+            return redirect(url)
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
