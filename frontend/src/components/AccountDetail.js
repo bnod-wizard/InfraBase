@@ -56,6 +56,8 @@ function AccountDetail() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [sidebarDocs,       setSidebarDocs]       = useState([]);
   const [docToDelete,       setDocToDelete]       = useState(null);
+  const [expandedCards,     setExpandedCards]     = useState({});
+  const toggleCard = id => setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
   const [areaCalcCtx,       setAreaCalcCtx]       = useState(null); // { property, type: 'measurement'|'lalpurja'|'deduction' }
   const [mapProperty,       setMapProperty]       = useState(null);
   const [stageSaving,       setStageSaving]       = useState(false);
@@ -641,10 +643,22 @@ function AccountDetail() {
               const itemId = item._id || item.id || null;
               const isEditingItem = activeObjectEdit.type === type && activeObjectEdit.id === itemId;
               const data = isEditingItem ? activeObjectEdit.data : item;
+              const isExpanded = !!expandedCards[itemId];
               return (
                 <div key={itemId || Math.random()} className="ad-obj-card">
-                  <div className="ad-obj-head">
-                    <strong>{getObjectHeader(item, headerLabel, title.slice(0, -1))}</strong>
+                  <div
+                    className="ad-obj-head"
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                    onClick={e => { if (e.target.closest('button')) return; toggleCard(itemId); }}
+                  >
+                    <strong style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{
+                        fontSize:10, color:'#aaa', flexShrink:0,
+                        display:'inline-block', transition:'transform .18s',
+                        transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                      }}>▶</span>
+                      {getObjectHeader(item, headerLabel, title.slice(0, -1))}
+                    </strong>
                     <div className="ad-obj-actions">
                       {isEditingItem ? (
                         <>
@@ -654,12 +668,12 @@ function AccountDetail() {
                       ) : (
                         <>
                           {getExtraActions && getExtraActions(item)}
-                          <button className="btn btn-sm btn-secondary" style={{ display:'flex', alignItems:'center', gap:4 }} onClick={() => startObjectEdit(type, item)}><IconEdit size={13} /> Edit</button>
+                          <button className="btn btn-sm btn-secondary" style={{ display:'flex', alignItems:'center', gap:4 }} onClick={e => { e.stopPropagation(); startObjectEdit(type, item); }}><IconEdit size={13} /> Edit</button>
                         </>
                       )}
                     </div>
                   </div>
-                  {renderFieldGrid(fields, itemId, isEditingItem, data, item)}
+                  {(isExpanded || isEditingItem) && renderFieldGrid(fields, itemId, isEditingItem, data, item)}
                 </div>
               );
             })}
@@ -851,13 +865,13 @@ function AccountDetail() {
                 onClick={() => setIsUploadModalOpen(true)}
               ><IconUpload size={12} /> Upload</button>
             </div>
-            <div className="activity">
+            <div className="activity" style={{ maxHeight: 320, overflowY: sidebarDocs.length > 5 ? 'auto' : 'visible', paddingRight: sidebarDocs.length > 5 ? 4 : 0 }}>
               {sidebarDocs.length === 0 ? (
                 <div className="act">
                   <div className="swatch" />
                   <div className="body"><b>No documents</b><small>Upload files to this account</small></div>
                 </div>
-              ) : sidebarDocs.slice(0, 6).map(doc => {
+              ) : sidebarDocs.map(doc => {
                 const token = localStorage.getItem('authToken');
                 const ext = (doc.file_ext || '').toLowerCase();
                 const icon = ['jpg','jpeg','png','tiff','tif'].includes(ext) ? '🖼' : ext === 'pdf' ? '📄' : ['doc','docx'].includes(ext) ? '📝' : ['xls','xlsx'].includes(ext) ? '📊' : '📎';
@@ -889,12 +903,6 @@ function AccountDetail() {
                   </div>
                 );
               })}
-              {sidebarDocs.length > 6 && (
-                <div className="act" style={{ cursor:'pointer' }} onClick={() => setIsUploadModalOpen(true)}>
-                  <div className="swatch" />
-                  <div className="body"><small style={{ color:'#1f3a2e', fontWeight:600 }}>View all {sidebarDocs.length} documents →</small></div>
-                </div>
-              )}
             </div>
           </div>
 
