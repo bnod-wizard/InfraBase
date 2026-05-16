@@ -240,7 +240,10 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
                   <div className="gdm-scope-chips">
                     {owners.map(o => {
                       const id  = o._id;
-                      const name = [o.title, o.owner_name].filter(Boolean).join(' ') || '—';
+                      const baseName = o.owner_name || '';
+                      const titleStr = o.title || '';
+                      const name = (titleStr && !baseName.startsWith(titleStr))
+                        ? `${titleStr} ${baseName}` : baseName || '—';
                       const on  = selOwnerIds.includes(id);
                       return (
                         <button key={id} type="button"
@@ -264,6 +267,7 @@ function GenerateDocModal({ accountId, accountName, hierarchy, isOpen, onClose }
                     {properties.map(p => {
                       const id = p._id;
                       const label = [
+                        p.property_type && (p.property_type.charAt(0).toUpperCase() + p.property_type.slice(1)),
                         p.plot_no && `Plot ${p.plot_no}`,
                         p.vdc_municipality,
                         p.district,
