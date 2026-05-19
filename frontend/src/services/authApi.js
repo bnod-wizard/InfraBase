@@ -3,6 +3,7 @@
  */
 import axios from 'axios';
 import { API_ENDPOINTS, STORAGE_KEYS } from '../constants';
+import { attachAuthInterceptor } from './authInterceptor';
 
 const apiClient = axios.create({
   baseURL: API_ENDPOINTS.AUTH.REGISTER.split('/auth')[0],
@@ -25,18 +26,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Handle responses
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Clear auth on unauthorized
-      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.USER_DATA);
-    }
-    return Promise.reject(error);
-  }
-);
+attachAuthInterceptor(apiClient);
 
 /**
  * Auth API Methods

@@ -3,6 +3,7 @@
  */
 import React, { createContext, useState, useCallback, useEffect } from 'react';
 import { STORAGE_KEYS } from '../constants';
+import { setLogoutHandler, isTokenExpired } from '../services/authInterceptor';
 
 export const AuthContext = createContext(null);
 
@@ -11,14 +12,17 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize from localStorage
+  // Initialize from localStorage, clear immediately if token is expired
   useEffect(() => {
     const storedToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     const storedUser = localStorage.getItem(STORAGE_KEYS.USER_DATA);
 
-    if (storedToken && storedUser) {
+    if (storedToken && storedUser && !isTokenExpired(storedToken)) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
+    } else if (storedToken) {
+      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.USER_DATA);
     }
     setLoading(false);
   }, []);
@@ -36,6 +40,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER_DATA);
   }, []);
+
+  // Register logout with the axios interceptor module
+  useEffect(() => {
+    setLogoutHandler(logout);
+  }, [logout]);
 
   const value = {
     user,

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL, STORAGE_KEYS } from '../constants/api';
+import { attachAuthInterceptor } from './authInterceptor';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL
@@ -15,6 +16,8 @@ axiosInstance.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+attachAuthInterceptor(axiosInstance);
 
 const accountApi = {
   // Create account with hierarchy (bulk)
