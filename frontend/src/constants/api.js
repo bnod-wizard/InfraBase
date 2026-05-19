@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
     LOGIN: `${API_BASE_URL}/auth/login`,
     PROFILE: `${API_BASE_URL}/auth/profile`,
   },
+  USERS: `${API_BASE_URL}/users`,
   CUSTOMERS: `${API_BASE_URL}/customers`,
   HEALTH: `${API_BASE_URL}/health`,
 };

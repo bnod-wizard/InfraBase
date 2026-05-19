@@ -115,11 +115,11 @@ class AccountService:
         except Exception as e:
             return False, str(e), None
 
-    def get_accounts_with_filters(self, query='', status_filters=None, skip=0, limit=10):
+    def get_accounts_with_filters(self, query='', status_filters=None, skip=0, limit=10, user_id=None):
         """Get accounts with combined search and status filters"""
         try:
             accounts, total = self.account_repository.get_accounts_with_filters(
-                query, status_filters, skip, limit
+                query, status_filters, skip, limit, user_id=user_id
             )
             accounts_json = [AccountModel.to_json(acc) for acc in accounts]
             return True, "Accounts retrieved successfully", {
@@ -133,11 +133,11 @@ class AccountService:
         except Exception as e:
             return False, str(e), None
 
-    def get_stats_overview(self):
+    def get_stats_overview(self, user_id=None):
         """Get account counts grouped for dashboard KPIs"""
         try:
-            total = self.account_repository.get_total_count()
-            raw_counts = self.account_repository.get_status_counts()
+            total = self.account_repository.get_total_count(user_id=user_id)
+            raw_counts = self.account_repository.get_status_counts(user_id=user_id)
 
             # Map any casing variant to the canonical Title Case label
             _canonical = {
@@ -171,7 +171,7 @@ class AccountService:
         except Exception as e:
             return False, str(e), None
 
-    def get_monthly_counts(self):
+    def get_monthly_counts(self, user_id=None):
         """Get account creation counts for the last 6 months"""
         try:
             from datetime import timezone
@@ -188,7 +188,7 @@ class AccountService:
 
             start = datetime(months_list[0]['year'], months_list[0]['month'], 1,
                              tzinfo=timezone.utc)
-            raw       = self.account_repository.get_monthly_counts(start)
+            raw       = self.account_repository.get_monthly_counts(start, user_id=user_id)
             count_map = {(r['_id']['year'], r['_id']['month']): r['count'] for r in raw}
 
             names  = ['Jan','Feb','Mar','Apr','May','Jun',
@@ -214,10 +214,10 @@ class AccountService:
         except Exception as e:
             return False, str(e), None
 
-    def get_recent_changelogs(self, limit=20):
+    def get_recent_changelogs(self, limit=20, user_id=None):
         """Get most recent changelog entries across all accounts"""
         try:
-            logs = self.account_repository.get_recent_changelogs(limit)
+            logs = self.account_repository.get_recent_changelogs(limit, user_id=user_id)
             return True, "Recent changelogs retrieved", self._serialize_logs(logs)
         except Exception as e:
             return False, str(e), None

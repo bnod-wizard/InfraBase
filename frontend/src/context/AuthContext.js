@@ -18,8 +18,16 @@ export const AuthProvider = ({ children }) => {
     const storedUser = localStorage.getItem(STORAGE_KEYS.USER_DATA);
 
     if (storedToken && storedUser && !isTokenExpired(storedToken)) {
+      const userData = JSON.parse(storedUser);
+      // Backfill role from JWT payload if missing in stored user data
+      if (!userData.role) {
+        try {
+          const payload = JSON.parse(atob(storedToken.split('.')[1]));
+          userData.role = payload.role || 'user';
+        } catch {}
+      }
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      setUser(userData);
     } else if (storedToken) {
       localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.USER_DATA);
@@ -41,6 +49,14 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem(STORAGE_KEYS.USER_DATA);
   }, []);
 
+  const updateUser = useCallback((updates) => {
+    setUser(prev => {
+      const updated = { ...prev, ...updates };
+      localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   // Register logout with the axios interceptor module
   useEffect(() => {
     setLogoutHandler(logout);
@@ -53,6 +69,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!token,
     login,
     logout,
+    updateUser,
   };
 
   return (

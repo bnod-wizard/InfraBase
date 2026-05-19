@@ -35,7 +35,8 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 payload = auth_service.verify_token(token)
                 if not payload or 'user_id' not in payload:
                     return jsonify({'error': 'Invalid token'}), 401
-                request.user_id = payload['user_id']
+                request.user_id   = payload['user_id']
+                request.user_role = payload.get('role', 'user')
             except Exception as e:
                 return jsonify({'error': str(e)}), 401
 
@@ -98,7 +99,8 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
     def get_recent_changelogs():
         try:
             limit = request.args.get('limit', 20, type=int)
-            success, message, result = account_service.get_recent_changelogs(limit)
+            user_id_filter = None if getattr(request, 'user_role', 'user') == 'admin' else request.user_id
+            success, message, result = account_service.get_recent_changelogs(limit, user_id=user_id_filter)
             if success:
                 return jsonify({'success': True, 'message': message, 'data': result}), 200
             return jsonify({'success': False, 'message': message}), 400
@@ -110,7 +112,8 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
     @token_required
     def get_monthly_stats():
         try:
-            success, message, result = account_service.get_monthly_counts()
+            user_id_filter = None if getattr(request, 'user_role', 'user') == 'admin' else request.user_id
+            success, message, result = account_service.get_monthly_counts(user_id=user_id_filter)
             if success:
                 return jsonify({'success': True, 'message': message, 'data': result}), 200
             return jsonify({'success': False, 'message': message}), 400
@@ -122,7 +125,8 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
     @token_required
     def get_account_stats():
         try:
-            success, message, result = account_service.get_stats_overview()
+            user_id_filter = None if getattr(request, 'user_role', 'user') == 'admin' else request.user_id
+            success, message, result = account_service.get_stats_overview(user_id=user_id_filter)
             if success:
                 return jsonify({'success': True, 'message': message, 'data': result}), 200
             return jsonify({'success': False, 'message': message}), 400
@@ -290,8 +294,9 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
             status_str = request.args.get('status', '', type=str)
             status_filters = [s.strip() for s in status_str.split(',')] if status_str else None
             
+            user_id_filter = None if getattr(request, 'user_role', 'user') == 'admin' else request.user_id
             success, message, result = account_service.get_accounts_with_filters(
-                query, status_filters, skip, limit
+                query, status_filters, skip, limit, user_id=user_id_filter
             )
             
             if success:

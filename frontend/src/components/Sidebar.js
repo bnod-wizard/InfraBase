@@ -2,14 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks';
 import accountApi from '../services/accountApi';
+import AddUserModal from './AddUserModal';
 
 function Sidebar({ onOpenAreaCalc }) {
   const navigate  = useNavigate();
   const location  = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [menuOpen,      setMenuOpen]      = useState(false); // user dropdown
   const [mobileOpen,    setMobileOpen]    = useState(false); // mobile drawer
   const [activeCount,   setActiveCount]   = useState(null);
+  const [editSelfOpen,  setEditSelfOpen]  = useState(false);
   const wrapRef = useRef(null);
 
   // Close user dropdown on outside click
@@ -56,6 +58,7 @@ function Sidebar({ onOpenAreaCalc }) {
   const displayName = user?.username || user?.email?.split('@')[0] || 'User';
   const email       = user?.email || '';
   const initials    = getInitials(displayName);
+  const isAdmin     = user?.role === 'admin';
 
   return (
     <>
@@ -98,6 +101,11 @@ function Sidebar({ onOpenAreaCalc }) {
             <span className="ico">◉</span> Accounts
             {activeCount !== null && <span className="badge">{activeCount}</span>}
           </div>
+          {isAdmin && (
+            <div className={`item ${isActive('/home/users') ? 'active' : ''}`} onClick={() => go('/home/users')}>
+              <span className="ico">☻</span> Users
+            </div>
+          )}
           <div className="item" onClick={onOpenAreaCalc}>
             <span className="ico">⬡</span> Area Calculator
           </div>
@@ -126,7 +134,7 @@ function Sidebar({ onOpenAreaCalc }) {
         <div className="sb-user-wrap" ref={wrapRef}>
           {menuOpen && (
             <div className="sb-dropdown">
-              <div className="sb-dropdown-head">
+              <div className="sb-dropdown-head" style={{cursor:'pointer'}} onClick={() => { setMenuOpen(false); setEditSelfOpen(true); }}>
                 <div className="av sb-dropdown-av">{initials}</div>
                 <div>
                   <strong>{displayName}</strong>
@@ -134,6 +142,9 @@ function Sidebar({ onOpenAreaCalc }) {
                 </div>
               </div>
               <div className="sb-dropdown-divider" />
+              <button className="sb-dropdown-item" onClick={() => { setMenuOpen(false); setEditSelfOpen(true); }}>
+                <span>✎</span> Edit Profile
+              </button>
               <button className="sb-dropdown-item sb-dropdown-danger" onClick={handleLogout}>
                 <span>⎋</span> Sign out
               </button>
@@ -148,7 +159,18 @@ function Sidebar({ onOpenAreaCalc }) {
             <span className="sb-chev">{menuOpen ? '▲' : '▼'}</span>
           </div>
         </div>
+
       </aside>
+
+      {/* ── Edit own profile modal — rendered outside <aside> to escape its stacking context ── */}
+      <AddUserModal
+        isOpen={editSelfOpen}
+        editUser={user ? { id: user.id, username: user.username, email: user.email, role: user.role } : null}
+        onClose={() => setEditSelfOpen(false)}
+        onSuccess={(updated) => {
+          if (updated) updateUser(updated);
+        }}
+      />
     </>
   );
 }

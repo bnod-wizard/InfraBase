@@ -25,6 +25,7 @@ def token_required(f):
             auth_service = args[0].auth_service  # Get auth_service from self
             payload = auth_service.verify_token(token)
             request.user_id = payload['user_id']
+            request.user_role = payload.get('role', 'user')
         except IndexError:
             return jsonify({'message': 'Invalid authorization header'}), 401
         except Exception as e:
@@ -105,6 +106,89 @@ class AuthController:
         else:
             return jsonify({'message': message}), 401
     
+    @token_required
+    def get_all_users(self):
+        """
+        List all users — admin only
+
+        Route: GET /api/users
+        """
+        if getattr(request, 'user_role', 'user') != 'admin':
+            return jsonify({'message': 'Admin access required'}), 403
+
+        skip  = request.args.get('skip',  0,   type=int)
+        limit = request.args.get('limit', 100, type=int)
+        success, message, result = self.auth_service.get_all_users(skip=skip, limit=limit)
+        if success:
+            return jsonify({'success': True, 'data': result}), 200
+        return jsonify({'success': False, 'message': message}), 400
+
+    @token_required
+    def create_user_admin(self):
+        """
+        Admin creates a new user
+
+        Route: POST /api/users
+        Body: { username, email, password, role }
+        """
+        if getattr(request, 'user_role', 'user') != 'admin':
+            return jsonify({'message': 'Admin access required'}), 403
+
+        data = request.get_json()
+        success, message, result = self.auth_service.create_user_by_admin(
+            username=data.get('username') if data else None,
+            email=data.get('email')    if data else None,
+            password=data.get('password') if data else None,
+            role=data.get('role', 'user') if data else 'user',
+        )
+        if success:
+            return jsonify({'success': True, 'message': message, 'data': result}), 201
+        return jsonify({'success': False, 'message': message}), 400
+
+    @token_required
+    def update_user_admin(self, user_id):
+        """
+        Admin updates a user
+
+        Route: PUT /api/users/<user_id>
+        Body: { username?, email?, password?, role? }
+        """
+        if getattr(request, 'user_role', 'user') != 'admin':
+            return jsonify({'message': 'Admin access required'}), 403
+
+        data = request.get_json() or {}
+        success, message, result = self.auth_service.update_user_admin(
+            user_id,
+            username=data.get('username') or None,
+            email=data.get('email')    or None,
+            password=data.get('password') or None,
+            role=data.get('role')     or None,
+        )
+        if success:
+            return jsonify({'success': True, 'message': message, 'data': result}), 200
+        return jsonify({'success': False, 'message': message}), 400
+
+    @token_required
+    def delete_user_admin(self, user_id):
+        """
+        Admin deletes a user
+
+        Route: DELETE /api/users/<user_id>
+        """
+        if getattr(request, 'user_role', 'user') != 'admin':
+            return jsonify({'message': 'Admin access required'}), 403
+        if user_id == request.user_id:
+            return jsonify({'success': False, 'message': 'Cannot delete your own account'}), 400
+        # Prevent deletion of the protected root admin account
+        target = self.auth_service.user_repository.find_by_id(user_id)
+        if target and target.get('email', '').lower() == self.auth_service.PROTECTED_EMAIL:
+            return jsonify({'success': False, 'message': 'This account cannot be deleted'}), 403
+
+        success, message, _ = self.auth_service.delete_user_admin(user_id)
+        if success:
+            return jsonify({'success': True, 'message': message}), 200
+        return jsonify({'success': False, 'message': message}), 404
+
     @token_required
     def get_profile(self):
         """

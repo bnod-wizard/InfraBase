@@ -54,10 +54,11 @@ class AccountRepository:
         except Exception as e:
             raise Exception(f"Error fetching accounts: {str(e)}")
 
-    def get_total_count(self):
+    def get_total_count(self, user_id=None):
         """Get total count of accounts"""
         try:
-            return self.collection.count_documents({})
+            filter_q = {'created_by': user_id} if user_id else {}
+            return self.collection.count_documents(filter_q)
         except Exception as e:
             raise Exception(f"Error counting accounts: {str(e)}")
 
@@ -129,11 +130,14 @@ class AccountRepository:
         except Exception as e:
             raise Exception(f"Error searching accounts: {str(e)}")
 
-    def get_accounts_with_filters(self, query='', status_filters=None, skip=0, limit=10):
+    def get_accounts_with_filters(self, query='', status_filters=None, skip=0, limit=10, user_id=None):
         """Get accounts with combined search and status filters"""
         try:
             filters = []
-            
+
+            if user_id:
+                filters.append({'created_by': user_id})
+
             # Add search filter if query is provided
             if query and query.strip():
                 search_filter = {
@@ -144,34 +148,34 @@ class AccountRepository:
                     ]
                 }
                 filters.append(search_filter)
-            
+
             if status_filters and len(status_filters) > 0:
                 status_conditions = [
                     {'status': {'$regex': f'^{re.escape(s)}$', '$options': 'i'}}
                     for s in status_filters
                 ]
                 filters.append({'$or': status_conditions} if len(status_conditions) > 1 else status_conditions[0])
-            
+
             # Combine all filters with AND
             if filters:
-                if len(filters) == 1:
-                    query_filter = filters[0]
-                else:
-                    query_filter = {'$and': filters}
+                query_filter = filters[0] if len(filters) == 1 else {'$and': filters}
             else:
                 query_filter = {}
-            
+
             accounts = list(self.collection.find(query_filter).sort('created_at', -1).skip(skip).limit(limit))
             total = self.collection.count_documents(query_filter)
-            
+
             return accounts, total
         except Exception as e:
             raise Exception(f"Error fetching accounts with filters: {str(e)}")
 
-    def get_status_counts(self):
+    def get_status_counts(self, user_id=None):
         """Get count of accounts grouped by status"""
         try:
-            pipeline = [{'$group': {'_id': '$status', 'count': {'$sum': 1}}}]
+            pipeline = []
+            if user_id:
+                pipeline.append({'$match': {'created_by': user_id}})
+            pipeline.append({'$group': {'_id': '$status', 'count': {'$sum': 1}}})
             results = list(self.collection.aggregate(pipeline))
             return {item['_id']: item['count'] for item in results if item['_id']}
         except Exception as e:
@@ -184,11 +188,14 @@ class AccountRepository:
         except Exception as e:
             raise Exception(f"Error fetching changelog: {str(e)}")
 
-    def get_monthly_counts(self, start_date):
+    def get_monthly_counts(self, start_date, user_id=None):
         """Count accounts created per month from start_date"""
         try:
+            match_filter = {'created_at': {'$gte': start_date}}
+            if user_id:
+                match_filter['created_by'] = user_id
             pipeline = [
-                {'$match': {'created_at': {'$gte': start_date}}},
+                {'$match': match_filter},
                 {
                     '$group': {
                         '_id': {
@@ -204,9 +211,10 @@ class AccountRepository:
         except Exception as e:
             raise Exception(f"Error aggregating monthly counts: {str(e)}")
 
-    def get_recent_changelogs(self, limit=20):
+    def get_recent_changelogs(self, limit=20, user_id=None):
         """Get most recent changelog entries across all accounts"""
         try:
-            return list(self.changelog_model.collection.find().sort('changed_at', -1).limit(limit))
+            filter_q = {'changed_by': user_id} if user_id else {}
+            return list(self.changelog_model.collection.find(filter_q).sort('changed_at', -1).limit(limit))
         except Exception as e:
             raise Exception(f"Error fetching recent changelogs: {str(e)}")

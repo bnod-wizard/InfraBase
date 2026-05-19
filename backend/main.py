@@ -131,6 +131,23 @@ def get_profile():
     """Get user profile (protected route)"""
     return auth_controller.get_profile()
 
+# User management routes (admin only)
+@app.route('/api/users', methods=['GET'])
+def get_all_users():
+    return auth_controller.get_all_users()
+
+@app.route('/api/users', methods=['POST'])
+def create_user_admin():
+    return auth_controller.create_user_admin()
+
+@app.route('/api/users/<user_id>', methods=['PUT'])
+def update_user_admin(user_id):
+    return auth_controller.update_user_admin(user_id)
+
+@app.route('/api/users/<user_id>', methods=['DELETE'])
+def delete_user_admin(user_id):
+    return auth_controller.delete_user_admin(user_id)
+
 # Customer Routes
 @app.route('/api/customers', methods=['POST'])
 def create_customer():
