@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks';
 import accountApi from '../services/accountApi';
 import AddUserModal from './AddUserModal';
+import NotificationBell from './NotificationBell';
 
 function Sidebar({ onOpenAreaCalc }) {
   const navigate  = useNavigate();
@@ -87,9 +88,10 @@ function Sidebar({ onOpenAreaCalc }) {
           ✕
         </button>
 
-        <div className="brand">
+        <div className="brand" style={{ display: 'flex', alignItems: 'center' }}>
           <div className="mark">I</div>
-          <div><b>InfraBase</b></div>
+          <div style={{ flex: 1 }}><b>InfraBase</b></div>
+          <NotificationBell />
         </div>
 
         <div className="group">

@@ -12,7 +12,8 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                        valuation_repository=None, document_service=None,
                        client_service=None, owner_service=None, property_service=None,
                        user_repository=None, account_document_service=None,
-                       account_review_repository=None, note_repository=None):
+                       account_review_repository=None, note_repository=None,
+                       notification_repository=None):
     """Register account-related routes"""
 
     def token_required(f):
@@ -681,6 +682,15 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 if u:
                     assigner_name = u.get('username') or u.get('email', request.user_id)
 
+            # Resolve account name for notification message
+            account_name = account_id
+            try:
+                _, _, acct_data = account_service.get_account(account_id)
+                if acct_data:
+                    account_name = acct_data.get('account_name') or account_id
+            except Exception:
+                pass
+
             account_review_repository.upsert_for_account(account_id, {
                 'account_id':     str(account_id),
                 'reviewer_id':    str(reviewer_id),
@@ -692,9 +702,19 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 'status':         'pending',
                 'note':           '',
             })
+
+            # Create notification for the reviewer
+            if notification_repository:
+                notification_repository.create(
+                    user_id=str(reviewer_id),
+                    title='You have been assigned as reviewer',
+                    description=f'{assigner_name} assigned you to review "{account_name}". Please check the Review Queue.',
+                    redirect_path=f'/home/accounts/{account_id}',
+                )
+
             # Update account status to In-Review
             success, message, result = account_service.update_account(
-                account_id, {'status': 'In-Review'}, request.user_id
+                account_id, {'status': 'In-Review'}, request.user_id, assigner_name
             )
             if success:
                 return jsonify({'success': True, 'message': 'Reviewer assigned', 'data': result}), 200
@@ -764,7 +784,7 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                     note_type='review',
                 )
             success, message, result = account_service.update_account(
-                account_id, {'status': 'Approved'}, request.user_id
+                account_id, {'status': 'Approved'}, request.user_id, actor_name
             )
             if success:
                 return jsonify({'success': True, 'message': 'Account approved', 'data': result}), 200

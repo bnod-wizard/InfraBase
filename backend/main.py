@@ -14,6 +14,7 @@ from controllers.account_controller import account_controller
 from controllers.template_controller import template_controller
 from controllers.settings_controller import settings_controller
 from controllers.valuation_controller import ValuationController
+from controllers.notification_controller import notification_controller
 from services import AuthService, CustomerService, PDFService
 from services.valuation_service import ValuationService
 from services.account_service import AccountService
@@ -34,6 +35,7 @@ from repositories.valuation_repository import ValuationRepository
 from repositories.template_repository import TemplateRepository
 from repositories.account_review_repository import AccountReviewRepository
 from repositories.note_repository import NoteRepository
+from repositories.notification_repository import NotificationRepository
 
 load_dotenv()
 
@@ -97,7 +99,8 @@ if db is not None:
         pdf_controller = PDFController(pdf_service, customer_service, auth_service)
         
         account_review_repository = AccountReviewRepository(db)
-        note_repository = NoteRepository(db)
+        note_repository           = NoteRepository(db)
+        notification_repo         = NotificationRepository(db)
 
         # Register account controller with routes
         account_controller(
@@ -111,7 +114,11 @@ if db is not None:
             account_document_service=account_document_service,
             account_review_repository=account_review_repository,
             note_repository=note_repository,
+            notification_repository=notification_repo,
         )
+
+        # Register notification routes
+        notification_controller(app, auth_service, notification_repo)
 
         # Register template controller
         template_controller(app, template_service, auth_service)
