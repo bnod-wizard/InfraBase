@@ -58,7 +58,7 @@ function Sidebar({ onOpenAreaCalc }) {
   const displayName = user?.username || user?.email?.split('@')[0] || 'User';
   const email       = user?.email || '';
   const initials    = getInitials(displayName);
-  const isAdmin     = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
 
   return (
     <>
@@ -115,6 +115,9 @@ function Sidebar({ onOpenAreaCalc }) {
 
         <div className="group">
           <span className="group-label">Insights</span>
+          <div className={`item ${isActive('/home/review-queue') ? 'active' : ''}`} onClick={() => go('/home/review-queue')}>
+            <span className="ico">◈</span> Review Queue
+          </div>
           {isAdmin && (
             <div className={`item ${isActive('/home/users') ? 'active' : ''}`} onClick={() => go('/home/users')}>
               <span className="ico">☻</span> Users

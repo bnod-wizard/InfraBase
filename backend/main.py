@@ -13,7 +13,9 @@ from controllers import AuthController, CustomerController, PDFController
 from controllers.account_controller import account_controller
 from controllers.template_controller import template_controller
 from controllers.settings_controller import settings_controller
+from controllers.valuation_controller import ValuationController
 from services import AuthService, CustomerService, PDFService
+from services.valuation_service import ValuationService
 from services.account_service import AccountService
 from services.client_service import ClientService
 from services.owner_service import OwnerService
@@ -30,6 +32,8 @@ from repositories.owner_repository import OwnerRepository
 from repositories.property_repository import PropertyRepository
 from repositories.valuation_repository import ValuationRepository
 from repositories.template_repository import TemplateRepository
+from repositories.account_review_repository import AccountReviewRepository
+from repositories.note_repository import NoteRepository
 
 load_dotenv()
 
@@ -49,6 +53,7 @@ db = None
 auth_controller = None
 customer_controller = None
 pdf_controller = None
+valuation_controller = None
 
 try:
     client = MongoClient(MONGO_URI)
@@ -91,6 +96,9 @@ if db is not None:
         customer_controller = CustomerController(customer_service, auth_service)
         pdf_controller = PDFController(pdf_service, customer_service, auth_service)
         
+        account_review_repository = AccountReviewRepository(db)
+        note_repository = NoteRepository(db)
+
         # Register account controller with routes
         account_controller(
             app, account_service, bulk_account_service, auth_service, db,
@@ -101,6 +109,8 @@ if db is not None:
             property_service=property_service,
             user_repository=user_repository,
             account_document_service=account_document_service,
+            account_review_repository=account_review_repository,
+            note_repository=note_repository,
         )
 
         # Register template controller
@@ -108,6 +118,10 @@ if db is not None:
 
         # Register settings controller
         settings_controller(app, db, auth_service)
+
+        # Valuation approval workflow
+        valuation_service    = ValuationService(valuation_repository, user_repository)
+        valuation_controller = ValuationController(valuation_service, auth_service)
 
         print("✓ Controllers, Services, and Repositories initialized")
     except Exception as e:
@@ -199,6 +213,19 @@ def generate_cover_pdf(customer_id):
 def generate_report_pdf(customer_id):
     """Generate report PDF for a customer"""
     return pdf_controller.generate_report_pdf(customer_id)
+
+# Valuation approval workflow routes
+@app.route('/api/valuations/queue', methods=['GET'])
+def valuation_queue():
+    return valuation_controller.get_queue()
+
+@app.route('/api/valuations/tracked', methods=['GET'])
+def valuation_tracked():
+    return valuation_controller.get_all_tracked()
+
+@app.route('/api/valuations/<valuation_id>/action/<action>', methods=['POST'])
+def valuation_action(valuation_id, action):
+    return valuation_controller.take_action(valuation_id, action)
 
 @app.route('/api/health', methods=['GET'])
 def health():

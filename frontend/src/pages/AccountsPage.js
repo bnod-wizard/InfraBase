@@ -9,8 +9,7 @@ const FILTER_KEY = 'accounts_filter';
 
 // Each chip label is the exact status value stored in the DB
 const STATUS_CHIPS = [
-  'Active', 'Prospect', 'Bank Verification', 'Bank Verified',
-  'Payment Pending', 'Paid', 'Lost', 'Archived', 'Deleted',
+  'Prospect', 'In-Review', 'Approved', 'Bank Verification', 'Active', 'Lost',
 ];
 
 const DOC_TEMPLATES = [
@@ -18,15 +17,12 @@ const DOC_TEMPLATES = [
 ];
 
 const PILL_COLOR = {
-  Active:             { bg: '#e6f3ec', color: '#166534' },
   Prospect:           { bg: '#e7f3ff', color: '#1e4d8c' },
+  'In-Review':        { bg: '#fff0ed', color: '#c2410c' },
+  Approved:           { bg: '#e0f2f1', color: '#00695c' },
   'Bank Verification':{ bg: '#e7f3ff', color: '#1e4d8c' },
-  'Bank Verified':    { bg: '#e0f2f1', color: '#00695c' },
-  'Payment Pending':  { bg: '#fff0ed', color: '#c2410c' },
-  Paid:               { bg: '#e6f3ec', color: '#166534' },
+  Active:             { bg: '#e6f3ec', color: '#166534' },
   Lost:               { bg: '#fde3e0', color: '#991b1b' },
-  Archived:           { bg: '#f3f1f0', color: '#6b7280' },
-  Deleted:            { bg: '#f3f1f0', color: '#6b7280' },
 };
 
 function FilterDropdown({ options, selected, onChange }) {

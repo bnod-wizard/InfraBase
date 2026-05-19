@@ -15,21 +15,11 @@ axiosInstance.interceptors.request.use(
 
 attachAuthInterceptor(axiosInstance);
 
-const usersApi = {
-  getAll: (skip = 0, limit = 100) =>
-    axiosInstance.get('/users', { params: { skip, limit } }),
-
-  search: (q, limit = 20) =>
-    axiosInstance.get('/users', { params: { q, limit } }),
-
-  createUser: (data) =>
-    axiosInstance.post('/users', data),
-
-  updateUser: (userId, data) =>
-    axiosInstance.put(`/users/${userId}`, data),
-
-  deleteUser: (userId) =>
-    axiosInstance.delete(`/users/${userId}`),
+const valuationApi = {
+  getQueue:      ()                         => axiosInstance.get('/valuations/queue'),
+  getTracked:    ()                         => axiosInstance.get('/valuations/tracked'),
+  takeAction:    (valuationId, action, note) =>
+    axiosInstance.post(`/valuations/${valuationId}/action/${action}`, { note: note || '' }),
 };
 
-export default usersApi;
+export default valuationApi;

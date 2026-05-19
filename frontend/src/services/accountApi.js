@@ -95,6 +95,19 @@ const accountApi = {
   previewDocument: (accountId, docType) =>
     axiosInstance.get(`/accounts/${accountId}/preview/${docType}`),
 
+  // Review assignment
+  assignReviewer: (accountId, data) =>
+    axiosInstance.post(`/accounts/${accountId}/assign-reviewer`, data),
+  getMyAssignedReviews: () =>
+    axiosInstance.get('/reviews/my-assigned'),
+  approveReview: (accountId, note) =>
+    axiosInstance.post(`/reviews/${accountId}/approve`, { note: note || '' }),
+
+  getNotes: (accountId) =>
+    axiosInstance.get(`/accounts/${accountId}/notes`),
+  addNote: (accountId, content) =>
+    axiosInstance.post(`/accounts/${accountId}/notes`, { content }),
+
   // Settings (certifiers, banks, visitors)
   getSettings: (type) =>
     axiosInstance.get(`/settings/${type}`),

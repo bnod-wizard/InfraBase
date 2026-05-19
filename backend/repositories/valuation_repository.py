@@ -2,6 +2,7 @@
 Valuation Repository - Data access for ValuationReport
 """
 from bson import ObjectId
+from datetime import datetime
 
 
 class ValuationRepository:
@@ -34,3 +35,31 @@ class ValuationRepository:
     def delete(self, valuation_id):
         result = self.collection.delete_one({'_id': ObjectId(valuation_id)})
         return result.deleted_count > 0
+
+    # ── Approval workflow ──────────────────────────────────────────────────
+
+    def update_approval(self, valuation_id, approval_status, history_entry, extra_fields=None):
+        """Set approval_status, append a history entry, update updated_at."""
+        update = {
+            '$set': {
+                'approval_status': approval_status,
+                'updated_at': datetime.utcnow(),
+                **(extra_fields or {}),
+            },
+            '$push': {'approval_history': history_entry},
+        }
+        self.collection.update_one({'_id': ObjectId(valuation_id)}, update)
+
+    def find_by_approval_status(self, statuses, created_by=None):
+        """Return valuations whose approval_status is in the given list."""
+        query = {'approval_status': {'$in': statuses}}
+        if created_by:
+            query['created_by'] = created_by
+        return list(self.collection.find(query).sort('updated_at', -1))
+
+    def find_all_with_approval(self, created_by=None):
+        """Return all valuations that have an approval_status field."""
+        query = {'approval_status': {'$exists': True}}
+        if created_by:
+            query['created_by'] = created_by
+        return list(self.collection.find(query).sort('updated_at', -1))

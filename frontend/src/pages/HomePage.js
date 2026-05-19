@@ -9,6 +9,7 @@ import TemplateBuilder from '../components/TemplateBuilder';
 import AreaCalculatorModal from '../components/AreaCalculatorModal';
 import SettingsPage from './SettingsPage';
 import UsersPage from './UsersPage';
+import ReviewQueuePage from './ReviewQueuePage';
 import accountApi from '../services/accountApi';
 
 const HomePage = () => {
@@ -26,6 +27,7 @@ const HomePage = () => {
           <Route path="templates/:templateId" element={<TemplateBuilder />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="users" element={<UsersPage />} />
+          <Route path="review-queue" element={<ReviewQueuePage />} />
         </Routes>
       </main>
       <AreaCalculatorModal
@@ -40,9 +42,10 @@ const HomePage = () => {
 const SWATCH = {
   active:             'var(--ok)',
   paid:               'var(--ok)',
+  approved:           'var(--ok)',
   'bank verified':    '#00897b',
   'bank verification':'var(--info)',
-  prospect:           'var(--info)',
+  'in-review':        'var(--warn)',
   'payment pending':  'var(--warn)',
   pending:            'var(--warn)',
   lost:               'var(--danger)',
@@ -89,12 +92,12 @@ const buildMessage = log => {
 
 /* ── Pipeline stage definitions ────────────────────────────── */
 const PIPELINE_STAGES = [
-  { label: 'Active',            key: 'Active',            color: '#2e8b57', bg: '#e6f3ec' },
-  { label: 'Prospect',          key: 'Prospect',          color: '#3b6fb6', bg: '#e7f3ff' },
+  { label: 'Prospect',          key: 'Prospect',          color: '#1e4d8c', bg: '#e7f3ff' },
+  { label: 'In-Review',         key: 'In-Review',         color: '#e8743b', bg: '#fff0ed' },
+  { label: 'Approved',          key: 'Approved',          color: '#00695c', bg: '#e0f2f1' },
   { label: 'Bank Verification', key: 'Bank Verification', color: '#3b6fb6', bg: '#e7f3ff' },
-  { label: 'Bank Verified',     key: 'Bank Verified',     color: '#00695c', bg: '#e0f2f1' },
-  { label: 'Payment Pending',   key: 'Payment Pending',   color: '#e8743b', bg: '#fff0ed' },
-  { label: 'Paid',              key: 'Paid',              color: '#2e8b57', bg: '#e6f3ec' },
+  { label: 'Active',            key: 'Active',            color: '#2e8b57', bg: '#e6f3ec' },
+  { label: 'Lost',              key: 'Lost',              color: '#991b1b', bg: '#fde3e0' },
 ];
 
 /* ── DashboardContent ──────────────────────────────────────── */

@@ -18,37 +18,23 @@ const avatarColor = name => {
 const pillClass = status => {
   switch ((status || '').toLowerCase()) {
     case 'active':            return 'ok';
-    case 'paid':              return 'ok';
-    case 'bank verified':     return 'info';
-    case 'bank verification': return 'review';
+    case 'approved':          return 'info';
     case 'prospect':          return 'review';
-    case 'payment pending':   return 'warn';
-    case 'pending':           return 'warn';
-    case 'lost':
-    case 'overdue':           return 'due';
-    case 'deleted':
-    case 'archived':
-    case 'inactive':
-    case 'closed':            return 'draft';
+    case 'bank verification': return 'review';
+    case 'in-review':         return 'warn';
+    case 'lost':              return 'due';
     default:                  return 'draft';
   }
 };
 
 const rowStatusClass = status => {
   switch ((status || '').toLowerCase()) {
-    case 'active':
-    case 'paid':
-    case 'bank verified':     return 'status-ok';
-    case 'bank verification':
-    case 'prospect':          return 'status-review';
-    case 'payment pending':
-    case 'pending':           return 'status-review';
-    case 'lost':
-    case 'overdue':           return 'status-due';
-    case 'deleted':
-    case 'archived':
-    case 'inactive':
-    case 'closed':            return 'status-draft';
+    case 'active':            return 'status-ok';
+    case 'approved':          return 'status-ok';
+    case 'prospect':
+    case 'bank verification': return 'status-review';
+    case 'in-review':         return 'status-review';
+    case 'lost':              return 'status-due';
     default:                  return 'status-draft';
   }
 };
@@ -121,7 +107,7 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
 
   const confirmDelete = () => {
     if (!deleteTarget) return;
-    accountApi.deleteAccount(deleteTarget)
+    accountApi.updateAccount(deleteTarget, { status: 'Lost' })
       .then(fetchAccountsWithFilters)
       .catch(console.error)
       .finally(() => setDeleteTarget(null));
@@ -147,9 +133,9 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
     <div className="account-list-wrap">
       <ConfirmModal
         isOpen={!!deleteTarget}
-        title="Mark account as Deleted?"
-        message="The account will be marked as Deleted and hidden from active views. This action is logged and can be reversed by changing the status."
-        confirmLabel="Delete"
+        title="Mark account as Lost?"
+        message="The account status will be set to Lost. This is logged and can be reversed by changing the status."
+        confirmLabel="Mark as Lost"
         cancelLabel="Cancel"
         variant="danger"
         onConfirm={confirmDelete}
@@ -200,7 +186,7 @@ function AccountList({ onAddClick, refreshKey, statusFilters = [], searchTerm = 
                             style={{ cursor: 'pointer' }}
                             onClick={() => navigate(`/home/accounts/${account._id}`)}
                           >
-                            {account.account_name}
+                            {account.account_name || <span style={{ color: 'var(--ink-mute)', fontWeight: 400, fontStyle: 'italic' }}>Unnamed account</span>}
                           </b>
                           <small>{account.email}</small>
                         </div>

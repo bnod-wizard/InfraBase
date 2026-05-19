@@ -197,9 +197,9 @@ class AuthService:
             'created_at': user['created_at'].isoformat()
         }
 
-    def get_all_users(self, skip=0, limit=100):
-        """List all users (admin only)"""
-        users = self.user_repository.get_all_users(limit=limit, skip=skip)
+    def get_all_users(self, skip=0, limit=100, q=None):
+        """List all users (admin only), optionally filtered by search query."""
+        users = self.user_repository.get_all_users(limit=limit, skip=skip, q=q)
         result = []
         for u in users:
             result.append({
@@ -211,14 +211,16 @@ class AuthService:
             })
         return True, 'Users retrieved', result
 
+    VALID_ROLES = ('user', 'reviewer', 'admin')
+
     def create_user_by_admin(self, username, email, password, role='user'):
         """Admin creates a user with a specified role"""
         if not username or not email or not password:
             return False, 'Missing required fields', None
         if len(password) < 6:
             return False, 'Password must be at least 6 characters', None
-        if role not in ('user', 'admin'):
-            return False, 'Role must be user or admin', None
+        if role not in self.VALID_ROLES:
+            return False, 'Invalid role', None
         if self.user_repository.user_exists(email=email):
             return False, 'Email already registered', None
         if self.user_repository.user_exists(username=username):
@@ -251,8 +253,8 @@ class AuthService:
         existing_user = self.user_repository.find_by_id(user_id)
         if not existing_user:
             return False, 'User not found', None
-        if role and role not in ('user', 'admin'):
-            return False, 'Role must be user or admin', None
+        if role and role not in self.VALID_ROLES:
+            return False, 'Invalid role', None
         # Protect the root admin account — email, password, and role cannot be changed
         if existing_user.get('email', '').lower() == self.PROTECTED_EMAIL:
             if email or password or role:

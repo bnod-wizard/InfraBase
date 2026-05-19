@@ -11,7 +11,8 @@ import io
 def account_controller(app, account_service, bulk_account_service, auth_service, db=None,
                        valuation_repository=None, document_service=None,
                        client_service=None, owner_service=None, property_service=None,
-                       user_repository=None, account_document_service=None):
+                       user_repository=None, account_document_service=None,
+                       account_review_repository=None, note_repository=None):
     """Register account-related routes"""
 
     def token_required(f):
@@ -655,5 +656,174 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 return jsonify({'success': False, 'message': 'File not found'}), 404
             from flask import redirect
             return redirect(url)
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # ── Review assignment ──────────────────────────────────────────────────
+
+    @app.route('/api/accounts/<account_id>/assign-reviewer', methods=['POST'])
+    @token_required
+    def assign_reviewer(account_id):
+        """Assign a reviewer to an account and set status to In-Review."""
+        if account_review_repository is None:
+            return jsonify({'success': False, 'message': 'Review feature unavailable'}), 503
+        data = request.get_json() or {}
+        reviewer_id   = data.get('reviewer_id')
+        reviewer_name = data.get('reviewer_name', '')
+        reviewer_email= data.get('reviewer_email', '')
+        if not reviewer_id:
+            return jsonify({'success': False, 'message': 'reviewer_id is required'}), 400
+        try:
+            # Resolve assigner name
+            assigner_name = request.user_id
+            if user_repository:
+                u = user_repository.find_by_id(request.user_id)
+                if u:
+                    assigner_name = u.get('username') or u.get('email', request.user_id)
+
+            account_review_repository.upsert_for_account(account_id, {
+                'account_id':     str(account_id),
+                'reviewer_id':    str(reviewer_id),
+                'reviewer_name':  reviewer_name,
+                'reviewer_email': reviewer_email,
+                'assigned_by':    request.user_id,
+                'assigned_by_name': assigner_name,
+                'assigned_at':    datetime.utcnow(),
+                'status':         'pending',
+                'note':           '',
+            })
+            # Update account status to In-Review
+            success, message, result = account_service.update_account(
+                account_id, {'status': 'In-Review'}, request.user_id
+            )
+            if success:
+                return jsonify({'success': True, 'message': 'Reviewer assigned', 'data': result}), 200
+            return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/reviews/my-assigned', methods=['GET'])
+    @token_required
+    def get_my_assigned_reviews():
+        """Accounts assigned to the current user for review."""
+        if account_review_repository is None:
+            return jsonify({'success': False, 'message': 'Review feature unavailable'}), 503
+        try:
+            role = getattr(request, 'user_role', 'user')
+            if role == 'admin':
+                assignments = account_review_repository.find_all_active()
+            else:
+                assignments = account_review_repository.find_by_reviewer(request.user_id)
+
+            # Enrich with account data
+            enriched = []
+            for a in assignments:
+                acct = None
+                try:
+                    success, _, acct = account_service.get_account(str(a['account_id']))
+                except Exception:
+                    pass
+                enriched.append({
+                    'review_id':      str(a['_id']),
+                    'account_id':     str(a['account_id']),
+                    'account_name':   (acct or {}).get('account_name') or None,
+                    'account_status': (acct or {}).get('status', ''),
+                    'reviewer_id':    a.get('reviewer_id'),
+                    'reviewer_name':  a.get('reviewer_name'),
+                    'assigned_by_name': a.get('assigned_by_name'),
+                    'assigned_at':    a['assigned_at'].isoformat() if a.get('assigned_at') else None,
+                    'status':         a.get('status', 'pending'),
+                })
+            return jsonify({'success': True, 'data': enriched}), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/reviews/<account_id>/approve', methods=['POST'])
+    @token_required
+    def approve_review(account_id):
+        """Reviewer approves — sets account status to Approved."""
+        if account_review_repository is None:
+            return jsonify({'success': False, 'message': 'Review feature unavailable'}), 503
+        try:
+            actor_name = request.user_id
+            if user_repository:
+                u = user_repository.find_by_id(request.user_id)
+                if u:
+                    actor_name = u.get('username') or u.get('email', request.user_id)
+
+            data = request.get_json() or {}
+            note = data.get('note', '')
+            account_review_repository.mark_approved(account_id, request.user_id, actor_name, note)
+            # Persist review note into the shared notes collection
+            if note_repository and note.strip():
+                note_repository.create(
+                    account_id=account_id,
+                    content=note.strip(),
+                    created_by=request.user_id,
+                    created_by_name=actor_name,
+                    note_type='review',
+                )
+            success, message, result = account_service.update_account(
+                account_id, {'status': 'Approved'}, request.user_id
+            )
+            if success:
+                return jsonify({'success': True, 'message': 'Account approved', 'data': result}), 200
+            return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    # ── Notes ─────────────────────────────────────────────────────────────────
+
+    @app.route('/api/accounts/<account_id>/notes', methods=['GET'])
+    @token_required
+    def get_notes(account_id):
+        if note_repository is None:
+            return jsonify({'success': False, 'message': 'Notes unavailable'}), 503
+        try:
+            raw = note_repository.find_by_account(account_id)
+            notes = []
+            for n in raw:
+                notes.append({
+                    'id':               str(n['_id']),
+                    'content':          n.get('content', ''),
+                    'created_by':       n.get('created_by', ''),
+                    'created_by_name':  n.get('created_by_name', ''),
+                    'type':             n.get('type', 'manual'),
+                    'created_at':       n['created_at'].isoformat() if n.get('created_at') else None,
+                })
+            return jsonify({'success': True, 'data': notes}), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/accounts/<account_id>/notes', methods=['POST'])
+    @token_required
+    def add_note(account_id):
+        if note_repository is None:
+            return jsonify({'success': False, 'message': 'Notes unavailable'}), 503
+        data = request.get_json() or {}
+        content = (data.get('content') or '').strip()
+        if not content:
+            return jsonify({'success': False, 'message': 'content is required'}), 400
+        try:
+            author_name = request.user_id
+            if user_repository:
+                u = user_repository.find_by_id(request.user_id)
+                if u:
+                    author_name = u.get('username') or u.get('email', request.user_id)
+            note = note_repository.create(
+                account_id=account_id,
+                content=content,
+                created_by=request.user_id,
+                created_by_name=author_name,
+                note_type='manual',
+            )
+            return jsonify({'success': True, 'data': {
+                'id':              str(note['_id']),
+                'content':         note['content'],
+                'created_by':      note['created_by'],
+                'created_by_name': note['created_by_name'],
+                'type':            note['type'],
+                'created_at':      note['created_at'].isoformat(),
+            }}), 201
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500

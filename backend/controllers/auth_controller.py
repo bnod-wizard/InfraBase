@@ -118,7 +118,8 @@ class AuthController:
 
         skip  = request.args.get('skip',  0,   type=int)
         limit = request.args.get('limit', 100, type=int)
-        success, message, result = self.auth_service.get_all_users(skip=skip, limit=limit)
+        q     = request.args.get('q',     None)
+        success, message, result = self.auth_service.get_all_users(skip=skip, limit=limit, q=q)
         if success:
             return jsonify({'success': True, 'data': result}), 200
         return jsonify({'success': False, 'message': message}), 400

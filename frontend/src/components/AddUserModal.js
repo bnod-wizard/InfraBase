@@ -194,6 +194,7 @@ function AddUserModal({ isOpen, onClose, onSuccess, editUser = null, canEditRole
                 <div className="form-grid">
                   <SelectInput name="role" value={form.role} onChange={handle} label="Role *" disabled={isProtected}>
                     <option value="user">User — standard access</option>
+                    <option value="reviewer">Reviewer — senior review access</option>
                     <option value="admin">Admin — full access</option>
                   </SelectInput>
                 </div>

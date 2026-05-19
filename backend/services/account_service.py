@@ -62,14 +62,29 @@ class AccountService:
             return False, str(e), None
 
     def update_account(self, account_id, account_data, changed_by=None, changed_by_name=None):
-        """Update account"""
+        """Update account — supports both full and partial payloads."""
         try:
             account = self.account_repository.find_by_id(account_id)
             if not account:
                 return False, "Account not found", None
 
-            updated_data = AccountModel.to_dict(account_data)
-            updated_data['_id'] = account['_id']
+            # Build the $set payload: run through to_dict only when all fields are
+            # present (full edit form). For partial updates (e.g. status-only), use
+            # the provided dict directly so we don't overwrite existing fields with None.
+            KNOWN_FIELDS = {
+                'account_name', 'company_registration', 'registration_number', 'tax_id',
+                'business_type', 'phone', 'email', 'website', 'address', 'ward_no',
+                'vdc_municipality', 'district', 'country', 'logo_url', 'status',
+                'created_by', 'created_at',
+            }
+            is_full_update = KNOWN_FIELDS.issubset(account_data.keys())
+            if is_full_update:
+                updated_data = AccountModel.to_dict(account_data)
+                updated_data['_id'] = account['_id']
+            else:
+                # Partial update: only touch the supplied fields + updated_at
+                updated_data = {k: v for k, v in account_data.items() if k in KNOWN_FIELDS}
+                updated_data['updated_at'] = datetime.utcnow()
 
             success = self.account_repository.update_account(
                 account_id, updated_data,

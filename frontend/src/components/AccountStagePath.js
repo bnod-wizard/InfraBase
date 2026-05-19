@@ -3,15 +3,15 @@ import ConfirmModal from './ConfirmModal';
 import '../styles/AccountStagePath.css';
 
 export const PIPELINE_STAGES = [
-  { key: 'Active',            label: 'Active',            sub: 'Account opened'   },
   { key: 'Prospect',          label: 'Prospect',          sub: 'Initial contact'  },
+  { key: 'In-Review',         label: 'In-Review',         sub: 'Under review'     },
+  { key: 'Approved',          label: 'Approved',          sub: 'Review approved'  },
   { key: 'Bank Verification', label: 'Bank Verification', sub: 'Verifying bank'   },
-  { key: 'Bank Verified',     label: 'Bank Verified',     sub: 'Bank confirmed'   },
-  { key: 'Payment Pending',   label: 'Payment Pending',   sub: 'Awaiting payment' },
-  { key: 'Paid',              label: 'Paid',              sub: 'Completed'        },
+  { key: 'Active',            label: 'Active',            sub: 'Account live'     },
+  { key: 'Lost',              label: 'Lost',              sub: 'Closed / lost'    },
 ];
 
-const TERMINAL_STATES = ['lost', 'deleted', 'archived', 'inactive'];
+const TERMINAL_STATES = ['lost'];
 
 const CheckIcon = () => (
   <svg width="13" height="10" viewBox="0 0 13 10" fill="none"
@@ -52,8 +52,10 @@ function AccountStagePath({ currentStatus, changelog = [], onStatusChange, savin
     : (currentIdx / (PIPELINE_STAGES.length - 1)) * 100;
 
   const handleNodeClick = (stage, idx) => {
-    if (idx <= currentIdx || isTerminal || saving) return;
-    setPending({ stage, isSkip: idx > currentIdx + 1 });
+    if (idx === currentIdx || isTerminal || saving) return;
+    const isBack = idx < currentIdx;
+    const isSkip = !isBack && idx > currentIdx + 1;
+    setPending({ stage, isBack, isSkip });
   };
 
   const handleConfirm = () => {
@@ -73,7 +75,7 @@ function AccountStagePath({ currentStatus, changelog = [], onStatusChange, savin
                            : idx < currentIdx   ? 'done'
                            : idx === currentIdx ? 'current'
                            :                     'todo';
-            const canClick = !isTerminal && idx > currentIdx && !saving;
+            const canClick = !isTerminal && idx !== currentIdx && !saving;
             const date     = stageDates[stage.key];
 
             return (
@@ -81,7 +83,7 @@ function AccountStagePath({ currentStatus, changelog = [], onStatusChange, savin
                 key={stage.key}
                 className={`sp-step sp-step--${state}${canClick ? ' sp-step--clickable' : ''}`}
                 onClick={() => handleNodeClick(stage, idx)}
-                title={canClick ? `Move to ${stage.label}` : undefined}
+                title={canClick ? (idx < currentIdx ? `Move back to ${stage.label}` : `Move to ${stage.label}`) : undefined}
               >
                 <div className="sp-node">
                   {state === 'done' ? <CheckIcon /> : <span>{idx + 1}</span>}
@@ -99,13 +101,19 @@ function AccountStagePath({ currentStatus, changelog = [], onStatusChange, savin
       {/* Confirmation modal */}
       <ConfirmModal
         isOpen={!!pending}
-        title={pending?.isSkip ? 'Skip stages?' : `Move to ${pending?.stage.label}?`}
+        title={
+          pending?.isBack ? `Move back to ${pending?.stage.label}?`
+          : pending?.isSkip ? 'Skip stages?'
+          : `Move to ${pending?.stage.label}?`
+        }
         message={
-          pending?.isSkip
+          pending?.isBack
+            ? `This will move the account back to "${pending?.stage.label}". The change will be logged in the activity history.`
+            : pending?.isSkip
             ? `This will jump the account directly to "${pending?.stage.label}", bypassing any intermediate stages. Are you sure?`
             : `The account status will be updated to "${pending?.stage.label}". This action will be logged in the activity history.`
         }
-        confirmLabel={pending?.isSkip ? 'Yes, skip ahead' : 'Confirm'}
+        confirmLabel={pending?.isBack ? 'Yes, move back' : pending?.isSkip ? 'Yes, skip ahead' : 'Confirm'}
         onConfirm={handleConfirm}
         onCancel={() => setPending(null)}
       />

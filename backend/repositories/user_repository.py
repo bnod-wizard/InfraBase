@@ -125,18 +125,15 @@ class UserRepository:
         except Exception as e:
             return False
     
-    def get_all_users(self, limit=100, skip=0):
+    def get_all_users(self, limit=100, skip=0, q=None):
         """
-        Get all users with pagination
-        
-        Args:
-            limit (int): Maximum number of users to return
-            skip (int): Number of users to skip
-            
-        Returns:
-            list: List of user documents
+        Get all users with optional search filter and pagination.
         """
-        return list(self.collection.find({}).skip(skip).limit(limit))
+        query = {}
+        if q:
+            pattern = {'$regex': q, '$options': 'i'}
+            query = {'$or': [{'username': pattern}, {'email': pattern}]}
+        return list(self.collection.find(query).skip(skip).limit(limit))
     
     def user_exists(self, email=None, username=None):
         """

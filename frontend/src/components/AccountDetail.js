@@ -10,29 +10,23 @@ import AddToAccountModal from './AddToAccountModal';
 import ConfirmModal from './ConfirmModal';
 import GPSPickerModal from './GPSPickerModal';
 import { IconView, IconDelete, IconDownload, IconAdd, IconEdit, IconUpload } from './Icons';
+import AssignReviewerModal from './AssignReviewerModal';
+import AddNoteModal from './AddNoteModal';
 import { useToast } from '../context';
 import '../styles/AccountDetail.css';
 
 const STATUS_OPTIONS = [
-  'Active', 'Prospect', 'Bank Verification', 'Bank Verified',
-  'Payment Pending', 'Paid', 'Lost', 'Archived', 'Inactive',
+  'Prospect', 'In-Review', 'Approved', 'Bank Verification', 'Active', 'Lost',
 ];
 
 const pillClass = status => {
   switch ((status || '').toLowerCase()) {
     case 'active':            return 'ok';
-    case 'paid':              return 'ok';
-    case 'bank verified':     return 'info';
-    case 'bank verification': return 'review';
+    case 'approved':          return 'info';
     case 'prospect':          return 'review';
-    case 'payment pending':   return 'warn';
-    case 'pending':           return 'warn';
-    case 'lost':
-    case 'overdue':           return 'due';
-    case 'deleted':
-    case 'archived':
-    case 'inactive':
-    case 'closed':            return 'draft';
+    case 'bank verification': return 'review';
+    case 'in-review':         return 'warn';
+    case 'lost':              return 'due';
     default:                  return 'draft';
   }
 };
@@ -65,8 +59,13 @@ function AccountDetail() {
   const [areaCalcCtx,       setAreaCalcCtx]       = useState(null); // { property, type: 'measurement'|'lalpurja'|'deduction' }
   const [mapProperty,       setMapProperty]       = useState(null);
   const [stageSaving,       setStageSaving]       = useState(false);
+  const [assignReviewerOpen, setAssignReviewerOpen] = useState(false);
+  const [assignLoading,      setAssignLoading]      = useState(false);
   const [gpsPickerOpen,     setGpsPickerOpen]     = useState(false);
   const [addModal,          setAddModal]          = useState(null); // 'client' | 'owner' | 'property'
+  const [notes,             setNotes]             = useState([]);
+  const [noteModalOpen,     setNoteModalOpen]     = useState(false);
+  const [noteSaving,        setNoteSaving]        = useState(false);
 
   const accountFields = [
     { accessor: 'account_name',         label: 'Account Name',     np: 'खाता नाम' },
@@ -301,6 +300,32 @@ function AccountDetail() {
   ];
 
   useEffect(() => { if (accountId) fetchAccountHierarchy(); }, [accountId]);
+  useEffect(() => { if (accountId) fetchNotes(); }, [accountId]);
+
+  const fetchNotes = async () => {
+    try {
+      const res = await accountApi.getNotes(accountId);
+      if (res.data?.success) setNotes(res.data.data || []);
+    } catch { /* silent */ }
+  };
+
+  const handleAddNote = async content => {
+    setNoteSaving(true);
+    try {
+      const res = await accountApi.addNote(accountId, content);
+      if (res.data?.success) {
+        setNotes(prev => [res.data.data, ...prev]);
+        setNoteModalOpen(false);
+        toast('Note saved');
+      } else {
+        toast(res.data?.message || 'Failed to save note', 'error');
+      }
+    } catch {
+      toast('Network error', 'error');
+    } finally {
+      setNoteSaving(false);
+    }
+  };
 
   const fetchAccountHierarchy = async () => {
     setLoading(true); setError(null);
@@ -374,6 +399,10 @@ function AccountDetail() {
 
 
   const handleStageChange = async newStatus => {
+    if (newStatus === 'In-Review') {
+      setAssignReviewerOpen(true);
+      return;
+    }
     setStageSaving(true);
     try {
       const payload = { ...formData, status: newStatus };
@@ -390,6 +419,30 @@ function AccountDetail() {
       toast('Network error — status not updated.');
     } finally {
       setStageSaving(false);
+    }
+  };
+
+  const handleAssignReviewer = async reviewer => {
+    setAssignLoading(true);
+    try {
+      const res = await accountApi.assignReviewer(accountId, {
+        reviewer_id:    reviewer.id,
+        reviewer_name:  reviewer.username,
+        reviewer_email: reviewer.email,
+      });
+      if (res.data?.success) {
+        setFormData(res.data.data);
+        setHierarchy(prev => ({ ...prev, account: res.data.data }));
+        toast(`Assigned to ${reviewer.username} — status set to In-Review`);
+        setAssignReviewerOpen(false);
+        await fetchChangelog();
+      } else {
+        toast(res.data?.message || 'Failed to assign reviewer', 'error');
+      }
+    } catch {
+      toast('Network error — reviewer not assigned', 'error');
+    } finally {
+      setAssignLoading(false);
     }
   };
 
@@ -875,23 +928,66 @@ function AccountDetail() {
             </div>
           </div>
 
+          {/* ── Notes panel ── */}
           <div className="panel">
-            <div className="panel-head"><h3>Quick Info</h3></div>
-            <div className="ad-info-rows">
-              {[
-                { label: 'Status',   val: formData.status || '—' },
-                { label: 'Tax ID',   val: renderValue(formData.tax_id) },
-                { label: 'District', val: renderValue(formData.district) },
-                { label: 'Country',  val: renderValue(formData.country) },
-                { label: 'Created', val: formatDate(formData.created_at) },
-                { label: 'Updated', val: formatDate(formData.updated_at) },
-              ].map(row => (
-                <div key={row.label} className="ad-info-row">
-                  <span>{row.label}</span>
-                  <strong>{row.val}</strong>
-                </div>
-              ))}
+            <div className="panel-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3>
+                Notes
+                {notes.length > 0 && (
+                  <span style={{ background: '#1f3a2e', color: '#fff', borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 600, marginLeft: 6 }}>
+                    {notes.length}
+                  </span>
+                )}
+              </h3>
+              <button
+                onClick={() => setNoteModalOpen(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 26, height: 26, borderRadius: '50%',
+                  border: '1.5px solid var(--brand)', background: 'none',
+                  color: 'var(--brand)', fontSize: 18, lineHeight: 1,
+                  cursor: 'pointer', fontWeight: 700,
+                }}
+                title="Add note"
+              >＋</button>
             </div>
+
+            {notes.length === 0 ? (
+              <div style={{ padding: '16px 18px', color: 'var(--ink-mute)', fontSize: 13 }}>
+                No notes yet.{' '}
+                <button
+                  onClick={() => setNoteModalOpen(true)}
+                  style={{ background: 'none', border: 'none', color: 'var(--brand)', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}
+                >Add one</button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxHeight: 420, overflowY: notes.length > 4 ? 'auto' : 'visible' }}>
+                {notes.map((n, i) => (
+                  <div key={n.id} style={{
+                    padding: '12px 18px',
+                    borderBottom: i < notes.length - 1 ? '1px solid var(--line)' : 'none',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, fontFamily: 'var(--mono)',
+                        textTransform: 'uppercase', padding: '2px 7px', borderRadius: 99,
+                        background: n.type === 'review' ? '#e7f3ff' : '#f3f1f0',
+                        color:      n.type === 'review' ? '#1e4d8c'  : 'var(--ink-dim)',
+                      }}>{n.type === 'review' ? 'Review' : 'Note'}</span>
+                      <span style={{ fontSize: 11, color: 'var(--ink-dim)', fontFamily: 'var(--mono)' }}>
+                        {n.created_by_name || '—'}
+                      </span>
+                      <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--ink-mute)', fontFamily: 'var(--mono)' }}>
+                        {formatDate(n.created_at)}
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--ink)', lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {n.content}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="panel">
@@ -1051,6 +1147,21 @@ function AccountDetail() {
         onClose={() => { setIsUploadModalOpen(false); fetchSidebarDocs(); }}
         accountId={accountId}
         accountName={formData.account_name || 'Account'}
+      />
+
+      <AssignReviewerModal
+        isOpen={assignReviewerOpen}
+        accountName={formData.account_name}
+        loading={assignLoading}
+        onConfirm={handleAssignReviewer}
+        onCancel={() => setAssignReviewerOpen(false)}
+      />
+
+      <AddNoteModal
+        isOpen={noteModalOpen}
+        loading={noteSaving}
+        onConfirm={handleAddNote}
+        onCancel={() => setNoteModalOpen(false)}
       />
 
       <ConfirmModal
