@@ -70,10 +70,6 @@ const LoginForm = ({ onSuccess, onSwitchToRegister }) => {
         </button>
       </form>
 
-      <p className="auth-switch">
-        Don't have an account?
-        <button type="button" onClick={onSwitchToRegister}>Create one</button>
-      </p>
     </div>
   );
 };
