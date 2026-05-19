@@ -787,6 +787,17 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 account_id, {'status': 'Approved'}, request.user_id, actor_name
             )
             if success:
+                # Notify the submitter after status is confirmed updated
+                if notification_repository and result:
+                    submitter_id = result.get('created_by')
+                    account_name = result.get('account_name') or account_id
+                    if submitter_id:
+                        notification_repository.create(
+                            user_id=str(submitter_id),
+                            title='Your account has been approved',
+                            description=f'{actor_name} approved "{account_name}". The account is now Approved.',
+                            redirect_path=f'/home/accounts/{account_id}',
+                        )
                 return jsonify({'success': True, 'message': 'Account approved', 'data': result}), 200
             return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
@@ -824,6 +835,17 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
                 account_id, {'status': 'Rejected'}, request.user_id, actor_name
             )
             if success:
+                # Notify the submitter after status is confirmed updated
+                if notification_repository and result:
+                    submitter_id = result.get('created_by')
+                    account_name = result.get('account_name') or account_id
+                    if submitter_id:
+                        notification_repository.create(
+                            user_id=str(submitter_id),
+                            title='Your account has been rejected',
+                            description=f'{actor_name} rejected "{account_name}".{" Reason: " + reason if reason else ""}',
+                            redirect_path=f'/home/accounts/{account_id}',
+                        )
                 return jsonify({'success': True, 'message': 'Account rejected', 'data': result}), 200
             return jsonify({'success': False, 'message': message}), 400
         except Exception as e:
