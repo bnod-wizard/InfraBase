@@ -50,7 +50,7 @@ def seed_admin():
         
         # Create admin user
         admin_user = {
-            'username': 'admin',
+            'username': 'Admin',
             'email': 'admin@infrabase.com',
             'password': hash_password('admin123'),
             'role': 'admin',
