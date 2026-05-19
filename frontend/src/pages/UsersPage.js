@@ -77,16 +77,18 @@ function UsersPage() {
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
-  // Client-side search filter
-  const filtered = users.filter(u => {
-    if (!searchTerm.trim()) return true;
-    const q = searchTerm.toLowerCase();
-    return (
-      u.username?.toLowerCase().includes(q) ||
-      u.email?.toLowerCase().includes(q) ||
-      u.role?.toLowerCase().includes(q)
-    );
-  });
+  // Sort latest first, then filter
+  const filtered = [...users]
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+    .filter(u => {
+      if (!searchTerm.trim()) return true;
+      const q = searchTerm.toLowerCase();
+      return (
+        u.username?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.role?.toLowerCase().includes(q)
+      );
+    });
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated  = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -257,30 +259,20 @@ function UsersPage() {
                 </table>
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="pagination">
-                  <button
-                    className="pg-btn"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(p => p - 1)}
-                  >‹ Prev</button>
-                  {buildPageNumbers(currentPage, totalPages).map((p, i) =>
-                    p === '…'
-                      ? <span key={`ellipsis-${i}`} className="pg-ellipsis">…</span>
-                      : <button
-                          key={p}
-                          className={`pg-btn${p === currentPage ? ' active' : ''}`}
-                          onClick={() => setCurrentPage(p)}
-                        >{p}</button>
-                  )}
-                  <button
-                    className="pg-btn"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(p => p + 1)}
-                  >Next ›</button>
-                </div>
-              )}
+              <div className="panel-foot">
+                Showing {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filtered.length)}–{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} users
+                {totalPages > 1 && (
+                  <div className="pager">
+                    <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>‹</button>
+                    {buildPageNumbers(currentPage, totalPages).map((p, i) =>
+                      p === '…'
+                        ? <span key={`e${i}`} className="pager-ellipsis">…</span>
+                        : <button key={p} className={currentPage === p ? 'on' : ''} onClick={() => setCurrentPage(p)}>{p}</button>
+                    )}
+                    <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>›</button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

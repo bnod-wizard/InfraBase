@@ -14,8 +14,6 @@ const STATUS_CHIPS = [
 ];
 
 const DOC_TEMPLATES = [
-  { tag: 'Cover',    name: 'Cover Page',    pages: '1 page'    },
-  { tag: 'Header',   name: 'Letterhead',    pages: '1 page'    },
   { tag: 'Proposal', name: 'Full Proposal', pages: '11 pages'  },
 ];
 

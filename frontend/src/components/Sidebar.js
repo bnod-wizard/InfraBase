@@ -101,11 +101,6 @@ function Sidebar({ onOpenAreaCalc }) {
             <span className="ico">◉</span> Accounts
             {activeCount !== null && <span className="badge">{activeCount}</span>}
           </div>
-          {isAdmin && (
-            <div className={`item ${isActive('/home/users') ? 'active' : ''}`} onClick={() => go('/home/users')}>
-              <span className="ico">☻</span> Users
-            </div>
-          )}
           <div className="item" onClick={onOpenAreaCalc}>
             <span className="ico">⬡</span> Area Calculator
           </div>
@@ -116,15 +111,15 @@ function Sidebar({ onOpenAreaCalc }) {
           <div className={`item ${isActive('/home/templates') ? 'active' : ''}`} onClick={() => go('/home/templates')}>
             <span className="ico">▣</span> Templates
           </div>
-          <div className="item"><span className="ico">⎙</span> Generated</div>
-          <div className="item"><span className="ico">✎</span> E-Signatures</div>
-          <div className="item"><span className="ico">⛶</span> KYC Vault</div>
         </div>
 
         <div className="group">
           <span className="group-label">Insights</span>
-          <div className="item"><span className="ico">◢</span> Reports</div>
-          <div className="item"><span className="ico">◌</span> Risk &amp; Audit</div>
+          {isAdmin && (
+            <div className={`item ${isActive('/home/users') ? 'active' : ''}`} onClick={() => go('/home/users')}>
+              <span className="ico">☻</span> Users
+            </div>
+          )}
           <div className={`item ${isActive('/home/settings') ? 'active' : ''}`} onClick={() => go('/home/settings')}>
             <span className="ico">⚙</span> Settings
           </div>
