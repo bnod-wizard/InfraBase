@@ -33,6 +33,18 @@ class AccountReviewRepository:
             upsert=True,
         )
 
+    def mark_rejected(self, account_id, rejected_by, rejected_by_name, reason=''):
+        self.col.update_one(
+            {'account_id': str(account_id)},
+            {'$set': {
+                'status':             'rejected',
+                'rejected_by':        rejected_by,
+                'rejected_by_name':   rejected_by_name,
+                'rejected_at':        datetime.utcnow(),
+                'rejection_reason':   reason,
+            }},
+        )
+
     def mark_approved(self, account_id, approved_by, approved_by_name, note=''):
         self.col.update_one(
             {'account_id': str(account_id)},

@@ -23,6 +23,7 @@ const pillClass = status => {
     case 'bank verification': return 'review';
     case 'in-review':         return 'warn';
     case 'lost':              return 'due';
+    case 'rejected':          return 'due';
     default:                  return 'draft';
   }
 };
@@ -35,6 +36,7 @@ const rowStatusClass = status => {
     case 'bank verification': return 'status-review';
     case 'in-review':         return 'status-review';
     case 'lost':              return 'status-due';
+    case 'rejected':          return 'status-due';
     default:                  return 'status-draft';
   }
 };

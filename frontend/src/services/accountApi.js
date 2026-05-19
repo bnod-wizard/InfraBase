@@ -102,6 +102,8 @@ const accountApi = {
     axiosInstance.get('/reviews/my-assigned'),
   approveReview: (accountId, note) =>
     axiosInstance.post(`/reviews/${accountId}/approve`, { note: note || '' }),
+  rejectReview: (accountId, reason) =>
+    axiosInstance.post(`/reviews/${accountId}/reject`, { reason: reason || '' }),
 
   getNotes: (accountId) =>
     axiosInstance.get(`/accounts/${accountId}/notes`),

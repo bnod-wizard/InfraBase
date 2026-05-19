@@ -16,7 +16,7 @@ import { useToast } from '../context';
 import '../styles/AccountDetail.css';
 
 const STATUS_OPTIONS = [
-  'Prospect', 'In-Review', 'Approved', 'Bank Verification', 'Active', 'Lost',
+  'Prospect', 'In-Review', 'Approved', 'Bank Verification', 'Active', 'Lost', 'Rejected',
 ];
 
 const pillClass = status => {
@@ -27,6 +27,7 @@ const pillClass = status => {
     case 'bank verification': return 'review';
     case 'in-review':         return 'warn';
     case 'lost':              return 'due';
+    case 'rejected':          return 'due';
     default:                  return 'draft';
   }
 };

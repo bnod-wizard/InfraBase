@@ -98,6 +98,7 @@ const PIPELINE_STAGES = [
   { label: 'Bank Verification', key: 'Bank Verification', color: '#3b6fb6', bg: '#e7f3ff' },
   { label: 'Active',            key: 'Active',            color: '#2e8b57', bg: '#e6f3ec' },
   { label: 'Lost',              key: 'Lost',              color: '#991b1b', bg: '#fde3e0' },
+  { label: 'Rejected',         key: 'Rejected',          color: '#991b1b', bg: '#fde3e0' },
 ];
 
 /* ── DashboardContent ──────────────────────────────────────── */

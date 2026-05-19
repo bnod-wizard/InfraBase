@@ -1,7 +1,8 @@
 /* KPI value colours (variant overrides) */
-.kpi-val-ok   { color: var(--ok);   }
-.kpi-val-info { color: var(--info); }
-.kpi-val-warn { color: var(--warn); }
+.kpi-val-ok      { color: var(--ok);     }
+.kpi-val-info    { color: var(--info);   }
+.kpi-val-warn    { color: var(--warn);   }
+.kpi-val-due     { color: var(--danger); }
 .kpi-val-feature { color: #fff; }
 
 /* Keep the feature card's val white */

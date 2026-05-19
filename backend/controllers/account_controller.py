@@ -792,6 +792,43 @@ def account_controller(app, account_service, bulk_account_service, auth_service,
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
+    @app.route('/api/reviews/<account_id>/reject', methods=['POST'])
+    @token_required
+    def reject_review(account_id):
+        """Reviewer rejects — sets account status to Rejected and saves reason as a note."""
+        if account_review_repository is None:
+            return jsonify({'success': False, 'message': 'Review feature unavailable'}), 503
+        try:
+            actor_name = request.user_id
+            if user_repository:
+                u = user_repository.find_by_id(request.user_id)
+                if u:
+                    actor_name = u.get('username') or u.get('email', request.user_id)
+
+            data   = request.get_json() or {}
+            reason = (data.get('reason') or '').strip()
+
+            account_review_repository.mark_rejected(account_id, request.user_id, actor_name, reason)
+
+            # Persist rejection reason as a review note
+            if note_repository and reason:
+                note_repository.create(
+                    account_id=account_id,
+                    content=f'Rejection reason: {reason}',
+                    created_by=request.user_id,
+                    created_by_name=actor_name,
+                    note_type='review',
+                )
+
+            success, message, result = account_service.update_account(
+                account_id, {'status': 'Rejected'}, request.user_id, actor_name
+            )
+            if success:
+                return jsonify({'success': True, 'message': 'Account rejected', 'data': result}), 200
+            return jsonify({'success': False, 'message': message}), 400
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
     # ── Notes ─────────────────────────────────────────────────────────────────
 
     @app.route('/api/accounts/<account_id>/notes', methods=['GET'])

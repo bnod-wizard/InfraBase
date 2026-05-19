@@ -9,7 +9,7 @@ const FILTER_KEY = 'accounts_filter';
 
 // Each chip label is the exact status value stored in the DB
 const STATUS_CHIPS = [
-  'Prospect', 'In-Review', 'Approved', 'Bank Verification', 'Active', 'Lost',
+  'Prospect', 'In-Review', 'Approved', 'Bank Verification', 'Active', 'Lost', 'Rejected',
 ];
 
 const DOC_TEMPLATES = [
@@ -23,6 +23,7 @@ const PILL_COLOR = {
   'Bank Verification':{ bg: '#e7f3ff', color: '#1e4d8c' },
   Active:             { bg: '#e6f3ec', color: '#166534' },
   Lost:               { bg: '#fde3e0', color: '#991b1b' },
+  Rejected:           { bg: '#fde3e0', color: '#991b1b' },
 };
 
 function FilterDropdown({ options, selected, onChange }) {
